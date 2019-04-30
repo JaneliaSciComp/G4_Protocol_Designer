@@ -215,6 +215,7 @@ classdef run_controller < handle
             end
             
             %check if log files already present
+            
             if length(dir([experiment_folder '\Log Files\']))>2
                 fprintf('unsorted files present in "Log Files" folder, remove before restarting experiment\n');
                 return
@@ -315,10 +316,13 @@ classdef run_controller < handle
                     if pos_func_id ~= 0
                         Panel_com('set_pattern_func_id', pos_func_id);
                     end
-                    fprintf(['Rep ' num2str(r) ' of ' num2str(num_reps) ', cond ' num2str(c) ' of ' num2str(num_conditions) ': ' strjoin(self.model_.doc_.currentExp_.currentExp.pattern.pattNames(pat_id)) '\n']);
+                    counter = "Rep " + num2str(r) + " of " + num2str(num_reps) + ", cond " + num2str(c) + " of " + num2str(num_conditions) +": " + strjoin(self.model_.doc_.currentExp_.currentExp.pattern.pattNames{pat_id});
+                    disp(counter);
                     
                     %%%%%%How does this work? what does the zero represent?
                     %%%%%%What if there are more than one ao_functions?
+
+                    
                     for i = 1:length(active_ao_channels)
                         Panel_com('set_ao_function_id',[active_ao_channels(i), ao_func_indices(i)]);
                     end
@@ -330,7 +334,6 @@ classdef run_controller < handle
 
                 end
             end
-            
             %rename/move results folder
             Panel_com('stop_display');
             pause(1);

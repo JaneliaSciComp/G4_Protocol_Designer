@@ -189,6 +189,12 @@ classdef document < handle
                afnList = {};
                if exist('ao_list') ~= 0
                    ao_list = unique(ao_list);
+                   empty_aocells = cellfun(@isempty, ao_list);
+                    for i = 1:length(empty_aocells)
+                        if empty_aocells(i) == 1
+                            ao_list(i) = [];
+                        end
+                    end
                    num_ao = length(ao_list);
                    for n = 1:num_ao
                     
@@ -215,6 +221,12 @@ classdef document < handle
                end
                               
                pat_list = unique(pat_list);
+               empty_patcells = cellfun(@isempty, pat_list);
+                    for i = 1:length(empty_patcells)
+                        if empty_patcells(i) == 1
+                            pat_list(i) = [];
+                        end
+                    end
                patternList = { };
                pattNames = {};
                

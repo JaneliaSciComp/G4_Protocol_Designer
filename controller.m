@@ -1900,7 +1900,7 @@ classdef controller < handle %Made this handle class because was having trouble 
         function full_preview(self, src, event)
                 
           data = self.check_one_selected();
-           if data == 0
+           if isempty(data)
                %do nothing
            else
                
@@ -1958,7 +1958,11 @@ classdef controller < handle %Made this handle class because was having trouble 
             LmR_gain = trial{10};
             LmR_offset = trial{11};
             pre_start = 0;
-            experiment_folder = ['C:\matlabroot\G4\Experiments\' self.model_.experiment_name_];
+            if isempty(self.model_.doc_)
+                waitfor(errordlg("You must import an Experiment Folder first"));
+                return;
+            end
+            experiment_folder = self.model_.doc_.top_folder_path_;
             
             connectHost;
             Panel_com('change_root_directory', experiment_folder);
@@ -2392,10 +2396,10 @@ end
       %throw error if more or less than one is selected
             if all_checked == 0 
                 waitfor(errordlg("You must selected a trial to preview"));
-                data = 0;
+                data = [];
             elseif all_checked > 1
                 waitfor(errordlg("You can only select one trial at a time to preview"));
-                data = 0;
+                data = [];
             else
       %set data to correct table
                 if strcmp(checked_trial,'pre')
