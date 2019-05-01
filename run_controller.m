@@ -4,6 +4,9 @@ classdef run_controller < handle
         model_;
         fig_;
         fly_name_;
+        progress_axes_;
+        progress_bar_;
+        %total_trials_;
 
         
     end
@@ -13,6 +16,9 @@ classdef run_controller < handle
         model;
         fig;
         fly_name;
+        progress_axes;
+        progress_bar;
+       % total_trials;
         
         
     end
@@ -27,6 +33,16 @@ classdef run_controller < handle
                 'ToolBar', 'none', 'Resize', 'off');
             self.model_ = model;
             self.layout();
+%             self.total_trials_ = self.model_.get_repetitions()*length(self.model_.block_trials_{:,1});
+%             if strcmp(self.model_.pretrial{2},'') == 0
+%                 self.total_trials_ = self.total_trials_ + 1;
+%             end
+%             if strcmp(self.model_.posttrial{2},'') == 0
+%                 self.total_trials_ = self.total_trials_ + 1;
+%             end
+%             if strcmp(self.model_.intertrial{2},'') == 0
+%                 self.total_trials_ = self.total_trials_ + self.model_.get_repetitions() - 1;%%%%%%%IS THIS CORRECT? IS THERE AN INTERTRIAL AFTER THE LAST repetition or before the first repetition?
+%             end
 
             
             
@@ -40,13 +56,19 @@ classdef run_controller < handle
            
            
             start_button = uicontrol(self.fig_,'Style','pushbutton', 'String', 'Run', ...
-                'units', 'pixels', 'Position', [fig_size(3) - 150, fig_size(4)*.33, 135, 100],'Callback', @self.run);
+                'units', 'pixels', 'Position', [fig_size(3) - 130, fig_size(4)*.2 + 30, 115, 85],'Callback', @self.run);
             settings_pan = uipanel(self.fig_, 'Title', 'Settings', 'units', 'pixels', ...
                 'Position', [15, fig_size(4) - 215, 350, 200]);
             metadata_pan = uipanel(self.fig_, 'Title', 'Metadata', 'units', 'pixels', ...
-                'Position', [fig_size(3) - 250, fig_size(4) - 315, 235, 300]);
+                'Position', [fig_size(3) - 250, fig_size(4) - 265, 200, 250]);
             status_pan = uipanel(self.fig_, 'Title', 'Status', 'units', 'pixels', ...
-                'Position', [15, 15, fig_size(3) - 30, fig_size(4)*.3]); 
+                'Position', [15, 15, fig_size(3) - 30, fig_size(4)*.2]); 
+            self.progress_axes_ = axes(self.fig_, 'units','pixels', 'Position', [15, fig_size(4)*.2+30, fig_size(3) - 145 ,50]);
+            self.progress_bar_ = barh(0, 'Parent', self.progress_axes_,'BaseValue', 0);
+            self.progress_axes_.XAxis.Limits = [0 1];
+            self.progress_axes_.YAxis.Visible = 'off';
+            self.progress_axes_.XAxis.Visible = 'off';
+
             
             
             %Settings required from user
@@ -55,15 +77,32 @@ classdef run_controller < handle
             exp_name_box = uicontrol(settings_pan, 'Style', 'edit', 'String', self.model_.experiment_name_, 'units', 'pixels', 'Position', ...
                 [115, 160, 150, 18], 'Callback', @update_experiment_name);
             fly_name_label = uicontrol(settings_pan, 'Style', 'text', 'String', 'Fly Name:', ...
-                'units', 'pixels', 'Position', [10, 140, 100, 15]);
+                'units', 'pixels', 'Position', [10, 135, 100, 15]);
             fly_name_box = uicontrol(settings_pan, 'Style', 'edit', 'String', self.fly_name_, ...
-                'units', 'pixels', 'Position', [115, 140, 150, 18], 'Callback', @self.update_fly_name);
+                'units', 'pixels', 'Position', [115, 135, 150, 18], 'Callback', @self.update_fly_name);
+            exp_type_label = uicontrol(settings_pan, 'Style', 'text', 'String', 'Experiment Type:', ...
+                'units', 'pixels', 'Position', [10, 110, 100, 15]);
+            exp_type = uicontrol(settings_pan, 'Style', 'popupmenu', 'String', {'Flight','Camera walk', 'Chip walk'}, ...
+                'units', 'pixels', 'Position', [115, 110, 150, 18]);
+            test_button = uicontrol(settings_pan, 'Style', 'pushbutton', 'String', 'Run Test Protocol', ...
+                'units', 'pixels', 'Position', [180, 80, 150, 20], 'Callback', @self.run_test);
             
         end
         
         function update_fly_name(self, src, event)
             
             self.set_fly_name(src.String);
+            
+        end
+        
+        function update_progress(self, rep, cond)
+            increment = 1/(self.model_.repetitions_ * length(self.model_.block_trials_{:,1}));
+
+            distance = ((rep - 1)*length(self.model_.block_trials{:,1}) + cond)*increment;
+            self.progress_axes_.Title.String = "Rep " + rep + " of " + self.model_.repetitions + ", Trial " + cond + " of " + length(self.model_.block_trials_{:,1});
+            self.progress_bar_.YData = distance;
+            
+            drawnow;
             
         end
         
@@ -274,6 +313,7 @@ classdef run_controller < handle
             Panel_com('start_log');
             for r = 1:num_reps
                 for c = 1:num_conditions
+                    self.update_progress(r, c);
                     cond = exp_order(r,c); % + exclude_stripe
                     pat_id = self.model_.get_pattern_index(block_trials{cond,2});
                     pos_func_id = self.model_.get_posfunc_index(block_trials{cond,3});
@@ -341,10 +381,21 @@ classdef run_controller < handle
             disconnectHost;
             pause(1);
             movefile([experiment_folder '\Log Files\*'],fullfile(experiment_folder,'Results',self.fly_name_));
-            save([experiment_folder '\Log Files\exp_order.mat'],'exp_order')
+            %save([experiment_folder '\Log Files\exp_order.mat'],'exp_order')
             disp('Experiment complete');
 
             
+        end
+        
+        function run_test(self, src, event)
+        
+%             [testFilename, testFilepath] = uigetfile('*.g4p');
+%             filepath = fullfile(testFilepath, testFilename);
+%             
+%             test_protocol_params = load(filepath, '-mat');
+%             
+            
+   
         end
         
 

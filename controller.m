@@ -713,6 +713,7 @@ classdef controller < handle %Made this handle class because was having trouble 
         function update_experiment_name(self, src, event)
             
             new_val = src.String;
+           
             self.model_.set_experiment_name(new_val);
             self.update_gui();
         end
@@ -1042,10 +1043,12 @@ classdef controller < handle %Made this handle class because was having trouble 
        switch answer
            case 'Folder'
                 top_folder_path = uigetdir;
+                prog = waitbar(0, 'Importing...', 'WindowStyle', 'modal');
                 if isequal (top_folder_path,0)
                     %do nothing
                 else
                     imported_folder = document(top_folder_path);
+                    waitbar(.5,prog,'Updating...');
                     self.update_doc(imported_folder);
                     [exp_path, exp_name] = fileparts(self.model_.doc_.top_folder_path_);
                     self.model_.set_experiment_name(exp_name);
@@ -1053,8 +1056,12 @@ classdef controller < handle %Made this handle class because was having trouble 
                     set(self.num_rows_3_, 'Enable', 'off');
                     set(self.num_rows_4_, 'Enable', 'off');
                 end
+                close(prog);
            case 'File'
+               prog = waitbar(0, 'Importing...', 'WindowStyle', 'modal');
                self.imp_file();
+               waitbar(1, prog, 'Finished');
+               close(prog);
            case 'Cancel'
                %do nothing
        end
@@ -1087,13 +1094,25 @@ classdef controller < handle %Made this handle class because was having trouble 
 %Save As
 
     function saveas(self, src, event)
-
+        
+        cut_date_off_name = regexp(self.model_.experiment_name_,'-','split');
+        if length(cut_date_off_name) > 1
+            exp_name = cut_date_off_name{1}(1:end-2);
+        else
+            exp_name = self.model_.get_experiment_name();
+        end
+        dateFormat = 'mm-dd-yy_HH-MM-SS';
+        %dateFormat = 30; %ISO8601 format, yyyymmddTHHMMSS (year, month, date, T for time, hours, minutes, seconds) - see matlab docs
+        dated_exp_name = strcat(exp_name, datestr(now, dateFormat));
+        self.model_.set_experiment_name(dated_exp_name);
         [file, path] = uiputfile('*.mat','File Selection', self.model_.experiment_name_);
         full_path = fullfile(path, file);
         
         if file == 0
             return;
         end
+        
+        prog = waitbar(0,'Please wait...');
         
     %get values of interest from model and store them in struct to save to mat file.
         vars.block_trials = self.model_.get_block_trials();
@@ -1113,9 +1132,10 @@ classdef controller < handle %Made this handle class because was having trouble 
         vars.num_rows = self.model_.get_num_rows();
         vars.experiment_name = self.model_.get_experiment_name();
         
+        waitbar(.33,prog,'Saving...');
         
+        self.model_.doc_.saveas(full_path, vars, prog);
         
-        self.model_.doc_.saveas(full_path, vars);
         
 
     end
@@ -1432,17 +1452,21 @@ classdef controller < handle %Made this handle class because was having trouble 
                 
                  if src.Position == positions.pre
                     self.current_selected_cell_.table = "pre";
-                    mode = cell2mat(self.model_.pretrial_(1));
+                    mode = self.model_.pretrial_{1};
+                    dur = self.model_.pretrial_{12}*1000;
                 elseif src.Position == positions.inter
                     self.current_selected_cell_.table = "inter";
-                    mode = cell2mat(self.model_.intertrial_(1));
+                    mode = self.model_.intertrial_{1};
+                    dur = self.model_.intertrial_{12}*1000;
                 elseif src.Position == positions.block
                     self.current_selected_cell_.table = "block";
                     x = self.current_selected_cell_.index(1);
-                    mode = cell2mat(self.model_.block_trials_(x, 1));
+                    mode = self.model_.block_trials_{x, 1};
+                    dur = self.model_.block_trials_{x,12}*1000;
                  elseif src.Position == positions.post
                     self.current_selected_cell_.table = "post";
-                    mode = cell2mat(self.model_.posttrial_(1));
+                    mode = self.model_.posttrial_{1};
+                    dur = self.model_.posttrial_{12}*1000;
                 else
                     waitfor(errordlg("Something has gone wrong, table positions have been corrupted."));
                  end
@@ -1499,9 +1523,9 @@ classdef controller < handle %Made this handle class because was having trouble 
                         end
                         
                     elseif event.Indices(2) == 3
-                        disp(mode);
+                        
                         edit = self.check_editable(mode, 3);
-                        disp(edit);
+
                         if edit == 1
                             pos = self.model_.doc_.Pos_funcs_;
                             fields = fieldnames(pos);
@@ -1620,6 +1644,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                         set(self.hAxes_, 'XLim', xax, 'YLim', yax);
                         p = plot(self.current_preview_file_);
                         set(p, 'parent', self.hAxes_);
+                        dur_line = line('XData', [dur, dur], 'YData', [yax(1), yax(2)], 'Color', [1 0 0], 'LineWidth', 2);
 
 
                     elseif event.Indices(2) > 3 && event.Indices(2) < 7
@@ -1972,15 +1997,17 @@ classdef controller < handle %Made this handle class because was having trouble 
             position_index = self.model_.get_posfunc_index(trial{3});
             ao_index = self.model_.get_ao_index(trial{4});
             Panel_com('set_control_mode', trial_mode);
-            Panel_com('set_pattern_id', pattern_index); %HOW DOES THIS WORK? HOW DOES IT GET THE PATTERN DATA?
+            Panel_com('set_pattern_id', pattern_index); 
            % Panel_com('set_gain_bias', [LmR_gain LmR_offset])
             Panel_com('set_pattern_func_id', position_index);
-            %fprintf(['Rep ' num2str(r) ' of ' num2str(num_reps) ', cond ' num2str(c) ' of ' num2str(num_conditions) ': ' strjoin(currentExp.pattern.pattNames(cond)) '\n']);
             Panel_com('set_ao_function_id',[0, ao_index]);
+            Panel_com('set_gain_bias',[LmR_gain, LmR_offset]);
             pause(0.01)
             Panel_com('start_display', (trial_duration*10)); %duration expected in 100ms units
             pause(trial_duration+0.1)
             Panel_com('stop_display');
+            disconnectHost;
+            %Panel_com('reset_display');
             %end of trial portion
                   
             

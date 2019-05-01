@@ -209,6 +209,7 @@ classdef model_class < handle
             else
                 fields = fieldnames(self.doc_.Patterns_);
                 index = find(strcmp(fields, pat_name));
+                
             end    
         end
         

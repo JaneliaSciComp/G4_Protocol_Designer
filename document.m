@@ -28,39 +28,40 @@ classdef document < handle
            %Check if experiment folder for that experiment name already
            %exists - if it does, confirm the user wants to recycle the old
            %folder and replace it with the new one.
-            if exist(self.top_export_path_, 'dir') == 7
-                question = strcat('A folder for experiment ', vars.experiment_name, ' already exists. Are you sure you want to replace it?');
-                replace = questdlg(question);
-                if strcmp(replace, 'Yes') == 1
-                    confirm = strcat('Are you sure you want to send ', vars.experiment_name, ' to the recycle bin?');
-                    confirmation = questdlg(confirm);
-                    if strcmp(confirmation, 'Yes') == 1
-                        recycle('on')
-                        rmdir(self.top_export_path_,'s');
-                    elseif strcmp(confirmation,'')==1 || strcmp(confirmation,'Cancel')==1
-                        export_successful = 2; 
-                        return;
-                        
-                    else
-                        export_successful = 0;
-                        return;
-
-                    end
-                elseif strcmp(replace,'') == 1 || strcmp(replace,'Cancel') == 1
-                    export_successful = 2;
-                    return;
-                    
-                    
-                else
-                    export_successful = 0;
-                    return;
-                end
-               
-                
-            end
+%             if exist(self.top_export_path_, 'dir') == 7
+%                 question = "A folder for experiment " + vars.experiment_name + " already exists. Are you sure you want to replace it?";
+%                 replace = questdlg(question);
+%                 if strcmp(replace, 'Yes') == 1
+%                     confirm = "Are you sure you want to send " + vars.experiment_name + " to the recycle bin?";
+%                     confirmation = questdlg(confirm);
+%                     if strcmp(confirmation, 'Yes') == 1
+%                         recycle('on')
+%                         rmdir(self.top_export_path_,'s');
+%                     elseif strcmp(confirmation,'')==1 || strcmp(confirmation,'Cancel')==1
+%                         export_successful = 2; 
+%                         return;
+%                         
+%                     else
+%                         export_successful = 0;
+%                         return;
+% 
+%                     end
+%                 elseif strcmp(replace,'') == 1 || strcmp(replace,'Cancel') == 1
+%                     export_successful = 2;
+%                     return;
+%                     
+%                     
+%                 else
+%                     export_successful = 0;
+%                     return;
+%                 end
+%                
+%                 
+%             end
             
                         
             %[path, name, ext] =  fileparts(self.save_filename_);
+
             Exppath = self.top_export_path_;
 
 
@@ -175,14 +176,18 @@ classdef document < handle
                         pfnList{m} = pfnName;
                         func_folder = fullfile(self.top_folder_path_, 'Functions');
                         pfnFilePath = fullfile(func_folder,pfnName);
-                        pfnNewFilePath = fullfile(funcpath, pfnName);
+                        if ~isfile(pfnFilePath)
+                            errordlg(pfnFilePath + " does not exist in your imported directory. If you imported this .mat file separately, please move its associated .pfn file manually to your exported folder.");
+                        else
+                            pfnNewFilePath = fullfile(funcpath, pfnName);
 
-                        pfn = fopen(pfnFilePath);
-                        pfnData = fread(pfn);
-                        newpfn = fopen(pfnNewFilePath, 'w');
-                        fwrite(newpfn, pfnData);
-                        fclose(pfn);
-                        fclose(newpfn);
+                            pfn = fopen(pfnFilePath);
+                            pfnData = fread(pfn);
+                            newpfn = fopen(pfnNewFilePath, 'w');
+                            fwrite(newpfn, pfnData);
+                            fclose(pfn);
+                            fclose(newpfn);
+                        end
                 
                     end
                end
@@ -209,13 +214,17 @@ classdef document < handle
                         afnList{n} = afnName;
                         ao_folder = fullfile(self.top_folder_path_, 'Analog Output Functions');
                         afnFilePath = fullfile(ao_folder,afnName);
-                        afnNewFilePath = fullfile(aopath, afnName);
-                        afn = fopen(afnFilePath);
-                        afnData = fread(afn);
-                        newafn = fopen(afnNewFilePath, 'w');
-                        fwrite(newafn, afnData);
-                        fclose(afn);
-                        fclose(newafn);
+                        if ~isfile(afnFilePath)
+                            errordlg(afnFilePath + " does not exist in your imported directory. If you imported this .mat file separately, please move its associated .afn file to your exported folder manually.");
+                        else
+                            afnNewFilePath = fullfile(aopath, afnName);
+                            afn = fopen(afnFilePath);
+                            afnData = fread(afn);
+                            newafn = fopen(afnNewFilePath, 'w');
+                            fwrite(newafn, afnData);
+                            fclose(afn);
+                            fclose(newafn);
+                        end
                 
                    end
                end
@@ -245,13 +254,17 @@ classdef document < handle
                     patternList{k} = patname;
                     patfilepath = fullfile(patpath, patname);
                     imported_patfilepath = fullfile(self.top_folder_path_, 'Patterns', patname);
-                    pat = fopen(imported_patfilepath);
-                    patData = fread(pat);
-                    fileID = fopen(patfilepath,'w');
-                    fwrite(fileID, patData);
-                    fclose(pat);
-                    fclose(fileID);
-                
+                    if ~isfile(imported_patfilepath)
+                        errordlg(imported_patfilepath + " does not exist in your imported directory. If you imported this item separately, please move it to your exported folder manually.");
+                    else
+                        pat = fopen(imported_patfilepath);
+                        patData = fread(pat);
+                        fileID = fopen(patfilepath,'w');
+                        fwrite(fileID, patData);
+                        fclose(pat);
+                        fclose(fileID);
+                    end
+
                end
 
 %                 
@@ -342,7 +355,7 @@ classdef document < handle
    
         end
         
-        function saveas(self, path, exp_parameters)
+        function saveas(self, path, exp_parameters, prog)
             
             homemade_ext = '.g4p';
 
@@ -381,7 +394,7 @@ classdef document < handle
                 temp_path = '';
 
             end
-            
+            waitbar(.5, prog, 'Exporting...');
             export_successful = self.export(exp_parameters);% 0 - export was unable to complete 1- export completed successfully 2-user canceled and export not attempted
             if export_successful == 0
                 waitfor(errordlg("Export was unsuccessful. Please delete files to be overwritten manually and try again."));
@@ -397,6 +410,8 @@ classdef document < handle
                     rmdir(temp_path,'s');
                 end
             end
+            waitbar(1, prog, 'Save Successful');
+            close(prog);
             
         end
         
@@ -435,8 +450,11 @@ classdef document < handle
                 
                 if isfield(self.Patterns_, name) == 1
                     waitfor(errordlg("A pattern of that name has already been imported."));
+                    return;
                 else
                     self.Patterns_.(name) = load(file_full);
+
+                    
                 end
                 %add to Patterns_
                 
