@@ -96,10 +96,10 @@ classdef run_controller < handle
         end
         
         function update_progress(self, rep, cond)
-            increment = 1/(self.model_.repetitions_ * length(self.model_.block_trials_{:,1}));
+            increment = 1/(self.model_.repetitions_ * length(self.model_.block_trials_(:,1)));
 
-            distance = ((rep - 1)*length(self.model_.block_trials{:,1}) + cond)*increment;
-            self.progress_axes_.Title.String = "Rep " + rep + " of " + self.model_.repetitions + ", Trial " + cond + " of " + length(self.model_.block_trials_{:,1});
+            distance = ((rep - 1)*length(self.model_.block_trials_(:,1)) + cond)*increment;
+            self.progress_axes_.Title.String = "Rep " + rep + " of " + self.model_.repetitions_ + ", Trial " + cond + " of " + length(self.model_.block_trials_(:,1));
             self.progress_bar_.YData = distance;
             
             drawnow;
@@ -193,7 +193,7 @@ classdef run_controller < handle
             %%%%%%%%%CONSIDER PUTTING IN A CHECKBOX WHICH ALLOWS THEM TO
             %%%%%%%%%DISABLE THE PRE, INTER, AND POST TRIALS so they don't
             %%%%%%%%%have to erase everything autofilled. 
-            if strcmp(intertrial{2},'') == 1
+            if isempty(intertrial{2})
                 inter_type = 0;
             else
                 inter_type = 1;
@@ -202,10 +202,18 @@ classdef run_controller < handle
             
             %pre_start indicates whether there is a pretrial or not
             
-            if strcmp(pretrial{2},'') == 1
+            if isempty(pretrial{2})
                 pre_start = 0;
             else
                 pre_start = 1; 
+            end
+            
+            %post_type indicates if there is a posttrial or not
+            
+            if isempty(posttrial{2})
+                post_type = 0;
+            else
+                post_type = 1;
             end
             %%Get active channels from the model, create array of their
             %%numeric representations, ie if channels 1 and 3 are active,
@@ -214,7 +222,7 @@ classdef run_controller < handle
             %THIS METHOD will create an array like [0, 2, 3] if ao channels
             %1,3, and 4 are active. Is this correct??????????????
             channels = [self.model_.get_is_chan1(), self.model_.get_is_chan2(), self.model_.get_is_chan3(), self.model_.get_is_chan4()];
-            channel_nums = [1,2,3,4];
+            channel_nums = [0,1,2,3];
             
             j = 1;
             active_ao_channels = [];
@@ -232,10 +240,10 @@ classdef run_controller < handle
             posttrial_ao_funcs = [];
             for i = 1:length(active_ao_channels)
                 channel_num = active_ao_channels(i);
-                pretrial_ao_indices(i) = self.model_.get_ao_index(pretrial{channel_num + 3});
-                ao_indices(i) = self.model_.get_ao_index(block_trials{1,channel_num + 3});
-                intertrial_ao_indices(i) = self.model_.get_ao_index(intertrial{channel_num + 3});
-                posttrial_ao_indices(i) = self.model_.get_ao_index(posttrial{channel_num + 3});
+                pretrial_ao_indices(i) = self.model_.get_ao_index(pretrial{channel_num + 4});
+                ao_indices(i) = self.model_.get_ao_index(block_trials{1,channel_num + 4});
+                intertrial_ao_indices(i) = self.model_.get_ao_index(intertrial{channel_num + 4});
+                posttrial_ao_indices(i) = self.model_.get_ao_index(posttrial{channel_num + 4});
             end
          
             
@@ -256,11 +264,11 @@ classdef run_controller < handle
             %check if log files already present
             
             if length(dir([experiment_folder '\Log Files\']))>2
-                fprintf('unsorted files present in "Log Files" folder, remove before restarting experiment\n');
+                waitfor(errordlg('unsorted files present in "Log Files" folder, remove before restarting experiment\n'));
                 return
             end
             if exist([experiment_folder '\Results\' self.fly_name_],'dir')
-                fprintf('Results folder already exists with that fly name\n');
+                waitfor(errordlg('Results folder already exists with that fly name\n'));
                 return
             end
             
@@ -272,119 +280,174 @@ classdef run_controller < handle
             if exist('active_ao_channels','var') && ~isempty(active_ao_channels) &&sum(active_ao_channels)>0
                 aobits = 0;
                 for bit = active_ao_channels
-                    aobits = bitset(aobits,bit);
+                    aobits = bitset(aobits,bit+1); %plus 1 bc aochans are 0-3
                 end
                 Panel_com('set_active_ao_channels', dec2bin(aobits,4));
             end
-            
+            start = questdlg('Start Experiment?','Confirm Start','Start','Cancel','Start');
             if pre_start==1 %start with 10 seconds of closed loop stripe fixation
                 Panel_com('set_control_mode',pretrial_mode);
+                Panel_com('set_pattern_func_id',pretrial_posfunc_id);
                 Panel_com('set_gain_bias', [pretrial_gain, pretrial_offset]);
                 Panel_com('set_pattern_id', pretrial_pat_id);
                
                 for i = 1:length(pretrial_ao_funcs)
                     Panel_com('set_ao_function_id',[active_ao_channels(i), pretrial_ao_indices(i)]);%[channel number, index of ao func]
                 end
-
-                pause(0.01)
-                Panel_com('start_display', (10*10))
-            end
-            
-            start = input('press enter to start experiment');
-            
-            %% run experiment
-            exp_seconds = num_reps*num_conditions*(trial_duration + intertrial_duration);
-            fprintf(['Estimated experiment duration: ' num2str(exp_seconds/60) ' minutes\n']);
-            
-            
-            %%create .mat file of experiment order
-            if randomize == 1
-                exp_order = NaN(num_reps, num_conditions);
-                for rep_ind = 1:num_reps
-                    exp_order(rep_ind,:) = randperm(num_conditions);
+                
+                if pretrial_mode == 2
+                    Panel_com('set_frame_rate', pretrial{9});
                 end
-            else
-                exp_order = repmat(1:num_conditions,num_reps,1);
+                
+                if pretrial_mode == 3
+                    Panel_com('set_position_x', pretrial{8});
+                end
+                
+                pause(0.01)
+                Panel_com('start_display', (pretrial_duration*10))
+                pause(pretrial_duration);
             end
-            save([experiment_folder '\Log Files\exp_order.mat'],'exp_order')
             
-            %start experiment log and trial loop
-            Panel_com('stop_display');
-            Panel_com('start_log');
-            for r = 1:num_reps
-                for c = 1:num_conditions
-                    self.update_progress(r, c);
-                    cond = exp_order(r,c); % + exclude_stripe
-                    pat_id = self.model_.get_pattern_index(block_trials{cond,2});
-                    pos_func_id = self.model_.get_posfunc_index(block_trials{cond,3});
-                    trial_mode = block_trials{cond,1};
-                    for i = 1:length(active_ao_channels)
-                        ao_func_indices(i) = self.model_.get_ao_index(block_trials{cond, active_ao_channels(i)+3});
+           
+            switch start
+                case 'Cancel'
+                    Panel_com('stop_display')
+                    disconnectHost;
+                    return;
+                case 'Start'
+                %% run experiment
+                exp_seconds = num_reps*num_conditions*(trial_duration + intertrial_duration);
+                fprintf(['Estimated experiment duration: ' num2str(exp_seconds/60) ' minutes\n']);
+
+
+                %%create .mat file of experiment order
+                if randomize == 1
+                    exp_order = NaN(num_reps, num_conditions);
+                    for rep_ind = 1:num_reps
+                        exp_order(rep_ind,:) = randperm(num_conditions);
                     end
+                else
+                    exp_order = repmat(1:num_conditions,num_reps,1);
                     
-                    %intertrial portion
-                    
-%%%%%%%%%%%%%%%%%%%%%%%%%%%DOES THERE NEED TO BE A TYPE 2???why does type 2
-                    %%%%%%%set an ao function id but not type 1? 
-                    if inter_type == 1
-                        Panel_com('set_control_mode', intertrial_mode);
-                        Panel_com('set_pattern_id', intertrial_pat_id );
-                        Panel_com('set_position_x', 1);
-                        Panel_com('start_display', (intertrial_duration*10));
-                        pause(intertrial_duration);
-                    elseif inter_type == 2
-                        Panel_com('set_control_mode', 4);
-                        Panel_com('set_gain_bias', [LmR_gain, LmR_offset]);
-                        Panel_com('set_pattern_id', 1);
-                        for i = 1:length(intertrial_ao_funcs)
-                            Panel_com('set_ao_function_id',[active_ao_channels(i), intertrial_ao_indices(i)]);
+                end
+
+                save([experiment_folder '\Log Files\exp_order.mat'],'exp_order')
+
+                %start experiment log and trial loop
+                Panel_com('stop_display');
+                Panel_com('start_log');
+                for r = 1:num_reps
+                    for c = 1:num_conditions
+                        
+                        self.update_progress(r, c);
+                        cond = exp_order(r,c); % + exclude_stripe
+                        pat_id = self.model_.get_pattern_index(block_trials{cond,2});
+                        pos_func_id = self.model_.get_posfunc_index(block_trials{cond,3});
+                        trial_mode = block_trials{cond,1};
+                        for i = 1:length(active_ao_channels)
+                            ao_func_indices(i) = self.model_.get_ao_index(block_trials{cond, active_ao_channels(i)+ 4});
+                        end
+
+                        %intertrial portion
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%DOES THERE NEED TO BE A TYPE 2???why does type 2
+                        %%%%%%%set an ao function id but not type 1? 
+                        if inter_type == 1
+                            Panel_com('set_control_mode', intertrial_mode);
+                            Panel_com('set_pattern_id', intertrial_pat_id );
+                            Panel_com('set_pattern_func_id',intertrial_posfunc_id);
+                            if intertrial_mode == 3
+                                Panel_com('set_position_x', intertrial{8});
+                            end
+                            for i = 1:length(intertrial_ao_funcs)
+                                Panel_com('set_ao_function_id',[active_ao_channels(i), intertrial_ao_indices(i)]);
+                            end
+                            if intertrial_mode == 2
+                                Panel_com('set_frame_rate', intertrial{9});
+                            end
+                            Panel_com('start_display', (intertrial_duration*10));
+                            pause(intertrial_duration);
+                        elseif inter_type == 2
+                            Panel_com('set_control_mode', 4);
+                            Panel_com('set_gain_bias', [LmR_gain, LmR_offset]);
+                            Panel_com('set_pattern_id', 1);
+                            for i = 1:length(intertrial_ao_funcs)
+                                Panel_com('set_ao_function_id',[active_ao_channels(i), intertrial_ao_indices(i)]);
+                            end
+                            pause(0.01)
+                            Panel_com('start_display', (intertrial_duration*10));
+                            pause(intertrial_duration+0.1);
+                        end
+                        %end of intertrial portion
+
+                         %trial portion
+                        %Panel_com('stop_display')
+                        Panel_com('set_control_mode', trial_mode);
+                        Panel_com('set_pattern_id', pat_id);
+                        if ~isempty(block_trials{cond,10})
+                            LmR_gain = block_trials{cond,10};
+                            LmR_offset = block_trials{cond,11};
+                            Panel_com('set_gain_bias', [LmR_gain, LmR_offset]);
+                        end
+                        if pos_func_id ~= 0
+                            Panel_com('set_pattern_func_id', pos_func_id);
+                        end
+                        if trial_mode == 2
+                            Panel_com('set_frame_rate',block_trials{cond,9});
+                        end
+                        if trial_mode == 3
+                            Panel_com('set_position_x', block_trials{cond,8});
+                        end
+    %                     counter = "Rep " + num2str(r) + " of " + num2str(num_reps) + ", cond " + num2str(c) + " of " + num2str(num_conditions) +": " + strjoin(self.model_.doc_.currentExp_.currentExp.pattern.pattNames(pat_id));
+    %                     disp(counter);
+
+                        %%%%%%How does this work? what does the zero represent?
+                        %%%%%%What if there are more than one ao_functions?
+
+
+                        for i = 1:length(active_ao_channels)
+                            Panel_com('set_ao_function_id',[active_ao_channels(i), ao_func_indices(i)]);
                         end
                         pause(0.01)
-                        Panel_com('start_display', (intertrial_duration*10));
-                        pause(intertrial_duration+0.1);
-                    end
-                    %end of intertrial portion
-                    
-                     %trial portion
-                    Panel_com('set_control_mode', trial_mode);
-                    Panel_com('set_pattern_id', pat_id);
-                    if ~isempty(block_trials{cond,10})
-                        LmR_gain = block_trials{cond,10};
-                        LmR_offset = block_trials{cond,11};
-                        Panel_com('set_gain_bias', [LmR_gain, LmR_offset]);
-                    end
-                    if pos_func_id ~= 0
-                        Panel_com('set_pattern_func_id', pos_func_id);
-                    end
-                    counter = "Rep " + num2str(r) + " of " + num2str(num_reps) + ", cond " + num2str(c) + " of " + num2str(num_conditions) +": " + strjoin(self.model_.doc_.currentExp_.currentExp.pattern.pattNames{pat_id});
-                    disp(counter);
-                    
-                    %%%%%%How does this work? what does the zero represent?
-                    %%%%%%What if there are more than one ao_functions?
+                        Panel_com('start_display', (trial_duration*10)); %duration expected in 100ms units
+                        pause(trial_duration+0.1)
+                        %end of trial portion
 
-                    
-                    for i = 1:length(active_ao_channels)
-                        Panel_com('set_ao_function_id',[active_ao_channels(i), ao_func_indices(i)]);
-                    end
-                    pause(0.01)
-                    Panel_com('start_display', (trial_duration*10)); %duration expected in 100ms units
-                    pause(trial_duration+0.1)
-                    %end of trial portion
-                    
 
+                    end
                 end
-            end
-            %rename/move results folder
-            Panel_com('stop_display');
-            pause(1);
-            Panel_com('stop_log');
-            disconnectHost;
-            pause(1);
-            movefile([experiment_folder '\Log Files\*'],fullfile(experiment_folder,'Results',self.fly_name_));
-            %save([experiment_folder '\Log Files\exp_order.mat'],'exp_order')
-            disp('Experiment complete');
+                
+                if post_type == 1
+                     Panel_com('set_control_mode', posttrial_mode);
+                     Panel_com('set_pattern_id', posttrial_pat_id);
+                     if ~isempty(posttrial{10})
+                         Panel_com('set_gain_bias', [posttrial_gain, posttrial_offset]);
+                     end
+                     if pos_func_id ~= 0
+                         Panel_com('set_pattern_func_id', posttrial_posfunc_id);
+                     end
+                     if posttrial_mode == 2
+                         Panel_com('set_frame_rate', posttrial{9});
+                     end
+                     if posttrial_mode == 3
+                         Panel_com('set_position_x',posttrial{8});
+                     end
+                     Panel_com('start_display',posttrial_duration*10);
+                     pause(posttrial_duration);
+                end
+                %rename/move results folder
+                Panel_com('stop_display');
+                pause(1);
+                Panel_com('stop_log');
+                disconnectHost;
+                pause(1);
+                movefile([experiment_folder '\Log Files\*'],fullfile(experiment_folder,'Results',self.fly_name_));
+                %save([experiment_folder '\Log Files\exp_order.mat'],'exp_order')
+                self.progress_axes_.Title.String = "Experiment Completed.";
+                drawnow;
 
             
+            end
         end
         
         function run_test(self, src, event)
@@ -414,6 +477,9 @@ classdef run_controller < handle
             output = self.fly_name_;
         end
         
+        
+        
+       
         
     end
     

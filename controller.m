@@ -1644,8 +1644,9 @@ classdef controller < handle %Made this handle class because was having trouble 
                         set(self.hAxes_, 'XLim', xax, 'YLim', yax);
                         p = plot(self.current_preview_file_);
                         set(p, 'parent', self.hAxes_);
-                        dur_line = line('XData', [dur, dur], 'YData', [yax(1), yax(2)], 'Color', [1 0 0], 'LineWidth', 2);
-
+                        if dur <= length(self.current_preview_file_(1,:))
+                            dur_line = line('XData', [dur, dur], 'YData', [yax(1), yax(2)], 'Color', [1 0 0], 'LineWidth', 2);
+                        end
 
                     elseif event.Indices(2) > 3 && event.Indices(2) < 7
 
@@ -1979,9 +1980,18 @@ classdef controller < handle %Made this handle class because was having trouble 
             %block_trials = self.model_.get_block_trials();
             trial_mode = trial{1};
             trial_duration = trial{12};
+           
+            trial_fr_rate = trial{9};
+           
+            
             %intertrial = self.model_.get_intertrial();
-            LmR_gain = trial{10};
-            LmR_offset = trial{11};
+            if isempty(trial{10}) == 0
+                LmR_gain = trial{10};
+                LmR_offset = trial{11};
+            else
+                LmR_gain = 0;
+                LmR_offset = 0;
+            end
             pre_start = 0;
             if isempty(self.model_.doc_)
                 waitfor(errordlg("You must import an Experiment Folder first"));
@@ -1991,24 +2001,43 @@ classdef controller < handle %Made this handle class because was having trouble 
             
             connectHost;
             Panel_com('change_root_directory', experiment_folder);
-            start = input('press enter to start experiment');
+            start = questdlg('Start Dry Run?','Confirm Start','Start','Cancel','Start');
+            switch start
+                case 'Cancel'
+                    Panel_com('stop_display')
+                    disconnectHost;
+                    return;
+                case 'Start'
             
-            pattern_index = self.model_.get_pattern_index(trial{2});
-            position_index = self.model_.get_posfunc_index(trial{3});
-            ao_index = self.model_.get_ao_index(trial{4});
-            Panel_com('set_control_mode', trial_mode);
-            Panel_com('set_pattern_id', pattern_index); 
-           % Panel_com('set_gain_bias', [LmR_gain LmR_offset])
-            Panel_com('set_pattern_func_id', position_index);
-            Panel_com('set_ao_function_id',[0, ao_index]);
-            Panel_com('set_gain_bias',[LmR_gain, LmR_offset]);
-            pause(0.01)
-            Panel_com('start_display', (trial_duration*10)); %duration expected in 100ms units
-            pause(trial_duration+0.1)
-            Panel_com('stop_display');
-            disconnectHost;
-            %Panel_com('reset_display');
-            %end of trial portion
+                    pattern_index = self.model_.get_pattern_index(trial{2});
+                    if ~isempty(trial{3})
+                        position_index = self.model_.get_posfunc_index(trial{3});
+                    else
+                        position_index = 0;
+                    end
+                    %ao_index = self.model_.get_ao_index(trial{4});
+                    Panel_com('set_control_mode', trial_mode);
+                    Panel_com('set_pattern_id', pattern_index); 
+                   % Panel_com('set_gain_bias', [LmR_gain LmR_offset])
+                    Panel_com('set_pattern_func_id', position_index);
+                    %Panel_com('set_ao_function_id',[0, ao_index]);
+                    Panel_com('set_gain_bias',[LmR_gain LmR_offset]);
+                    if trial_mode == 2
+                        Panel_com('set_frame_rate', trial_fr_rate);
+                    end
+
+                    if trial_mode == 3
+                        Panel_com('set_position_x', trial{8});
+                       % Panel_com('set_position_y', trial{8});
+                    end
+                    pause(0.01)
+                    Panel_com('start_display', (trial_duration*10)); %duration expected in 100ms units
+                    pause(trial_duration+0.1)
+                    Panel_com('stop_display');
+                    disconnectHost;
+                    %Panel_com('reset_display');
+                    %end of trial portion
+            end
                   
             
         end
