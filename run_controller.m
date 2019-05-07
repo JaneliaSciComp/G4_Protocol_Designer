@@ -29,7 +29,7 @@ classdef run_controller < handle
         
         %contstructor
         function self = run_controller(model)
-            self.fig_ = figure('units','pixels','MenuBar', 'none', ...
+            self.fig_ = figure('Name', 'Fly Experiment Conductor', 'NumberTitle', 'off', 'units','pixels','MenuBar', 'none', ...
                 'ToolBar', 'none', 'Resize', 'off');
             self.model_ = model;
             self.layout();
@@ -57,7 +57,7 @@ classdef run_controller < handle
            
            
             start_button = uicontrol(self.fig_,'Style','pushbutton', 'String', 'Run', ...
-                'units', 'pixels', 'Position', [15, fig_size(4)- 305, 115, 85],'Callback', @self.run);
+                'units', 'pixels', 'Position', [15, fig_size(4)- 305, 115, 85],'Callback', @self.test_progress_bar);
             settings_pan = uipanel(self.fig_, 'Title', 'Settings', 'FontSize', 13, 'units', 'pixels', ...
                 'Position', [15, fig_size(4) - 215, 370, 200]);
             metadata_pan = uipanel(self.fig_, 'Title', 'Metadata', 'units', 'pixels', ...
@@ -145,6 +145,21 @@ classdef run_controller < handle
             
             drawnow;
             
+        end
+        
+        function test_progress_bar(self, src, event)
+        
+            reps = self.model_.get_repetitions();
+            trials = length(self.model_.block_trials_(:,1));
+            for i = 1:reps
+                for j = 1:trials
+                    
+                    self.update_progress(i,j);
+                    pause(1);
+                end
+            end
+        
+        
         end
         
         function run(self, src, event)

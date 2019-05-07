@@ -38,7 +38,7 @@ classdef preview_controller < handle
             self.model = model;
             self.preview_index = 1;
             self.is_paused = false;
-            self.fig = figure( 'units', 'pixels'); 
+            self.fig = figure( 'Name', 'Trial Preview', 'NumberTitle', 'off','units', 'pixels'); 
             self.is_realtime = 0;
             self.mode = self.data{1};
             pat = string(self.data(2));
