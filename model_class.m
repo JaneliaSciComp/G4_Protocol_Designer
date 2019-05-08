@@ -4,10 +4,10 @@ classdef model_class < handle
 
     properties
 %TRIALS
-        pretrial_data_
-        intertrial_data_
-        block_trials_data_
-        posttrial_data_
+        pretrial_data
+        intertrial_data
+        block_trials_data
+        posttrial_data
         pretrial_
         block_trials_
         intertrial_
@@ -40,13 +40,21 @@ classdef model_class < handle
     end
     
     properties (Dependent)
+        
+
         %pretrial_data
         pretrial
         block_trials
         intertrial
         posttrial
+        
+        
         repetitions
         is_randomized
+        doc
+        num_rows
+        configData
+        
         is_chan1
         chan1_rate
         is_chan2
@@ -55,9 +63,8 @@ classdef model_class < handle
         chan3_rate
         is_chan4
         chan4_rate
-        doc
-        num_rows
-        configData
+        
+        
         experiment_name
         %fly_name
      
@@ -66,64 +73,64 @@ classdef model_class < handle
     methods
 %CONSTRUCTOR (Set defaults here except trial defaults - set those in model_trial)
         function self = model_class()
-            self.pretrial_data_ = model_trial() ;
+            self.pretrial_data = model_trial() ;
 
-            self.pretrial_ = {self.pretrial_data_.trial_mode_, self.pretrial_data_.pattern_name_, ...
-            self.pretrial_data_.position_func_, self.pretrial_data_.ao1_, ...
-            self.pretrial_data_.ao2_, self.pretrial_data_.ao3_, self.pretrial_data_.ao4_, ...
-            self.pretrial_data_.frame_index_, self.pretrial_data_.frame_rate_, ...
-            self.pretrial_data_.gain_, self.pretrial_data_.offset_, ...
-            self.pretrial_data_.duration_, self.pretrial_data_.is_checked_};
+            self.pretrial_ = {self.pretrial_data.trial_mode_, self.pretrial_data.pattern_name_, ...
+            self.pretrial_data.position_func_, self.pretrial_data.ao1_, ...
+            self.pretrial_data.ao2_, self.pretrial_data.ao3_, self.pretrial_data.ao4_, ...
+            self.pretrial_data.frame_index_, self.pretrial_data.frame_rate_, ...
+            self.pretrial_data.gain_, self.pretrial_data.offset_, ...
+            self.pretrial_data.duration_, self.pretrial_data.is_checked_};
             
-            self.intertrial_data_ = model_trial() ;
+            self.intertrial_data = model_trial() ;
             
-            self.intertrial_ = {self.intertrial_data_.trial_mode_, self.intertrial_data_.pattern_name_, ...
-            self.intertrial_data_.position_func_, self.intertrial_data_.ao1_, ...
-            self.intertrial_data_.ao2_, self.intertrial_data_.ao3_, self.intertrial_data_.ao4_, ...
-            self.intertrial_data_.frame_index_, self.intertrial_data_.frame_rate_, ...
-            self.intertrial_data_.gain_, self.intertrial_data_.offset_, ...
-            self.intertrial_data_.duration_, self.intertrial_data_.is_checked_};    
+            self.intertrial_ = {self.intertrial_data.trial_mode_, self.intertrial_data.pattern_name_, ...
+            self.intertrial_data.position_func_, self.intertrial_data.ao1_, ...
+            self.intertrial_data.ao2_, self.intertrial_data.ao3_, self.intertrial_data.ao4_, ...
+            self.intertrial_data.frame_index_, self.intertrial_data.frame_rate_, ...
+            self.intertrial_data.gain_, self.intertrial_data.offset_, ...
+            self.intertrial_data.duration_, self.intertrial_data.is_checked_};    
             
-            self.block_trials_data_ = model_trial() ;
+            self.block_trials_data = model_trial() ;
             
-            self.block_trials_ = {self.block_trials_data_.trial_mode_, self.block_trials_data_.pattern_name_, ...
-            self.block_trials_data_.position_func_, self.block_trials_data_.ao1_, ...
-            self.block_trials_data_.ao2_, self.block_trials_data_.ao3_, self.block_trials_data_.ao4_, ...
-            self.block_trials_data_.frame_index_, self.block_trials_data_.frame_rate_, ...
-            self.block_trials_data_.gain_, self.block_trials_data_.offset_, ...
-            self.block_trials_data_.duration_, self.block_trials_data_.is_checked_};
+            self.block_trials_ = {self.block_trials_data.trial_mode_, self.block_trials_data.pattern_name_, ...
+            self.block_trials_data.position_func_, self.block_trials_data.ao1_, ...
+            self.block_trials_data.ao2_, self.block_trials_data.ao3_, self.block_trials_data.ao4_, ...
+            self.block_trials_data.frame_index_, self.block_trials_data.frame_rate_, ...
+            self.block_trials_data.gain_, self.block_trials_data.offset_, ...
+            self.block_trials_data.duration_, self.block_trials_data.is_checked_};
             
             
-            self.posttrial_data_ = model_trial() ;
+            self.posttrial_data = model_trial() ;
             
-            self.posttrial_ = {self.posttrial_data_.trial_mode_, self.posttrial_data_.pattern_name_, ...
-            self.posttrial_data_.position_func_, self.posttrial_data_.ao1_, ...
-            self.posttrial_data_.ao2_, self.posttrial_data_.ao3_, self.posttrial_data_.ao4_, ...
-            self.posttrial_data_.frame_index_, self.posttrial_data_.frame_rate_, ...
-            self.posttrial_data_.gain_, self.posttrial_data_.offset_, ...
-            self.posttrial_data_.duration_, self.posttrial_data_.is_checked_};
+            self.posttrial_ = {self.posttrial_data.trial_mode_, self.posttrial_data.pattern_name_, ...
+            self.posttrial_data.position_func_, self.posttrial_data.ao1_, ...
+            self.posttrial_data.ao2_, self.posttrial_data.ao3_, self.posttrial_data.ao4_, ...
+            self.posttrial_data.frame_index_, self.posttrial_data.frame_rate_, ...
+            self.posttrial_data.gain_, self.posttrial_data.offset_, ...
+            self.posttrial_data.duration_, self.posttrial_data.is_checked_};
             
             settings_data = strtrim(regexp( fileread('G4_Protocol_Designer_settings.m'),'\n','split'));
             path_line = find(contains(settings_data,'Configuration File Path:'));
             path_index = strfind(settings_data{path_line},'Path: ');
             path = settings_data{path_line}(path_index+6:end);
-            self.configData_ = strtrim(regexp( fileread(path),'\n','split'));
+            self.configData = strtrim(regexp( fileread(path),'\n','split'));
             
-            %Find the appropriate lines in configData_ to edit and trim
+            %Find the appropriate lines in configData to edit and trim
             %newlines from beginning or end
             
             %number of screen rows
-            numRows_line = find(contains(self.configData_,'Number of Rows'));
-            %numRows = strtrim(self.configData_{numRows_line});
-            self.num_rows_ = str2num(self.configData_{numRows_line}(end));
+            numRows_line = find(contains(self.configData,'Number of Rows'));
+            %numRows = strtrim(self.configData{numRows_line});
+            self.num_rows = str2num(self.configData{numRows_line}(end));
             
             %channel sample rates
             
             %Find the correct line in the config file for channel 1 sample
             %rate
             
-            rate1_line = find(contains(self.configData_,'ADC0'));
-            rate1 = strtrim(self.configData_{rate1_line});
+            rate1_line = find(contains(self.configData,'ADC0'));
+            rate1 = strtrim(self.configData{rate1_line});
             
             %Figure out how many digits are in the last half of this line
             %in the config file, in order to determine the sample rate
@@ -136,11 +143,11 @@ classdef model_class < handle
                 end
             
             end
-            self.chan1_rate_ = str2num(rate1((end-count1+1):end));
+            self.chan1_rate = str2num(rate1((end-count1+1):end));
             
             
-            rate2_line = find(contains(self.configData_,'ADC1'));
-            rate2 = strtrim(self.configData_{rate2_line});
+            rate2_line = find(contains(self.configData,'ADC1'));
+            rate2 = strtrim(self.configData{rate2_line});
             
             digits2 = isstrprop(rate2,'digit');
             count2 = 0; %the count of 1's in digits, each signifying a number in the rate1 string
@@ -151,10 +158,10 @@ classdef model_class < handle
                 end
             
             end
-            self.chan2_rate_ = str2num(rate2((end-count2+1):end));
+            self.chan2_rate = str2num(rate2((end-count2+1):end));
             
-            rate3_line = find(contains(self.configData_,'ADC2'));
-            rate3 = strtrim(self.configData_{rate3_line});
+            rate3_line = find(contains(self.configData,'ADC2'));
+            rate3 = strtrim(self.configData{rate3_line});
             
             digits3 = isstrprop(rate3,'digit');
             count3 = 0; %the count of 1's in digits, each signifying a number in the rate1 string
@@ -166,10 +173,10 @@ classdef model_class < handle
             
             end
             
-            self.chan3_rate_ = str2num(rate3((end-count3+1):end));
+            self.chan3_rate = str2num(rate3((end-count3+1):end));
             
-            rate4_line = find(contains(self.configData_,'ADC3'));
-            rate4 = strtrim(self.configData_{rate4_line});
+            rate4_line = find(contains(self.configData,'ADC3'));
+            rate4 = strtrim(self.configData{rate4_line});
             
             digits4 = isstrprop(rate4,'digit');
             count4 = 0; %the count of 1's in digits, each signifying a number in the rate1 string
@@ -181,25 +188,25 @@ classdef model_class < handle
             
             end
             
-            self.chan4_rate_ = str2num(rate4((end-count4+1):end));
+            self.chan4_rate = str2num(rate4((end-count4+1):end));
             
-            self.repetitions_ = 1;
-            self.is_randomized_ = 0;
-            self.is_chan1_ = 0;
+            self.repetitions = 1;
+            self.is_randomized = 0;
+            self.is_chan1 = 0;
            
-            self.is_chan2_ = 0;
+            self.is_chan2 = 0;
            
-            self.is_chan3_ = 0;
+            self.is_chan3 = 0;
             
-            self.is_chan4_ = 0;
+            self.is_chan4 = 0;
             
             
-            self.experiment_name_ = '';
+            self.experiment_name = '';
 %            self.fly_name_ = 'Fly Name';
             
 
             
-%             self.doc_ = document();
+%             self.doc = document();
      
         end
         
@@ -207,7 +214,7 @@ classdef model_class < handle
             if strcmp(pat_name,'') == 1
                 index = 0;
             else
-                fields = fieldnames(self.doc_.Patterns_);
+                fields = fieldnames(self.doc.Patterns);
                 index = find(strcmp(fields, pat_name));
                 
             end    
@@ -217,7 +224,7 @@ classdef model_class < handle
             if strcmp(pos_name,'') == 1
                 index = 0;
             else
-                fields = fieldnames(self.doc_.Pos_funcs_);
+                fields = fieldnames(self.doc.Pos_funcs);
                 index = find(strcmp(fields, pos_name));
             end
         end
@@ -226,7 +233,7 @@ classdef model_class < handle
             if strcmp(ao_name,'') == 1
                 index = 0;
             else
-                fields = fieldnames(self.doc_.Ao_funcs_);
+                fields = fieldnames(self.doc.Ao_funcs);
                 index = find(strcmp(fields, ao_name));
             end
         end
@@ -235,9 +242,9 @@ classdef model_class < handle
 
 %SETTERS
         function set_block_trial_property(self, index, new_value)
-            if index(1) > size(self.block_trials_,1)
-                self.block_trials_ = [self.block_trials_;new_value];
-%                 block_data = self.block_trials_;
+            if index(1) > size(self.block_trials,1)
+                self.block_trials = [self.block_trials;new_value];
+%                 block_data = self.block_trials;
             
             else
 
@@ -245,13 +252,14 @@ classdef model_class < handle
             %the file dimensions match
                 if index(2) == 2 && strcmp(string(new_value),'') == 0
                 patfield = new_value;
-                patDim = length(self.doc_.Patterns_.(patfield).pattern.Pats(1,1,:));
-                patRows = length(self.doc_.Patterns_.(patfield).pattern.Pats(:,1,1))/16;
-                numrows = self.get_num_rows();
-                    if strcmp(string(self.block_trials_{index(1),3}),'') == 0
+                patDim = length(self.doc.Patterns.(patfield).pattern.Pats(1,1,:));
+                patRows = length(self.doc.Patterns.(patfield).pattern.Pats(:,1,1))/16;
+                numrows = self.num_rows;
+                
+                    if strcmp(string(self.block_trials{index(1),3}),'') == 0
 
-                        posfield = self.block_trials_{index(1),3};
-                        funcDim = self.doc_.Pos_funcs_.(posfield).pfnparam.frames;
+                        posfield = self.block_trials{index(1),3};
+                        funcDim = self.doc.Pos_funcs.(posfield).pfnparam.frames;
 
                     else
 
@@ -260,12 +268,12 @@ classdef model_class < handle
 
                     end
 
-                elseif index(2) == 3 && strcmp(string(new_value),'') == 0 && strcmp(string(self.block_trials_{index(1),2}),'') == 0
+                elseif index(2) == 3 && strcmp(string(new_value),'') == 0 && strcmp(string(self.block_trials{index(1),2}),'') == 0
 
                     posfield = new_value;
-                    patfield = self.block_trials_{index(1),2};
-                    patDim = length(self.doc_.Patterns_.(patfield).pattern.Pats(1,1,:));
-                    funcDim = self.doc_.Pos_funcs_.(posfield).pfnparam.frames;
+                    patfield = self.block_trials{index(1),2};
+                    patDim = length(self.doc.Patterns.(patfield).pattern.Pats(1,1,:));
+                    funcDim = self.doc.Pos_funcs.(posfield).pfnparam.frames;
                     patRows = 0;
                     numrows = 0;
                 else
@@ -282,7 +290,7 @@ classdef model_class < handle
                      waitfor(errordlg("Please make sure the dimension of your pattern and position functions match"));
                 else
 
-                     self.block_trials_{index(1), index(2)} = new_value;
+                     self.block_trials{index(1), index(2)} = new_value;
                 end
             end
         end
@@ -294,13 +302,13 @@ classdef model_class < handle
             
             if index == 2 && strcmp(string(new_value),'') == 0
                 patfield = new_value;
-                patDim = length(self.doc_.Patterns_.(patfield).pattern.Pats(1,1,:));
-                patRows = length(self.doc_.Patterns_.(patfield).pattern.Pats(:,1,1))/16;
-                numrows = self.get_num_rows();
-                if strcmp(string(self.pretrial_{3}),'') == 0
+                patDim = length(self.doc.Patterns.(patfield).pattern.Pats(1,1,:));
+                patRows = length(self.doc.Patterns.(patfield).pattern.Pats(:,1,1))/16;
+                numrows = self.num_rows;
+                if strcmp(string(self.pretrial{3}),'') == 0
                     
-                    posfield = self.pretrial_{3};
-                    funcDim = self.doc_.Pos_funcs_.(posfield).pfnparam.frames;
+                    posfield = self.pretrial{3};
+                    funcDim = self.doc.Pos_funcs.(posfield).pfnparam.frames;
                     
                 else
                     
@@ -309,12 +317,12 @@ classdef model_class < handle
                     
                 end
                     
-            elseif index == 3 && strcmp(string(new_value),'') == 0 && strcmp(string(self.pretrial_{2}),'') == 0
+            elseif index == 3 && strcmp(string(new_value),'') == 0 && strcmp(string(self.pretrial{2}),'') == 0
 
                 posfield = new_value;
-                patfield = self.pretrial_{2};
-                patDim = length(self.doc_.Patterns_.(patfield).pattern.Pats(1,1,:));
-                funcDim = self.doc_.Pos_funcs_.(posfield).pfnparam.frames;
+                patfield = self.pretrial{2};
+                patDim = length(self.doc.Patterns.(patfield).pattern.Pats(1,1,:));
+                funcDim = self.doc.Pos_funcs.(posfield).pfnparam.frames;
                 patRows = 0;
                 numrows = 0;
             else
@@ -332,7 +340,7 @@ classdef model_class < handle
                  waitfor(errordlg("Please make sure the dimension of your pattern and position functions match"));
             else
 
-            self.pretrial_{index} =  new_value ;
+            self.pretrial{index} =  new_value ;
 
             end
             
@@ -343,13 +351,13 @@ classdef model_class < handle
             %the file dimensions match
            if index == 2 && strcmp(string(new_value),'') == 0
                 patfield = new_value;
-                patDim = length(self.doc_.Patterns_.(patfield).pattern.Pats(1,1,:));
-                patRows = length(self.doc_.Patterns_.(patfield).pattern.Pats(:,1,1))/16;
-                numrows = self.get_num_rows();
-                if strcmp(string(self.intertrial_{3}),'') == 0
+                patDim = length(self.doc.Patterns.(patfield).pattern.Pats(1,1,:));
+                patRows = length(self.doc.Patterns.(patfield).pattern.Pats(:,1,1))/16;
+                numrows = self.num_rows;
+                if strcmp(string(self.intertrial{3}),'') == 0
                     
-                    posfield = self.intertrial_{3};
-                    funcDim = self.doc_.Pos_funcs_.(posfield).pfnparam.frames;
+                    posfield = self.intertrial{3};
+                    funcDim = self.doc.Pos_funcs.(posfield).pfnparam.frames;
                     
                 else
                     
@@ -358,12 +366,12 @@ classdef model_class < handle
                     
                 end
                     
-            elseif index == 3 && strcmp(string(new_value),'') == 0 && strcmp(string(self.intertrial_{2}),'') == 0
+            elseif index == 3 && strcmp(string(new_value),'') == 0 && strcmp(string(self.intertrial{2}),'') == 0
 
                 posfield = new_value;
-                patfield = self.intertrial_{2};
-                patDim = length(self.doc_.Patterns_.(patfield).pattern.Pats(1,1,:));
-                funcDim = self.doc_.Pos_funcs_.(posfield).pfnparam.frames;
+                patfield = self.intertrial{2};
+                patDim = length(self.doc.Patterns.(patfield).pattern.Pats(1,1,:));
+                funcDim = self.doc.Pos_funcs.(posfield).pfnparam.frames;
                 patRows = 0;
                 numrows = 0;
             else
@@ -380,7 +388,7 @@ classdef model_class < handle
             if patDim ~= funcDim
                  waitfor(errordlg("Please make sure the dimension of your pattern and position functions match"));
             else
-            self.intertrial_{index} =  new_value ;
+            self.intertrial{index} =  new_value ;
             end
        
 %             end
@@ -392,13 +400,13 @@ classdef model_class < handle
             %the file dimensions match
             if index == 2 && strcmp(string(new_value),'') == 0
                 patfield = new_value;
-                patDim = length(self.doc_.Patterns_.(patfield).pattern.Pats(1,1,:));
-                patRows = length(self.doc_.Patterns_.(patfield).pattern.Pats(:,1,1))/16;
-                numrows = self.get_num_rows();
-                if strcmp(string(self.posttrial_{3}),'') == 0
+                patDim = length(self.doc.Patterns.(patfield).pattern.Pats(1,1,:));
+                patRows = length(self.doc.Patterns.(patfield).pattern.Pats(:,1,1))/16;
+                numrows = self.num_rows;
+                if strcmp(string(self.posttrial{3}),'') == 0
                     
-                    posfield = self.posttrial_{3};
-                    funcDim = self.doc_.Pos_funcs_.(posfield).pfnparam.frames;
+                    posfield = self.posttrial{3};
+                    funcDim = self.doc.Pos_funcs.(posfield).pfnparam.frames;
                     
                 else
                     
@@ -407,12 +415,12 @@ classdef model_class < handle
                     
                 end
                     
-            elseif index == 3 && strcmp(string(new_value),'') == 0 && strcmp(string(self.posttrial_{2}),'') == 0
+            elseif index == 3 && strcmp(string(new_value),'') == 0 && strcmp(string(self.posttrial{2}),'') == 0
 
                 posfield = new_value;
-                patfield = self.posttrial_{2};
-                patDim = length(self.doc_.Patterns_.(patfield).pattern.Pats(1,1,:));
-                funcDim = self.doc_.Pos_funcs_.(posfield).pfnparam.frames;
+                patfield = self.posttrial{2};
+                patDim = length(self.doc.Patterns.(patfield).pattern.Pats(1,1,:));
+                funcDim = self.doc.Pos_funcs.(posfield).pfnparam.frames;
                 patRows = 0;
                 numrows = 0;
             else
@@ -429,7 +437,7 @@ classdef model_class < handle
             if patDim ~= funcDim
                  waitfor(errordlg("Please make sure the dimension of your pattern and position functions match"));
             else
-            self.posttrial_{index} =  new_value ;
+            self.posttrial{index} =  new_value ;
             end
 
         end
@@ -443,62 +451,62 @@ classdef model_class < handle
         end
         
         function set_is_chan1(self, new_value)
-            self.is_chan1_ = new_value;
+            self.is_chan1 = new_value;
         end
         
         function set_chan1_rate(self, new_value)
-            self.chan1_rate_ = new_value;
+            self.chan1_rate = new_value;
         end
         
         function set_is_chan2(self, new_value)
-            self.is_chan2_ = new_value;
+            self.is_chan2 = new_value;
         end
         
         function set_chan2_rate(self, new_value)
-            self.chan2_rate_ = new_value;
+            self.chan2_rate = new_value;
         end
         
         function set_is_chan3(self, new_value)
-            self.is_chan3_ = new_value;
+            self.is_chan3 = new_value;
         end
         
         function set_chan3_rate(self, new_value)
-            self.chan3_rate_ = new_value;
+            self.chan3_rate = new_value;
         end
         
         function set_is_chan4(self, new_value)
-            self.is_chan4_ = new_value;
+            self.is_chan4 = new_value;
         end
         
         function set_chan4_rate(self, new_value)
-            self.chan4_rate_ = new_value;
+            self.chan4_rate = new_value;
         end
         
         function set_doc(self, new_value)
-            self.doc_ = new_value;
+            self.doc = new_value;
         end
         
         function set_num_rows(self, new_value)
-            self.num_rows_ = new_value;
+            self.num_rows = new_value;
         end
         
         function set_config_data(self, new_value, channel)
             
              if channel == 1
                 newline = strcat("ADC0 Rate (Hz) = ", num2str(new_value));
-                rate1_line = find(contains(self.configData_,'ADC0'));
-                self.configData_{rate1_line} = newline;
-                self.configData_{rate1_line} = convertStringsToChars(self.configData_{rate1_line});
+                rate1_line = find(contains(self.configData,'ADC0'));
+                self.configData{rate1_line} = newline;
+                self.configData{rate1_line} = convertStringsToChars(self.configData{rate1_line});
                 
             end
             
             if channel == 2
                 newline = strcat("ADC1 Rate (Hz) = ", num2str(new_value));
-                rate2_line = find(contains(self.configData_,'ADC1'));
+                rate2_line = find(contains(self.configData,'ADC1'));
                 
-                self.configData_{rate2_line} = newline;
+                self.configData{rate2_line} = newline;
                 
-                self.configData_{rate2_line} = convertStringsToChars(self.configData_{rate2_line});
+                self.configData{rate2_line} = convertStringsToChars(self.configData{rate2_line});
 
           
             end
@@ -506,28 +514,28 @@ classdef model_class < handle
             
             if channel == 3
                 newline = strcat("ADC2 Rate (Hz) = ", num2str(new_value));
-                rate3_line = find(contains(self.configData_,'ADC2'));
-                self.configData_{rate3_line} = newline;
+                rate3_line = find(contains(self.configData,'ADC2'));
+                self.configData{rate3_line} = newline;
 
-                self.configData_{rate3_line} = convertStringsToChars(self.configData_{rate3_line});
+                self.configData{rate3_line} = convertStringsToChars(self.configData{rate3_line});
             end
             
             if channel == 4
                 newline = strcat("ADC3 Rate (Hz) = ", num2str(new_value));
-                rate4_line = find(contains(self.configData_,'ADC3'));
-                self.configData_{rate4_line} = newline;
+                rate4_line = find(contains(self.configData,'ADC3'));
+                self.configData{rate4_line} = newline;
                 
-                self.configData_{rate4_line} = convertStringsToChars(self.configData_{rate4_line});
+                self.configData{rate4_line} = convertStringsToChars(self.configData{rate4_line});
 
             end
             
             if channel == 0
 
                 newline = strcat("Number of Rows = ", num2str(new_value));
-                numRows_line = find(contains(self.configData_,'Number of Rows'));
-                self.configData_{numRows_line} = newline;
+                numRows_line = find(contains(self.configData,'Number of Rows'));
+                self.configData{numRows_line} = newline;
                 
-                self.configData_{numRows_line} = convertStringsToChars(self.configData_{numRows_line});
+                self.configData{numRows_line} = convertStringsToChars(self.configData{numRows_line});
 
             end
             
@@ -535,9 +543,102 @@ classdef model_class < handle
         end
         
         function set_experiment_name(self, new_value)
-            self.experiment_name_ = new_value;
+            self.experiment_name = new_value;
         end
         
+
+  
+        
+        
+%         function value = set.pretrial_data(self, value)
+%             self.pretrial_data_ = value;
+%         end
+%         
+%         function value = set.intertrial_data(self, value)
+%             self.intertrial_data_ = value;
+%         end
+%         
+%         function value = set.block_trials_data(self, value)
+%             self.block_trials_data_ = value;
+%         end
+%         
+%         function value = set.posttrial_data(self, value)
+%             self.posttrial_data_ = value;
+%         end
+        
+        function set.pretrial(self, value)
+            self.pretrial_ = value;
+        end
+        
+        function set.intertrial(self, value)
+            self.intertrial_ = value;
+        end
+        
+        function set.block_trials(self, value)
+            self.block_trials_ = value;
+        end
+        
+        function set.posttrial(self, value)
+            self.posttrial_ = value;
+        end
+        
+        function set.repetitions(self, value)
+            self.repetitions_ = value;
+        end
+        
+        function set.is_randomized(self, value)
+            self.is_randomized_ = value;
+        end
+        
+        function set.doc(self, value)
+            self.doc_ = value;
+        end
+        
+        function set.num_rows(self, value)
+            self.num_rows_ = value;
+        end
+        
+        function set.configData(self, value)
+            self.configData_ = value;
+        end
+        
+        function set.is_chan1(self, value)
+            self.is_chan1_ = value;
+        end
+        
+        function set.is_chan2(self, value)
+            self.is_chan2_ = value;
+        end
+        
+        function set.is_chan3(self, value)
+            self.is_chan3_ = value;
+        end
+        
+        function set.is_chan4(self, value)
+            self.is_chan4_ = value;
+        end
+        
+        function set.chan1_rate(self, value)
+            self.chan1_rate_ = value;
+        end
+        
+        function set.chan2_rate(self, value)
+            self.chan2_rate_ = value;
+        end
+        
+        function set.chan3_rate(self, value)
+            self.chan3_rate_ = value;
+        end
+        
+        function set.chan4_rate(self, value)
+            self.chan4_rate_ = value;
+        end
+        
+        function set.experiment_name(self, value)
+            self.experiment_name_ = value;
+        end
+            
+
 %         function set_fly_name(self, new_value)
 %             self.fly_name_ = new_value;
 %         end
@@ -545,76 +646,92 @@ classdef model_class < handle
         
         
 %GETTERS        
+
+%         function output = get.pretrial_data(self)
+%             output = self.pretrial_data_;
+%         end
+%         
+%         function output = get.intertrial_data(self)
+%             output = self.intertrial_data_;
+%         end
+%         
+%         function output = get.block_trials_data(self)
+%             output = self.block_trials_data_;
+%         end
+%         
+%         function output = get.posttrial_data(self)
+%             output = self.posttrial_data_;
+%         end
         
-        function output = get_pretrial(self)
+        function output = get.pretrial(self)
             output = self.pretrial_;
         end
         
-        function output = get_block_trials(self)
+        function output = get.block_trials(self)
             output = self.block_trials_;
         end
         
-        function output = get_intertrial(self)
+        function output = get.intertrial(self)
             output = self.intertrial_;
         end
         
-        function output = get_posttrial(self)
+        function output = get.posttrial(self)
             output = self.posttrial_;
         end
         
-        function output = get_repetitions(self)
+        function output = get.repetitions(self)
             output = self.repetitions_;
         end
         
-        function output = get_is_randomized(self)
+        function output = get.is_randomized(self)
             output = self.is_randomized_;
         end
         
-        function output = get_is_chan1(self)
+        function output = get.is_chan1(self)
             output = self.is_chan1_;
         end
         
-        function output = get_chan1_rate(self)
+        function output = get.chan1_rate(self)
             output = self.chan1_rate_;
         end
         
-        function output = get_is_chan2(self)
+        function output = get.is_chan2(self)
             output = self.is_chan2_;
         end
         
-        function output = get_chan2_rate(self)
+        function output = get.chan2_rate(self)
             output = self.chan2_rate_;
         end
         
-        function output = get_is_chan3(self)
+        function output = get.is_chan3(self)
             output = self.is_chan3_;
         end
         
-        function output = get_chan3_rate(self)
+        function output = get.chan3_rate(self)
             output = self.chan3_rate_;
         end
         
-        function output = get_is_chan4(self)
+        function output = get.is_chan4(self)
             output = self.is_chan4_;
         end
         
-        function output = get_chan4_rate(self)
+        function output = get.chan4_rate(self)
            output = self.chan4_rate_;
         end
         
-        function output = get_doc(self)
+        function output = get.doc(self)
             output = self.doc_;
         end
         
-        function output = get_num_rows(self)
+        function output = get.num_rows(self)
             output = self.num_rows_;
         end
         
-        function output = get_config_data(self)
+        function output = get.configData(self)
             output = self.configData_;
         end
         
-        function output = get_experiment_name(self)
+        function output = get.experiment_name(self)
             output = self.experiment_name_;
         end
         

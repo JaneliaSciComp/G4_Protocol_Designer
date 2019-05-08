@@ -13,6 +13,18 @@ classdef document < handle
         
     end
     
+    
+    properties (Dependent)
+        top_folder_path
+        top_export_path
+        Patterns
+        Pos_funcs
+        Ao_funcs
+        save_filename
+        currentExp
+        
+    end
+    
     methods
         
 %         function self = document()
@@ -62,7 +74,7 @@ classdef document < handle
                         
             %[path, name, ext] =  fileparts(self.save_filename_);
 
-            Exppath = self.top_export_path_;
+            Exppath = self.top_export_path;
 
 
             [Expstatus, Expmsg] = mkdir(Exppath);
@@ -168,13 +180,13 @@ classdef document < handle
                         field = func_list{m};
                         filename = strcat(field, '.mat');
                         filepath = fullfile(funcpath, filename);
-                        pfnparam = self.Pos_funcs_.(field).pfnparam;
+                        pfnparam = self.Pos_funcs.(field).pfnparam;
                         save(filepath, 'pfnparam');
                         
                         num = regexp(filename,'\_','split');
                         pfnName = strcat('fun',num{2},'.pfn');
                         pfnList{m} = pfnName;
-                        func_folder = fullfile(self.top_folder_path_, 'Functions');
+                        func_folder = fullfile(self.top_folder_path, 'Functions');
                         pfnFilePath = fullfile(func_folder,pfnName);
                         if ~isfile(pfnFilePath)
                             errordlg(pfnFilePath + " does not exist in your imported directory. If you imported this .mat file separately, please move its associated .pfn file manually to your exported folder.");
@@ -206,13 +218,13 @@ classdef document < handle
                         field = ao_list{n};
                         filename = strcat(field, '.mat');
                         filepath = fullfile(aopath, filename);
-                        afnparam = self.Ao_funcs_.(field).afnparam;
+                        afnparam = self.Ao_funcs.(field).afnparam;
                         save(filepath, 'afnparam');
                         
                         num = regexp(filename,'\_','split');
                         afnName = strcat('ao',num{2},'.afn');
                         afnList{n} = afnName;
-                        ao_folder = fullfile(self.top_folder_path_, 'Analog Output Functions');
+                        ao_folder = fullfile(self.top_folder_path, 'Analog Output Functions');
                         afnFilePath = fullfile(ao_folder,afnName);
                         if ~isfile(afnFilePath)
                             errordlg(afnFilePath + " does not exist in your imported directory. If you imported this .mat file separately, please move its associated .afn file to your exported folder manually.");
@@ -246,14 +258,14 @@ classdef document < handle
                     pattNames{k} = field;
                     filename = strcat(field,'.mat');
                     filepath = fullfile(patpath, filename);
-                    pattern = self.Patterns_.(field).pattern;
+                    pattern = self.Patterns.(field).pattern;
                     save(filepath, 'pattern');
                     
                     num = regexp(filename,'\_','split');
                     patname = strcat(num{2},'.pat'); 
                     patternList{k} = patname;
                     patfilepath = fullfile(patpath, patname);
-                    imported_patfilepath = fullfile(self.top_folder_path_, 'Patterns', patname);
+                    imported_patfilepath = fullfile(self.top_folder_path, 'Patterns', patname);
                     if ~isfile(imported_patfilepath)
                         errordlg(imported_patfilepath + " does not exist in your imported directory. If you imported this item separately, please move it to your exported folder manually.");
                     else
@@ -297,10 +309,10 @@ classdef document < handle
                %currentExp.pattern
                 for j = 1:num_pats
                     field = pat_list{j};
-                    currentExp.pattern.x_num(j) = self.Patterns_.(field).pattern.x_num;
-                    currentExp.pattern.y_num(j) = self.Patterns_.(field).pattern.y_num;
-                    currentExp.pattern.gs_val(j) = self.Patterns_.(field).pattern.gs_val;
-                    currentExp.pattern.arena_pitch(j) = self.Patterns_.(field).pattern.param.arena_pitch;
+                    currentExp.pattern.x_num(j) = self.Patterns.(field).pattern.x_num;
+                    currentExp.pattern.y_num(j) = self.Patterns.(field).pattern.y_num;
+                    currentExp.pattern.gs_val(j) = self.Patterns.(field).pattern.gs_val;
+                    currentExp.pattern.arena_pitch(j) = self.Patterns.(field).pattern.param.arena_pitch;
                     pat_list{j} = strcat(field, '.mat');
                     
                 end
@@ -312,7 +324,7 @@ classdef document < handle
                 if exist('func_list')~= 0
                     for k = 1:num_funcs
                         field = func_list{k};
-                        currentExp.function.functionSize{k} = self.Pos_funcs_.(field).pfnparam.size;
+                        currentExp.function.functionSize{k} = self.Pos_funcs.(field).pfnparam.size;
                         func_list{k} = strcat(field, '.mat');
                         currentExp.function.functionName{k} = func_list{k};
                     end
@@ -324,7 +336,7 @@ classdef document < handle
                 if exist('ao_list')~= 0
                     for p = 1:num_ao
                         field = ao_list{p};
-                        currentExp.aoFunction.aoFunctionSize{p} = self.Ao_funcs_.(field).afnparam.size;  
+                        currentExp.aoFunction.aoFunctionSize{p} = self.Ao_funcs.(field).afnparam.size;  
                         ao_list{p} = strcat(field, '.mat');
                     end
                     currentExp.aoFunction.aoFunctionName = ao_list;
@@ -363,10 +375,10 @@ classdef document < handle
             
             [savepath, name, ext] = fileparts(path);
             savename = strcat(name, homemade_ext);
-            self.top_export_path_ = fullfile(savepath, exp_parameters.experiment_name);
+            self.top_export_path = fullfile(savepath, exp_parameters.experiment_name);
         %Get path to file you want to save including new extension    
-            save_file = fullfile(self.top_export_path_, savename);
-            self.save_filename_ = save_file;
+            save_file = fullfile(self.top_export_path, savename);
+            self.save_filename = save_file;
             if isfile(save_file)
                 question = 'This file already exists. Are you sure you want to replace it?';
                 replace = questdlg(question);
@@ -378,9 +390,9 @@ classdef document < handle
 
                         recycle('on');
                         delete(save_file);
-                        temp_path = strcat(self.top_export_path_, 'temp');
-                        movefile(self.top_export_path_, temp_path);
-                        self.top_folder_path_ = temp_path;
+                        temp_path = strcat(self.top_export_path, 'temp');
+                        movefile(self.top_export_path, temp_path);
+                        self.top_folder_path = temp_path;
                         
                     else
                         return;
@@ -405,7 +417,7 @@ classdef document < handle
 
             else
             
-                save(self.save_filename_, 'exp_parameters');
+                save(self.save_filename, 'exp_parameters');
                 if strcmp(temp_path,'') == 0
                     rmdir(temp_path,'s');
                 end
@@ -417,7 +429,7 @@ classdef document < handle
         
         function save(self, exp_parameters)
             
-            if isempty(self.save_filename_) == 1
+            if isempty(self.save_filename) == 1
                 waitfor(errordlg("You have not yet saved a new file. Please use 'save as'"));
             else
                 export_successful = self.export(exp_parameters);
@@ -429,7 +441,7 @@ classdef document < handle
                     return;
                 else
 
-                save(self.save_filename_, 'exp_parameters');
+                save(self.save_filename, 'exp_parameters');
                 end                
             end
             
@@ -448,32 +460,32 @@ classdef document < handle
             
             elseif strncmp(file, 'Pattern', 7) == 1
                 
-                if isfield(self.Patterns_, name) == 1
+                if isfield(self.Patterns, name) == 1
                     waitfor(errordlg("A pattern of that name has already been imported."));
                     return;
                 else
-                    self.Patterns_.(name) = load(file_full);
+                    self.Patterns.(name) = load(file_full);
 
                     
                 end
-                %add to Patterns_
+                %add to Patterns
                 
             elseif strncmp(file, 'FunctionAO', 10) == 1
                 
-                if isfield(self.Ao_funcs_, name) == 1
+                if isfield(self.Ao_funcs, name) == 1
                     waitfor(errordlg("An Analog Output Function of that name has already been imported."));
                 else
-                    self.Ao_funcs_.(name) = load(file_full);
+                    self.Ao_funcs.(name) = load(file_full);
                 end
                 
                 %add to ao functions
                 
             elseif strncmp(file, 'Function', 8) == 1
                 
-                if isfield(self.Pos_funcs_, name) == 1
+                if isfield(self.Pos_funcs, name) == 1
                     waitfor(errordlg("A Position Function of that name has already been imported."));
                 else
-                    self.Pos_funcs_.(name) = load(file_full);
+                    self.Pos_funcs.(name) = load(file_full);
                 end
                 %add to pos funcs
                 
@@ -488,16 +500,16 @@ classdef document < handle
         
         function self = document(path)
             
-            self.top_folder_path_ = path;
+            self.top_folder_path = path;
 
             %use fullfile to create the file path to each folder in
             %Experiment
             
-            pat_folder = fullfile(self.top_folder_path_, 'Patterns');
-            pos_folder = fullfile(self.top_folder_path_, 'Functions');
-            ao_folder = fullfile(self.top_folder_path_, 'Analog Output Functions');
-            %results_folder = fullfile(self.top_folder_path_, 'Results');
-            currentExp_path = fullfile(self.top_folder_path_, 'currentExp.mat');
+            pat_folder = fullfile(self.top_folder_path, 'Patterns');
+            pos_folder = fullfile(self.top_folder_path, 'Functions');
+            ao_folder = fullfile(self.top_folder_path, 'Analog Output Functions');
+            %results_folder = fullfile(self.top_folder_path, 'Results');
+            currentExp_path = fullfile(self.top_folder_path, 'currentExp.mat');
 
             if ~isfolder(pat_folder)
 
@@ -541,7 +553,7 @@ classdef document < handle
                 %create path to kth .mat file in Patterns folder
                 filepath = fullfile(pat_folder, string(list_pat_names(k)));
                 [path, name, ext] = fileparts(filepath);
-                self.Patterns_.(name) = load(filepath);
+                self.Patterns.(name) = load(filepath);
             end
 
 
@@ -553,7 +565,7 @@ classdef document < handle
             for m = 1:num_of_positions
                 filepath = fullfile(pos_folder, string(list_pos_names(m)));
                 [path, name, ext] = fileparts(filepath);
-                self.Pos_funcs_.(name) = load(filepath);
+                self.Pos_funcs.(name) = load(filepath);
             end
 
             ao_file_pattern = sprintf('%s/*.mat', ao_folder);
@@ -564,14 +576,76 @@ classdef document < handle
             for j = 1:num_of_ao
                 filepath = fullfile(ao_folder, string(list_ao_names(j)));
                 [path, name, ext] = fileparts(filepath);
-                self.Ao_funcs_.(name) = load(filepath);
+                self.Ao_funcs.(name) = load(filepath);
             end
             [path, name, ext] = fileparts(currentExp_path);
-            self.currentExp_ = load(currentExp_path);
-            self.save_filename_ = '';
+            self.currentExp = load(currentExp_path);
+            self.save_filename = '';
 
 
         end
+        
+        %Setters
+        
+        function self = set.top_folder_path(self, value)
+            self.top_folder_path_ = value;
+        end
+        
+        function set.top_export_path(self, value)
+            self.top_export_path_ = value;
+        end
+        
+        function set.Patterns(self, value)
+            self.Patterns_ = value;
+        end
+        
+        function set.Pos_funcs(self, value)
+            self.Pos_funcs_ = value;
+        end
+        
+        function set.Ao_funcs(self, value)
+            self.Ao_funcs_ = value;
+        end
+        
+        function set.save_filename(self, value)
+            self.save_filename_ = value;
+        end
+        
+        function set.currentExp(self, value)
+            self.currentExp_ = value;
+        end
+        
+        %Getters
+        
+        
+        function value = get.top_folder_path(self)
+            value = self.top_folder_path_;
+        end
+        
+        function value = get.top_export_path(self)
+            value = self.top_export_path_;
+        end
+        
+        function value = get.Patterns(self)
+            value = self.Patterns_;
+        end
+        
+        function value = get.Pos_funcs(self)
+            value = self.Pos_funcs_;
+        end
+        
+        function value = get.Ao_funcs(self)
+            value = self.Ao_funcs_;
+        end
+        
+        function value = get.save_filename(self)
+            value = self.save_filename_;
+        end
+        
+        function value = get.currentExp(self)
+            value = self.currentExp_;
+        end
+        
 
     end
 

@@ -1,6 +1,35 @@
 classdef preview_controller < handle
 
     properties
+        model_;
+        data_;
+        fig_;
+        im_;
+        pat_axes_;
+        pos_line_;
+        ao1_line_;
+        ao2_line_;
+        ao3_line_;
+        ao4_line_;
+        dummy_line_;
+        dummy_data_;
+        preview_index_;
+        is_paused_;
+        is_realtime_;
+        slow_frRate_;
+        rt_frRate_;
+        pattern_data_;
+        mode_;
+        dur_;
+        pos_data_;
+        ao1_data_;
+        ao2_data_;
+        ao3_data_;
+        ao4_data_;
+        
+    end
+    
+    properties (Dependent)
         model;
         data;
         fig;
@@ -26,7 +55,6 @@ classdef preview_controller < handle
         ao2_data;
         ao3_data;
         ao4_data;
-        
     end
     
     
@@ -952,7 +980,167 @@ classdef preview_controller < handle
             end
         end
         
-       
+        
+        %GETTERS
+
+        
+        function value = get.model(self)
+            value = self.model_;
+        end
+        function value = get.data(self)
+            value = self.data_;
+        end
+        
+        function value = get.fig(self)
+            value = self.fig_;
+        end
+        
+        function value = get.im(self)
+            value = self.im_;
+        end
+        function value = get.pat_axes(self)
+            value = self.pat_axes_;
+        end
+        function value = get.pos_line(self)
+            value = self.pos_line_;
+        end
+        function value = get.ao1_line(self)
+            value = self.ao1_line_;
+        end
+        function value = get.ao2_line(self)
+            value = self.ao2_line_;
+        end
+        function value = get.ao3_line(self)
+            value = self.ao3_line_;
+        end
+        function value = get.ao4_line(self)
+            value = self.ao4_line_;
+        end
+        function value = get.dummy_line(self)
+            value = self.dummy_line_;
+        end
+        function value = get.dummy_data(self)
+            value = self.dummy_data_;
+        end
+        function value = get.preview_index(self)
+            value = self.preview_index_;
+        end
+        function value = get.is_paused(self)
+            value = self.is_paused_;
+        end
+        function value = get.is_realtime(self)
+            value = self.is_realtime_;
+        end
+        function value = get.slow_frRate(self)
+            value = self.slow_frRate_;
+        end
+        function value = get.rt_frRate(self)
+            value = self.rt_frRate_;
+        end
+        function value = get.pattern_data(self)
+            value = self.pattern_data_;
+        end
+        function value = get.mode(self)
+            value = self.mode_;
+        end
+        function value = get.dur(self)
+            value = self.dur_;
+        end
+        function value = get.pos_data(self)
+            value = self.pos_data_;
+        end
+        function value = get.ao1_data(self)
+            value = self.ao1_data_;
+        end
+        function value = get.ao2_data(self)
+            value = self.ao2_data_;
+        end
+        function value = get.ao3_data(self)
+            value = self.ao3_data_;
+        end
+        function value = get.ao4_data(self)
+            value = self.ao4_data_;
+        end
+
+        %SETTERS
+        
+        function set.model(self, value)
+            self.model_ = value;
+        end
+        function set.data(self, value)
+            self.data_ = value;
+        end
+        
+        function set.fig(self, value)
+            self.fig_ = value;
+        end
+        
+        function set.im(self, value)
+            self.im_ = value;
+        end
+        function set.pat_axes(self, value)
+            self.pat_axes_ = value;
+        end
+        function set.pos_line(self, value)
+            self.pos_line_ = value;
+        end
+        function set.ao1_line(self, value)
+            self.ao1_line_ = value;
+        end
+        function set.ao2_line(self, value)
+            self.ao2_line_ = value;
+        end
+        function set.ao3_line(self, value)
+            self.ao3_line_ = value;
+        end
+        function set.ao4_line(self, value)
+            self.ao4_line_ = value;
+        end
+        function set.dummy_line(self, value)
+            self.dummy_line_ = value;
+        end
+        function set.dummy_data(self, value)
+            self.dummy_data_ = value;
+        end
+        function set.preview_index(self, value)
+            self.preview_index_ = value;
+        end
+        function set.is_paused(self, value)
+            self.is_paused_ = value;
+        end
+        function set.is_realtime(self, value)
+            self.is_realtime_ = value;
+        end
+        function set.slow_frRate(self, value)
+            self.slow_frRate_ = value;
+        end
+        function set.rt_frRate(self, value)
+            self.rt_frRate_ = value;
+        end
+        function set.pattern_data(self, value)
+            self.pattern_data_ = value;
+        end
+        function set.mode(self, value)
+            self.mode_ = value;
+        end
+        function set.dur(self, value)
+            self.dur_ = value;
+        end
+        function set.pos_data(self, value)
+            self.pos_data_ = value;
+        end
+        function set.ao1_data(self, value)
+            self.ao1_data_ = value;
+        end
+        function set.ao2_data(self, value)
+            self.ao2_data_ = value;
+        end
+        function set.ao3_data(self, value)
+            self.ao3_data_ = value;
+        end
+        function set.ao4_data(self, value)
+            self.ao4_data_ = value;
+        end
         
     
     

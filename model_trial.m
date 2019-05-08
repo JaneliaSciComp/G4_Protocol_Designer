@@ -45,19 +45,19 @@ classdef model_trial
         
         function self = model_trial()
         
-            self.trial_mode_ = 1 ;
-            self.pattern_name_= '' ;
-            self.position_func_ = '' ;
-            self.ao1_ = '' ;
-            self.ao2_ = '' ;
-            self.ao3_ = '' ;
-            self.ao4_ = '' ;
-            self.frame_index_ = [] ;
-            self.frame_rate_ = [] ;
-            self.gain_ = [] ;
-            self.offset_ = [] ;
-            self.duration_ = 5 ;
-            self.is_checked_ = false ;
+            self.trial_mode = 1 ;
+            self.pattern_name= '' ;
+            self.position_func = '' ;
+            self.ao1 = '' ;
+            self.ao2 = '' ;
+            self.ao3 = '' ;
+            self.ao4 = '' ;
+            self.frame_index = [] ;
+            self.frame_rate = [] ;
+            self.gain = [] ;
+            self.offset = [] ;
+            self.duration = 5 ;
+            self.is_checked = false ;
             
 
            
@@ -186,23 +186,23 @@ classdef model_trial
         
          function [pre_trial] = update_pre_trial(pre_trial_table, event)
             pre_trial = get(pre_trial_table, 'data');
-            disp(pre_trial)
+
          end
         
          function [inter_trial] = update_inter_trial(inter_trial_table, event)
             inter_trial = get(inter_trial_table, 'data');
-            disp(inter_trial)
+
          end
          
          
          function [block_trial] = update_block_trial(block_trial_table, event)
             block_trial = get(block_trial_table, 'data');
-            disp(block_trial)
+ 
          end
          
          function [post_trial] = update_post_trial(post_trial_table, event)
             post_trial = get(post_trial_table, 'data');
-            disp(post_trial)
+
          end
          
          function [block_trial] = add_trial(add_trial_button, event)

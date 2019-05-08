@@ -2,8 +2,8 @@ classdef controller < handle %Made this handle class because was having trouble 
 
     properties
         model_ %contains all values
-        preview_con_; %controller for the fullscreen preview
-        run_con_;
+        preview_con_ %controller for the fullscreen preview
+        run_con_
         
         %Tables
         %tables_
@@ -17,6 +17,11 @@ classdef controller < handle %Made this handle class because was having trouble 
         block_files_
         inter_files_
         post_files_
+        
+        pre_selected_index_
+        inter_selected_index_
+        post_selected_index_
+        block_selected_index_
         
         %tracking which file is in the current preview window
         current_preview_file_
@@ -49,7 +54,7 @@ classdef controller < handle %Made this handle class because was having trouble 
         repetitions_box_
         isSelect_all_box_
         f_
-        preview_panel
+        preview_panel_
         hAxes_
         num_rows_3_
         num_rows_4_
@@ -59,11 +64,19 @@ classdef controller < handle %Made this handle class because was having trouble 
     end
 
     properties(Dependent)
+        model
+        preview_con
+        run_con
 
         pretrial_table
         intertrial_table
         posttrial_table
         block_table
+        
+        pre_files
+        inter_files
+        block_files
+        post_files
         
         %Tracking which cell is selected in each table
         pre_selected_index
@@ -71,8 +84,12 @@ classdef controller < handle %Made this handle class because was having trouble 
         post_selected_index
         block_selected_index
         
+        current_preview_file
+        current_selected_cell
+        
         %Tracking position in in-window preview
         auto_preview_index
+        is_paused
        
         chan1
         chan1_rate_box
@@ -86,6 +103,15 @@ classdef controller < handle %Made this handle class because was having trouble 
         num_rows_3
         num_rows_4
         isSelect_all
+        isRandomized_radio
+        isSequential_radio
+        bg
+        repetitions_box
+        isSelect_all_box
+        f
+        preview_panel
+        hAxes
+        exp_name_box
 
         
 %         isRandomized_box
@@ -105,33 +131,33 @@ classdef controller < handle %Made this handle class because was having trouble 
 
         function self = controller()
            
-            self.model_ = model_class();        
-            self.isSelect_all_ = false;
-            self.auto_preview_index_ = 1;
+            self.model = model_class();        
+            self.isSelect_all = false;
+            self.auto_preview_index = 1;
             screensize = get(0, 'screensize');
 
-            self.f_ = figure('Name', 'Fly Experiment Designer', 'NumberTitle', 'off','units', 'pixels', 'MenuBar', 'none', ...
+            self.f = figure('Name', 'Fly Experiment Designer', 'NumberTitle', 'off','units', 'pixels', 'MenuBar', 'none', ...
                 'ToolBar', 'none', 'Resize', 'off', 'outerposition', [screensize(3)*.1, screensize(4)*.1, 1600, 1000]);
            %ALL REST OF PROPERTIES ARE DEFINED IN LAYOUT         
-          self.pre_files_ = struct('pattern', self.model_.pretrial_(2),...
-               'position',self.model_.pretrial_(3),'ao1',self.model_.pretrial_(4),...
-               'ao2',self.model_.pretrial_(5),'ao3',self.model_.pretrial_(6),...
-               'ao4',self.model_.pretrial_(7));
-           self.block_files_ = struct('pattern', string(self.model_.block_trials_(2)),...
-               'position',string(self.model_.block_trials_(3)),'ao1',string(self.model_.block_trials_(4)),...
-               'ao2',string(self.model_.block_trials_(5)),'ao3',string(self.model_.block_trials_(6)),...
-               'ao4',string(self.model_.block_trials_(7)));
-           self.inter_files_ = struct('pattern', self.model_.intertrial_(2),...
-               'position',self.model_.intertrial_(3),'ao1',self.model_.intertrial_(4),...
-               'ao2',self.model_.intertrial_(5),'ao3',self.model_.intertrial_(6),...
-               'ao4',self.model_.intertrial_(7));
-           self.post_files_ = struct('pattern', self.model_.posttrial_(2),...
-               'position',self.model_.posttrial_(3),'ao1',self.model_.posttrial_(4),...
-               'ao2',self.model_.posttrial_(5),'ao3',self.model_.posttrial_(6),...
-               'ao4',self.model_.posttrial_(7));
-           self.current_preview_file_ = '';
-           self.current_selected_cell_ = struct('table', "", 'index', [0,0]);
-           self.is_paused_ = false;
+          self.pre_files = struct('pattern', self.model.pretrial(2),...
+               'position',self.model.pretrial(3),'ao1',self.model.pretrial(4),...
+               'ao2',self.model.pretrial(5),'ao3',self.model.pretrial(6),...
+               'ao4',self.model.pretrial(7));
+           self.block_files = struct('pattern', string(self.model.block_trials(2)),...
+               'position',string(self.model.block_trials(3)),'ao1',string(self.model.block_trials(4)),...
+               'ao2',string(self.model.block_trials(5)),'ao3',string(self.model.block_trials(6)),...
+               'ao4',string(self.model.block_trials(7)));
+           self.inter_files = struct('pattern', self.model.intertrial(2),...
+               'position',self.model.intertrial(3),'ao1',self.model.intertrial(4),...
+               'ao2',self.model.intertrial(5),'ao3',self.model.intertrial(6),...
+               'ao4',self.model.intertrial(7));
+           self.post_files = struct('pattern', self.model.posttrial(2),...
+               'position',self.model.posttrial(3),'ao1',self.model.posttrial(4),...
+               'ao2',self.model.posttrial(5),'ao3',self.model.posttrial(6),...
+               'ao4',self.model.posttrial(7));
+           self.current_preview_file = '';
+           self.current_selected_cell = struct('table', "", 'index', [0,0]);
+           self.is_paused = false;
            self.layout_gui() ;
            self.update_gui() ;
            self.set_bg2_selection();
@@ -165,69 +191,69 @@ classdef controller < handle %Made this handle class because was having trouble 
 
 
 
-            pretrial_label_ = uicontrol(self.f_, 'Style', 'text', 'String', 'Pre-Trial', ...
+            pretrial_label_ = uicontrol(self.f, 'Style', 'text', 'String', 'Pre-Trial', ...
                'Units', 'Pixels', 'FontSize', font_size_, ...
            'Position', [positions.pre(1) - 85, positions.pre(2) + 15, 78, 20]);
 
-            self.pretrial_table_ = uitable(self.f_, 'data', self.model_.pretrial_, 'columnname', column_names_, ...
+            self.pretrial_table = uitable(self.f, 'data', self.model.pretrial, 'columnname', column_names_, ...
             'units', 'pixels', 'Position', positions.pre, 'ColumnEditable', columns_editable_, 'ColumnFormat', column_format_, ...
            'CellEditCallback', @self.update_model_pretrial, 'CellSelectionCallback', {@self.preview_selection, positions});
 
-            intertrial_label_ = uicontrol(self.f_, 'Style', 'text', 'String', 'Inter-Trial', ...
+            intertrial_label_ = uicontrol(self.f, 'Style', 'text', 'String', 'Inter-Trial', ...
                'units', 'pixels', 'FontSize', font_size_, ...
            'Position', [positions.inter(1) - 85, positions.inter(2) + 15, 78, 20]);
 
-            self.intertrial_table_ = uitable(self.f_, 'data', self.model_.intertrial_, 'columnname', column_names_, ...
+            self.intertrial_table = uitable(self.f, 'data', self.model.intertrial, 'columnname', column_names_, ...
             'units', 'pixels', 'Position', positions.inter, 'ColumnEditable', columns_editable_, 'ColumnFormat', column_format_, ...
             'CellEditCallback', @self.update_model_intertrial, 'CellSelectionCallback', {@self.preview_selection, positions});
 
-            blocktrial_label_ = uicontrol(self.f_, 'Style', 'text', 'String', 'Block Trials', ...
+            blocktrial_label_ = uicontrol(self.f, 'Style', 'text', 'String', 'Block Trials', ...
                'units', 'pixels', 'FontSize', font_size_, ...
            'Position', [positions.block(1) - 85, positions.block(2) + .5*positions.block(4), 78, 20]);
 
-            self.block_table_ = uitable(self.f_, 'data', self.model_.block_trials_, 'columnname', column_names_, ...
+            self.block_table = uitable(self.f, 'data', self.model.block_trials, 'columnname', column_names_, ...
             'units', 'pixels', 'Position', positions.block, 'ColumnEditable', columns_editable_, 'ColumnFormat', column_format_, ...
             'CellEditCallback', @self.update_model_block_trials, 'CellSelectionCallback', {@self.preview_selection, positions});
 
 
-            posttrial_label_ = uicontrol(self.f_, 'Style', 'text', 'String', 'Post-Trial', ...
+            posttrial_label_ = uicontrol(self.f, 'Style', 'text', 'String', 'Post-Trial', ...
                'units', 'pixels', 'FontSize', font_size_, ...
            'Position', [positions.post(1) - 85, positions.post(2) + 15, 78, 20]);
 
-            self.posttrial_table_ = uitable(self.f_, 'data', self.model_.posttrial_, 'columnname', column_names_, ...
+            self.posttrial_table = uitable(self.f, 'data', self.model.posttrial, 'columnname', column_names_, ...
             'units', 'pixels', 'Position', positions.post, 'ColumnEditable', columns_editable_, 'ColumnFormat', column_format_, ...
             'CellEditCallback', @self.update_model_posttrial, 'CellSelectionCallback', {@self.preview_selection, positions});
 
-            add_trial_button = uicontrol(self.f_, 'Style', 'pushbutton','String','Add Trial','units', ...
+            add_trial_button = uicontrol(self.f, 'Style', 'pushbutton','String','Add Trial','units', ...
             'pixels','Position', [positions.block(1) + positions.block(3), ...
                 positions.block(2) + 20, 75, 20], 'Callback',@self.add_trial);
 
-            delete_trial_button = uicontrol(self.f_, 'Style', 'pushbutton', 'String', 'Delete Trial', ...
+            delete_trial_button = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Delete Trial', ...
                 'units', 'pixels', 'Position', [positions.block(1) + positions.block(3), positions.block(2), ...
             75, 20], 'Callback', @self.delete_trial);
 
-            self.isSelect_all_box_ = uicontrol(self.f_, 'Style', 'checkbox', 'String', 'Select All', 'Value', self.isSelect_all_, 'units', ...
+            self.isSelect_all_box = uicontrol(self.f, 'Style', 'checkbox', 'String', 'Select All', 'Value', self.isSelect_all, 'units', ...
                 'pixels','FontSize', font_size_, 'Position', [positions.block(1) + positions.block(3) - 45, ... 
                 positions.block(2) + positions.block(4) + 2, 78, 22], 'Callback', @self.select_all);
 
-            invert_selection = uicontrol(self.f_, 'Style', 'pushbutton', 'String', 'Invert Selection', ...
+            invert_selection = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Invert Selection', ...
                  'units', 'pixels', 'Position', [positions.block(1) + positions.block(3), ...
                 positions.block(2) - 20, 75, 20], 'Callback', @self.invert_selection);
 
-            up_button = uicontrol(self.f_, 'Style', 'pushbutton', 'String', 'Shift up', 'units', ...
+            up_button = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Shift up', 'units', ...
                 'pixels', 'Position', [positions.block(1) + positions.block(3), positions.block(2) + .65*positions.block(4), ...
                 75, 20], 'Callback', @self.move_trial_up);
 
-            down_button = uicontrol(self.f_, 'Style', 'pushbutton', 'String', 'Shift down', 'units', ...
+            down_button = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Shift down', 'units', ...
                 'pixels', 'Position', [positions.block(1) + positions.block(3), positions.block(2) + .35*positions.block(4), ...
                 75, 20], 'Callback', @self.move_trial_down);
             
-            autofill_button = uicontrol(self.f_, 'Style', 'pushbutton', 'String', 'Auto-Fill', ...
+            autofill_button = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Auto-Fill', ...
                 'FontSize', 14, 'units', 'pixels', 'Position', [pos_panel_(1), pos_panel_(2) - 50, 100, 50], ...
                 'Callback', @self.autofill);
 
 
-            self.preview_panel = uipanel(self.f_, 'Title', 'Preview', 'FontSize', font_size_, 'units', 'pixels', ...
+            self.preview_panel = uipanel(self.f, 'Title', 'Preview', 'FontSize', font_size_, 'units', 'pixels', ...
                 'Position', pos_panel_);
 
             %code to make the above panel transparent, so the preview image
@@ -238,44 +264,44 @@ classdef controller < handle %Made this handle class because was having trouble 
             jPanel.getComponent(0).setOpaque(false)
             jPanel.repaint
 
-            preview_button = uicontrol(self.f_, 'Style', 'pushbutton', 'String', 'Preview', 'Fontsize', ...
+            preview_button = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Preview', 'Fontsize', ...
                 font_size_, 'units', 'pixels', 'Position', [pos_panel_(1) + pos_panel_(3) + 2, ...
                 pos_panel_(2), 75, 40], 'Callback', @self.full_preview);
 
-            play_button = uicontrol(self.f_, 'Style', 'pushbutton', 'String', 'Play', 'FontSize', ...
+            play_button = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Play', 'FontSize', ...
                 font_size_, 'units', 'pixels', 'Position', [pos_panel_(1) + .5*pos_panel_(3) - 120, ...
                 pos_panel_(2) - 35, 75, 20], 'Callback', @self.preview_play);
 
-            pause_button = uicontrol(self.f_, 'Style', 'pushbutton', 'String', 'Pause', 'FontSize', ...
+            pause_button = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Pause', 'FontSize', ...
                 font_size_, 'units', 'pixels', 'Position', [pos_panel_(1) + .5*pos_panel_(3) - 35, ...
                 pos_panel_(2) - 35, 75, 20], 'Callback', @self.preview_pause);
 
-            stop_button = uicontrol(self.f_, 'Style', 'pushbutton', 'String', 'Stop', 'FontSize', ...
+            stop_button = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Stop', 'FontSize', ...
                 font_size_, 'units', 'pixels', 'Position', [pos_panel_(1) + .5*pos_panel_(3) + 50, ...
                 pos_panel_(2) - 35, 75, 20], 'Callback', @self.preview_stop);
 
-            frameBack_button = uicontrol(self.f_, 'Style', 'pushbutton', 'String', 'Back Frame', 'FontSize', ...
+            frameBack_button = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Back Frame', 'FontSize', ...
                 font_size_, 'units', 'pixels', 'Position', [pos_panel_(1) + .5*pos_panel_(3) - 205, ...
                 pos_panel_(2) - 35, 75, 20], 'Callback', @self.frame_back);
 
-            frameForward_button = uicontrol(self.f_, 'Style', 'pushbutton', 'String', 'Forward Frame', ...
+            frameForward_button = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Forward Frame', ...
                 'FontSize', font_size_, 'units', 'pixels', 'Position', [pos_panel_(1) + .5*pos_panel_(3) ...
                 + 135, pos_panel_(2) - 35, 90, 20], 'Callback', @self.frame_forward);
 
-            self.hAxes_ = axes(self.f_, 'units', 'pixels', 'OuterPosition', [200, 125, 1280 ,427], 'XLim', [0 200], 'YLim', [0 65]);
+            self.hAxes = axes(self.f, 'units', 'pixels', 'OuterPosition', [200, 125, 1280 ,427], 'XLim', [0 200], 'YLim', [0 65]);
             
-            self.exp_name_box_ = uicontrol(self.f_, 'Style', 'edit', 'String', self.model_.experiment_name_, ...
+            self.exp_name_box = uicontrol(self.f, 'Style', 'edit', 'String', self.model.experiment_name, ...
                 'FontSize', 14, 'units', 'pixels', 'Position', ...
                 [pos_panel_(1)+ (pos_panel_(3)/2) - 200, pos_panel_(2) - 100, 400, 30], 'Callback', @self.update_experiment_name);
             
-            exp_name_label = uicontrol(self.f_, 'Style', 'text', 'String', 'Experiment Name: ', ...
+            exp_name_label = uicontrol(self.f, 'Style', 'text', 'String', 'Experiment Name: ', ...
                 'FontSize', 16, 'units', 'pixels', 'Position', [pos_panel_(1) + (pos_panel_(3)/2) - 375, ...
                 pos_panel_(2) - 100, 150, 30]);
 
 
        %Drop down menu and associated labels and buttons
 
-            menu = uimenu(self.f_, 'Text', 'File');
+            menu = uimenu(self.f, 'Text', 'File');
             menu_import = uimenu(menu, 'Text', 'Import', 'Callback', @self.imp_folder);
             menu_open = uimenu(menu, 'Text', 'Open', 'Callback', @self.open_file);
             menu_saveas = uimenu(menu, 'Text', 'Save as', 'Callback', @self.saveas);
@@ -285,81 +311,105 @@ classdef controller < handle %Made this handle class because was having trouble 
 
        %Randomization
        
-            self.bg_ = uibuttongroup(self.f_, 'units', 'pixels', 'Position', [15, positions.block(2) + positions.block(4) - 10, 130, 55], 'SelectionChangedFcn', @self.update_randomize);
+            self.bg = uibuttongroup(self.f, 'units', 'pixels', 'Position', [15, positions.block(2) + positions.block(4) - 10, 130, 55], 'SelectionChangedFcn', @self.update_randomize);
        
        
-            self.isRandomized_radio_ = uicontrol(self.bg_, 'Style', 'radiobutton', 'String', 'Randomize Trials', 'FontSize', font_size_, ...
+            self.isRandomized_radio = uicontrol(self.bg, 'Style', 'radiobutton', 'String', 'Randomize Trials', 'FontSize', font_size_, ...
                 'units', 'pixels', 'Position', [1, 29, 130, 20]);
             
-            self.isSequential_radio_ = uicontrol(self.bg_, 'Style', 'radiobutton', 'String', 'Sequential Trials', 'FontSize', font_size_, ...
+            self.isSequential_radio = uicontrol(self.bg, 'Style', 'radiobutton', 'String', 'Sequential Trials', 'FontSize', font_size_, ...
                 'units', 'pixels', 'Position', [1,7, 130, 20]);
 
        %Repetitions
 
-            self.repetitions_box_ = uicontrol(self.f_, 'Style', 'edit', 'units', 'pixels', 'Position', ...
+            self.repetitions_box = uicontrol(self.f, 'Style', 'edit', 'units', 'pixels', 'Position', ...
                 [90, positions.block(2) + positions.block(4) - 45, 40, 20], 'Callback', @self.update_repetitions);
 
-            repetitions_label_ = uicontrol(self.f_, 'Style', 'text', 'String', 'Repetitions:', 'FontSize', font_size_, ...
+            repetitions_label_ = uicontrol(self.f, 'Style', 'text', 'String', 'Repetitions:', 'FontSize', font_size_, ...
                 'units', 'pixels', 'Position', [15, positions.block(2) + positions.block(4) - 45, 70, 20]);
 
        %Dry Run
-            dry_run_ = uicontrol(self.f_, 'Style', 'pushbutton', 'String', 'Dry Run', 'FontSize', font_size_, 'units', 'pixels', 'Position', ...
+            dry_run_ = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Dry Run', 'FontSize', font_size_, 'units', 'pixels', 'Position', ...
                 [pos_panel_(1) + pos_panel_(3) + 2, pos_panel_(2) - 40, 75, 40],'Callback',@self.dry_run);
 
        %Actual run button
 
-            run_button =  uicontrol(self.f_, 'Style', 'pushbutton', 'String', 'Run Trials', 'FontSize', font_size_, 'units', 'pixels', 'Position', ...
+            run_button =  uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Run Trials', 'FontSize', font_size_, 'units', 'pixels', 'Position', ...
                  [15, positions.block(2) + positions.block(4) - 110, 90, 50], 'Callback', @self.open_run_gui);
 
        %Channels to acquire
 
-            chan_pan = uipanel(self.f_, 'Title', 'Acquire Channels:', 'FontSize', font_size_, 'units', 'pixels', ...
+            chan_pan = uipanel(self.f, 'Title', 'Acquire Channels:', 'FontSize', font_size_, 'units', 'pixels', ...
                 'Position', [15, positions.block(2) + positions.block(4) - 240, 250, 120]);
 
-            self.chan1_ = uicontrol(self.f_, 'Style', 'checkbox', 'String', 'Channel 1', 'Value', self.model_.is_chan1_, 'FontSize', font_size_, ...
+            self.chan1 = uicontrol(self.f, 'Style', 'checkbox', 'String', 'Channel 1', 'Value', self.model.is_chan1, 'FontSize', font_size_, ...
                 'units', 'pixels', 'Position', [20, positions.block(2) + positions.block(4) - 160, 80, 20], 'Callback', @self.update_chan1);
 
-            self.chan1_rate_box_ = uicontrol(self.f_, 'Style', 'edit', 'String', num2str(self.model_.chan1_rate_), 'units', 'pixels', 'Position', ...
+            self.chan1_rate_box = uicontrol(self.f, 'Style', 'edit', 'String', num2str(self.model.chan1_rate), 'units', 'pixels', 'Position', ...
                 [105, positions.block(2) + positions.block(4) - 160, 40, 20], 'Callback', @self.update_chan1_rate);
 
-            chan1_rate_label = uicontrol(self.f_, 'Style', 'text', 'String', 'Sample Rate', 'FontSize', font_size_, ...
+            chan1_rate_label = uicontrol(self.f, 'Style', 'text', 'String', 'Sample Rate', 'FontSize', font_size_, ...
                 'units', 'pixels', 'Position', [155, positions.block(2) + positions.block(4) - 160, 85, 20]);
 
-            self.chan2_ = uicontrol(self.f_, 'Style', 'checkbox', 'String', 'Channel 2', 'Value', self.model_.is_chan2_, 'FontSize', font_size_, ...
+            self.chan2 = uicontrol(self.f, 'Style', 'checkbox', 'String', 'Channel 2', 'Value', self.model.is_chan2, 'FontSize', font_size_, ...
                 'units', 'pixels', 'Position', [20, positions.block(2) + positions.block(4) - 180, 80, 20], 'Callback', @self.update_chan2);
 
-            self.chan2_rate_box_ = uicontrol(self.f_, 'Style', 'edit', 'String', num2str(self.model_.chan2_rate_), 'units', 'pixels', 'Position', ...
+            self.chan2_rate_box = uicontrol(self.f, 'Style', 'edit', 'String', num2str(self.model.chan2_rate), 'units', 'pixels', 'Position', ...
                 [105, positions.block(2) + positions.block(4) - 180, 40, 20], 'Callback', @self.update_chan2_rate);
 
-            chan2_rate_label = uicontrol(self.f_, 'Style', 'text', 'String', 'Sample Rate', 'FontSize', font_size_, ...
+            chan2_rate_label = uicontrol(self.f, 'Style', 'text', 'String', 'Sample Rate', 'FontSize', font_size_, ...
                 'units', 'pixels', 'Position', [155, positions.block(2) + positions.block(4) - 180, 85, 20]);
 
-            self.chan3_ = uicontrol(self.f_, 'Style', 'checkbox', 'String', 'Channel 3', 'Value', self.model_.is_chan3_, 'FontSize', font_size_, ...
+            self.chan3 = uicontrol(self.f, 'Style', 'checkbox', 'String', 'Channel 3', 'Value', self.model.is_chan3, 'FontSize', font_size_, ...
                 'units', 'pixels', 'Position', [20, positions.block(2) + positions.block(4) - 200, 80, 20], 'Callback', @self.update_chan3);
 
-            self.chan3_rate_box_ = uicontrol(self.f_, 'Style', 'edit', 'String', num2str(self.model_.chan3_rate_), 'units', 'pixels', 'Position', ...
+            self.chan3_rate_box = uicontrol(self.f, 'Style', 'edit', 'String', num2str(self.model.chan3_rate), 'units', 'pixels', 'Position', ...
                 [105, positions.block(2) + positions.block(4) - 200, 40, 20], 'Callback', @self.update_chan3_rate);
 
-            chan3_rate_label = uicontrol(self.f_, 'Style', 'text', 'String', 'Sample Rate', 'FontSize', font_size_, ...
+            chan3_rate_label = uicontrol(self.f, 'Style', 'text', 'String', 'Sample Rate', 'FontSize', font_size_, ...
                 'units', 'pixels', 'Position', [155, positions.block(2) + positions.block(4) - 200, 85, 20]);
 
-            self.chan4_ = uicontrol(self.f_, 'Style', 'checkbox', 'String', 'Channel 4', 'Value', self.model_.is_chan4_, 'FontSize', font_size_, ...
+            self.chan4 = uicontrol(self.f, 'Style', 'checkbox', 'String', 'Channel 4', 'Value', self.model.is_chan4, 'FontSize', font_size_, ...
                 'units', 'pixels', 'Position', [20, positions.block(2) + positions.block(4) - 220, 80, 20], 'Callback', @self.update_chan4);
 
-            self.chan4_rate_box_ = uicontrol(self.f_, 'Style', 'edit', 'String', num2str(self.model_.chan4_rate_), 'units', 'pixels', 'Position', ...
+            self.chan4_rate_box = uicontrol(self.f, 'Style', 'edit', 'String', num2str(self.model.chan4_rate), 'units', 'pixels', 'Position', ...
                 [105, positions.block(2) + positions.block(4) - 220, 40, 20], 'Callback', @self.update_chan4_rate);
 
-            chan4_rate_label = uicontrol(self.f_, 'Style', 'text', 'String', 'Sample Rate', 'FontSize', font_size_, ...
+            chan4_rate_label = uicontrol(self.f, 'Style', 'text', 'String', 'Sample Rate', 'FontSize', font_size_, ...
                 'units', 'pixels', 'Position', [155, positions.block(2) + positions.block(4) - 220, 85, 20]);
 
-            self.bg2_ = uibuttongroup(self.f_, 'units', 'pixels', 'Position', [15, positions.block(2) + positions.block(4) - 270, 250, 25], 'SelectionChangedFcn', @self.update_rowNum);
+            self.bg2 = uibuttongroup(self.f, 'units', 'pixels', 'Position', [15, positions.block(2) + positions.block(4) - 270, 250, 25], 'SelectionChangedFcn', @self.update_rowNum);
        
        
-            self.num_rows_3_ = uicontrol(self.bg2_, 'Style', 'radiobutton', 'String', '3 Row Screen', 'FontSize', font_size_, ...
+            self.num_rows_3 = uicontrol(self.bg2, 'Style', 'radiobutton', 'String', '3 Row Screen', 'FontSize', font_size_, ...
                 'units', 'pixels', 'Position', [1, 3, 120, 19]);
             
-            self.num_rows_4_ = uicontrol(self.bg2_, 'Style', 'radiobutton', 'String', '4 Row Screen', 'FontSize', font_size_, ...
+            self.num_rows_4 = uicontrol(self.bg2, 'Style', 'radiobutton', 'String', '4 Row Screen', 'FontSize', font_size_, ...
                 'units', 'pixels', 'Position', [121,3, 120, 19]);
+            
+            key_pan = uipanel(self.f, 'Title', 'Mode Key:', 'BackgroundColor', [.75, .75, .75], 'BorderType', 'none', ...
+                'FontSize', 13, 'units', 'pixels', 'Position', [15, positions.block(2) + positions.block(4) - 720, 280, 420]);
+            
+            mode_1_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 1:', 'BackgroundColor', [.75,.75,.75], ...
+                'FontSize', 11, 'units', 'pixels', 'Position', [25, positions.block(2) + positions.block(4) - 360, 65, 18]);
+            
+            mode_2_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 2:', 'BackgroundColor', [.75,.75,.75], ...
+                'FontSize', 11, 'units', 'pixels', 'Position', [25, mode_1_label.Position(2) - 50, 65, 18]);
+            
+            mode_3_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 3:', 'BackgroundColor', [.75,.75,.75], ...
+                'FontSize', 11, 'units', 'pixels', 'Position', [25, mode_2_label.Position(2) - 50, 65, 18]);
+            
+            mode_4_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 4:', 'BackgroundColor', [.75,.75,.75], ...
+                'FontSize', 11, 'units', 'pixels', 'Position', [25, mode_3_label.Position(2) - 50, 65, 18]);
+            
+            mode_5_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 5:', 'BackgroundColor', [.75,.75,.75], ...
+                'FontSize', 11, 'units', 'pixels', 'Position', [25, mode_4_label.Position(2) - 50, 65, 18]);
+            
+            mode_6_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 6:', 'BackgroundColor', [.75,.75,.75], ...
+                'FontSize', 11, 'units', 'pixels', 'Position', [25, mode_5_label.Position(2) - 50, 65, 18]);
+            
+            mode_7_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 7:', 'BackgroundColor', [.75,.75,.75], ...
+                'FontSize', 11, 'units', 'pixels', 'Position', [25, mode_6_label.Position(2) - 50, 65, 18]);
 
         end
         
@@ -402,7 +452,7 @@ classdef controller < handle %Made this handle class because was having trouble 
 
         function update_model_pretrial(self, src, event)
 
-            mode = self.model_.pretrial_{1};
+            mode = self.model.pretrial{1};
             new = event.EditData;
             x = event.Indices(1);
             y = event.Indices(2);
@@ -414,13 +464,13 @@ classdef controller < handle %Made this handle class because was having trouble 
                 if y >= 2 && y <= 7
 
                     self.set_pretrial_files_(y, new);
-                    self.model_.set_pretrial_property(y,new);
+                    self.model.set_pretrial_property(y,new);
                 elseif y ~= 13
 
-                    self.model_.set_pretrial_property(y, str2num(new));
+                    self.model.set_pretrial_property(y, str2num(new));
 
                 else
-                    self.model_.set_pretrial_property(y,new);
+                    self.model.set_pretrial_property(y,new);
                 end
 
 
@@ -444,7 +494,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             end
             
              self.update_gui();
-             %disp(self.pre_files_);
+             %disp(self.pre_files);
 
         end
         
@@ -455,7 +505,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             new = event.EditData;
             x = event.Indices(1);
             y = event.Indices(2);
-            mode = cell2mat(self.model_.block_trials_(x, 1));
+            mode = cell2mat(self.model.block_trials(x, 1));
             allow = self.check_editable(mode, y);
             
             
@@ -463,14 +513,14 @@ classdef controller < handle %Made this handle class because was having trouble 
                 if y >= 2 && y <= 7
      
                     self.set_blocktrial_files_(x, y, new);
-                    self.model_.set_block_trial_property([x,y], new);
+                    self.model.set_block_trial_property([x,y], new);
                     %src.Data{x,y} = new;
                 elseif y ~= 13
-                    self.model_.set_block_trial_property([x,y], str2num(new));
+                    self.model.set_block_trial_property([x,y], str2num(new));
                 else
-                    self.model_.set_block_trial_property([x,y], new);
+                    self.model.set_block_trial_property([x,y], new);
                 end
-                %self.model_.block_trials_
+                %self.model.block_trials
             else
                 
                 waitfor(errordlg("You cannot edit that field in this mode."));
@@ -485,7 +535,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             
 
             self.update_gui();
-            %disp(self.block_files_);
+            %disp(self.block_files);
             
         end
         
@@ -496,7 +546,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             new = event.EditData;
             x = event.Indices(1);
             y = event.Indices(2);
-            mode = cell2mat(self.model_.intertrial_(x, 1));
+            mode = cell2mat(self.model.intertrial(x, 1));
             allow = self.check_editable(mode, y);
             
             if allow == 1
@@ -504,12 +554,12 @@ classdef controller < handle %Made this handle class because was having trouble 
                 if y >= 2 && y <= 7
           
                     self.set_intertrial_files_(y,new);
-                    self.model_.set_intertrial_property(y, new);
+                    self.model.set_intertrial_property(y, new);
                 elseif y~=13
-                    self.model_.set_intertrial_property(y, str2num(new));
-                %self.model_.intertrial_;
+                    self.model.set_intertrial_property(y, str2num(new));
+                %self.model.intertrial;
                 else
-                    self.model_.set_intertrial_property(y, new);
+                    self.model.set_intertrial_property(y, new);
                 end
             else
                 
@@ -523,7 +573,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                 
             end
             self.update_gui();
-            %disp(self.inter_files_);
+            %disp(self.inter_files);
         end
         
 %Update posttrial model data
@@ -532,7 +582,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             new = event.EditData;
             x = event.Indices(1);
             y = event.Indices(2);
-            mode = cell2mat(self.model_.posttrial_(x, 1));
+            mode = cell2mat(self.model.posttrial(x, 1));
             allow = self.check_editable(mode, y);
             
             if allow == 1
@@ -540,12 +590,12 @@ classdef controller < handle %Made this handle class because was having trouble 
                 if y >= 2 && y <= 7
           
                     self.set_posttrial_files_(y,new);
-                    self.model_.set_posttrial_property(y, new);
+                    self.model.set_posttrial_property(y, new);
                 elseif y~=13
-                    self.model_.set_posttrial_property(y, str2num(new));
-                %self.model_.intertrial_;
+                    self.model.set_posttrial_property(y, str2num(new));
+                %self.model.intertrial;
                 else
-                    self.model_.set_posttrial_property(y, new);
+                    self.model.set_posttrial_property(y, new);
                 end
 
             else
@@ -559,7 +609,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                 
             end
             self.update_gui();
-            %disp(self.post_files_);
+            %disp(self.post_files);
         
         end
         
@@ -568,9 +618,9 @@ classdef controller < handle %Made this handle class because was having trouble 
         function update_repetitions(self, src, event)
         
             new = str2num(src.String);
-            self.model_.set_repetitions(new);
+            self.model.set_repetitions(new);
             self.update_gui();
-            %self.model_.repetitions_
+            %self.model.repetitions
         
         end
 
@@ -584,9 +634,9 @@ classdef controller < handle %Made this handle class because was having trouble 
             else
                 new_val = 0;
             end
-            self.model_.set_is_randomized(new_val);
+            self.model.set_is_randomized(new_val);
             self.update_gui();
-            %self.model_.is_randomized_
+            %self.model.is_randomized
             
         end
         
@@ -595,36 +645,36 @@ classdef controller < handle %Made this handle class because was having trouble 
         function update_chan1(self, src, event)
             
             new = src.Value;
-            self.model_.set_is_chan1(new);
+            self.model.set_is_chan1(new);
             self.update_gui();
-            %self.model_.is_chan1_
+            %self.model.is_chan1
         
         end
         
         function update_chan2(self, src, event)
 
             new = src.Value;
-            self.model_.set_is_chan2(new);
+            self.model.set_is_chan2(new);
             self.update_gui();
-            %self.model_.is_chan2_
+            %self.model.is_chan2
 
         end
         
         function update_chan3(self, src, event)
 
             new = src.Value;
-            self.model_.set_is_chan3(new);
+            self.model.set_is_chan3(new);
             self.update_gui();
-            %self.model_.is_chan3_
+            %self.model.is_chan3
 
         end
         
         function update_chan4(self, src, event)
 
             new = src.Value;
-            self.model_.set_is_chan4(new);
+            self.model.set_is_chan4(new);
             self.update_gui();
-            %self.model_.is_chan4_
+            %self.model.is_chan4
         
         end
  
@@ -633,63 +683,66 @@ classdef controller < handle %Made this handle class because was having trouble 
         function update_chan1_rate(self, src, event)
             
             new = str2num(src.String);
-            self.model_.set_chan1_rate(new);
-            self.model_.set_config_data(new, 1);
+            if rem(new,1000) ~= 0
+                waitfor(errordlg("The value you've entered is not a multiple of 1000. Please double check your entry."));
+            end
+            self.model.set_chan1_rate(new);
+            self.model.set_config_data(new, 1);
             self.update_config_file();
             self.update_gui();
-            %self.model_.chan1_rate_
+            %self.model.chan1_rate
             
         end
         
         function update_chan2_rate(self, src, event)
             
             new = str2num(src.String);
-            if new ~= 1000 && new ~= 500
-                waitfor(errordlg("You have entered a value other than 500 or 1000. Please double check your entry."));
+            if rem(new,1000) ~= 0
+                waitfor(errordlg("The value you've entered is not a multiple of 1000. Please double check your entry."));
             end
-            self.model_.set_config_data(new,2);
-            self.model_.set_chan2_rate(new);
+            self.model.set_config_data(new,2);
+            self.model.set_chan2_rate(new);
             self.update_config_file();
             self.update_gui();
-            %self.model_.chan2_rate_
+            %self.model.chan2_rate
             
         end
         
         function update_chan3_rate(self, src, event)
             
             new = str2num(src.String);
-            if new ~= 1000 && new ~= 500
-                waitfor(errordlg("You have entered a value other than 500 or 1000. Please double check your entry."));
+            if rem(new,1000) ~= 0
+                waitfor(errordlg("The value you've entered is not a multiple of 1000. Please double check your entry."));
             end
-            self.model_.set_chan3_rate(new);
-            self.model_.set_config_data(new, 3);
+            self.model.set_chan3_rate(new);
+            self.model.set_config_data(new, 3);
             self.update_config_file();
             self.update_gui();
-            %self.model_.chan3_rate_
+            %self.model.chan3_rate
             
         end
         
         function update_chan4_rate(self, src, event)
             
             new = str2num(src.String);
-            if new ~= 1000 && new ~= 500
-                waitfor(errordlg("You have entered a value other than 500 or 1000. Please double check your entry."));
+            if rem(new,1000) ~= 0
+                waitfor(errordlg("The value you've entered is not a multiple of 1000. Please double check your entry."));
             end
-            self.model_.set_chan4_rate(new);
-            self.model_.set_config_data(new, 4);
+            self.model.set_chan4_rate(new);
+            self.model.set_config_data(new, 4);
             self.update_config_file();
             self.update_gui();
-            %self.model_.chan4_rate_
+            %self.model.chan4_rate
             
         end
         
         function update_doc(self, new_value)
             
-            self.model_.set_doc(new_value);
+            self.model.set_doc(new_value);
         end
         
         function update_preview_con(self, new_value)
-            self.preview_con_ = new_value;
+            self.preview_con = new_value;
         end
         
         function update_rowNum(self, src, event)
@@ -702,8 +755,8 @@ classdef controller < handle %Made this handle class because was having trouble 
             %Check to make sure the number in the config file now matches
             %this new value
                 
-            self.model_.set_num_rows(new_val);%do this for other config updating
-            self.model_.set_config_data(new_val, 0);
+            self.model.set_num_rows(new_val);%do this for other config updating
+            self.model.set_config_data(new_val, 0);
             self.update_config_file();
             self.set_bg2_selection();
 
@@ -714,7 +767,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             
             new_val = src.String;
            
-            self.model_.set_experiment_name(new_val);
+            self.model.set_experiment_name(new_val);
             self.update_gui();
         end
        
@@ -723,7 +776,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             %open config file
             %change appropriate rate
             %save and close config file
-            configData = self.model_.get_config_data();
+            configData = self.model.get_config_data();
 
             settings_data = strtrim(regexp( fileread('G4_Protocol_Designer_Settings.m'),'\n','split'));
             filepath_line = find(contains(settings_data,'Configuration File Path:'));
@@ -743,22 +796,22 @@ classdef controller < handle %Made this handle class because was having trouble 
 
         function add_trial(self, src, event)
 
-            checkbox_column_data = horzcat(self.model_.block_trials_(1:end, end));
+            checkbox_column_data = horzcat(self.model.block_trials(1:end, end));
             checked_list = find(cell2mat(checkbox_column_data));
             checked_count = length(checked_list);
-            x = size(self.model_.block_trials_,1) + 1;
+            x = size(self.model.block_trials,1) + 1;
             
           
             if checked_count == 0
-                newRow = self.model_.block_trials_(end,1:end);
+                newRow = self.model.block_trials(end,1:end);
                 y = 1;
-                self.model_.set_block_trial_property([x,y],newRow);
+                self.model.set_block_trial_property([x,y],newRow);
             elseif checked_count == 1
-                newRow = self.model_.block_trials_(checked_list(1),1:end-1);
+                newRow = self.model.block_trials(checked_list(1),1:end-1);
                 newRow{:,end+1} = false;
                 %disp(newRow);
                 y = 1;
-                self.model_.set_block_trial_property([x,y], newRow);
+                self.model.set_block_trial_property([x,y], newRow);
                 
                 
             else 
@@ -767,12 +820,12 @@ classdef controller < handle %Made this handle class because was having trouble 
                   
                 
             end    
-            self.block_files_.pattern(end + 1) = string(cell2mat(newRow(2)));
-            self.block_files_.position(end + 1) = string(cell2mat(newRow(3)));
-            self.block_files_.ao1(end + 1) = string(cell2mat(newRow(4)));
-            self.block_files_.ao2(end + 1) = string(cell2mat(newRow(5)));
-            self.block_files_.ao3(end + 1) = string(cell2mat(newRow(6)));
-            self.block_files_.ao4(end + 1) = string(cell2mat(newRow(7)));
+            self.block_files.pattern(end + 1) = string(cell2mat(newRow(2)));
+            self.block_files.position(end + 1) = string(cell2mat(newRow(3)));
+            self.block_files.ao1(end + 1) = string(cell2mat(newRow(4)));
+            self.block_files.ao2(end + 1) = string(cell2mat(newRow(5)));
+            self.block_files.ao3(end + 1) = string(cell2mat(newRow(6)));
+            self.block_files.ao4(end + 1) = string(cell2mat(newRow(7)));
             
 %             for i = 1:13
 %                 
@@ -790,7 +843,7 @@ classdef controller < handle %Made this handle class because was having trouble 
 
         function delete_trial(self, src, event)
         
-            checkbox_column_data = horzcat(self.model_.block_trials_(1:end, end));
+            checkbox_column_data = horzcat(self.model.block_trials(1:end, end));
             checked_list = find(cell2mat(checkbox_column_data));
             checked_count = length(checked_list);
             %disp(checked_list);
@@ -804,11 +857,11 @@ classdef controller < handle %Made this handle class because was having trouble 
 %                          new = [];
 %                
 %                          x = checked_list(i) - (i - 1);
-%                          self.model_.set_block_trial_property( ,new);
-%                          self.model_.block_trials
+%                          self.model.set_block_trial_property( ,new);
+%                          self.model.block_trials
 %                     
-                        self.model_.block_trials_(checked_list(i) - (i-1),:) = [];
-                        %disp(self.model_.block_trials_);
+                        self.model.block_trials(checked_list(i) - (i-1),:) = [];
+                        %disp(self.model.block_trials);
 %                     end
                 
                 end
@@ -825,7 +878,7 @@ classdef controller < handle %Made this handle class because was having trouble 
 
         function move_trial_up(self, src, event)
         
-            checkbox_column_data = horzcat(self.model_.block_trials_(1:end, end));
+            checkbox_column_data = horzcat(self.model.block_trials(1:end, end));
             checked = find(cell2mat(checkbox_column_data));
             checked_count = length(checked);
             
@@ -835,17 +888,17 @@ classdef controller < handle %Made this handle class because was having trouble 
                 waitfor(errordlg("Please select only one trial to shift upward."));
             else 
             
-                selected = self.model_.block_trials_(checked, :);
+                selected = self.model.block_trials(checked, :);
                 if checked == 1
                     waitfor(errordlg("I can't shift up any more."));
                     return;
                 else
-                    above_selected = self.model_.block_trials_(checked - 1, :);
+                    above_selected = self.model.block_trials(checked - 1, :);
                 end
  
                
-                self.model_.block_trials_(checked , :) = above_selected;
-                self.model_.block_trials_(checked - 1, :) = selected;
+                self.model.block_trials(checked , :) = above_selected;
+                self.model.block_trials(checked - 1, :) = selected;
 
                 
             end
@@ -865,7 +918,7 @@ classdef controller < handle %Made this handle class because was having trouble 
         function move_trial_down(self, src, event)
 
             
-            checkbox_column_data = horzcat(self.model_.block_trials_(1:end, end));
+            checkbox_column_data = horzcat(self.model.block_trials(1:end, end));
             checked = find(cell2mat(checkbox_column_data));
             checked_count = length(checked);
             
@@ -875,19 +928,19 @@ classdef controller < handle %Made this handle class because was having trouble 
                 waitfor(errordlg("Please select only one trial to shift downward"));
             else 
                 
-                selected = self.model_.block_trials_(checked, :);
+                selected = self.model.block_trials(checked, :);
                 
-                if checked == length(self.model_.block_trials_(:,1))
+                if checked == length(self.model.block_trials(:,1))
                     waitfor(errordlg("I can't shift down any further."));
                     return;
                 else
-                    below_selected = self.model_.block_trials_(checked + 1, :);
+                    below_selected = self.model.block_trials(checked + 1, :);
                 end
                     
 
                 
-                self.model_.block_trials_(checked, :) = below_selected;
-                self.model_.block_trials_(checked + 1, :) = selected;
+                self.model.block_trials(checked, :) = below_selected;
+                self.model.block_trials(checked + 1, :) = selected;
 
                 
             end
@@ -906,7 +959,7 @@ classdef controller < handle %Made this handle class because was having trouble 
         pat_index = 1; %Keeps track of the indices of patterns that are actually displayed (not cut due to screen size discrepancy)
         pat_indices = []; %A record of all pattern indices that match the screen size.
         
-        doc = self.model_.doc_;
+        doc = self.model.doc;
         pat_names = fieldnames(doc.Patterns_);
         pos_names = fieldnames(doc.Pos_funcs_);
         ao_names = fieldnames(doc.Ao_funcs_);
@@ -917,15 +970,15 @@ classdef controller < handle %Made this handle class because was having trouble 
 
         pat1 = pat_names{pat_index};
         
-        if length(doc.Patterns_.(pat1).pattern.Pats(:,1,1))/16 ~= self.model_.num_rows_
-            while length(doc.Patterns_.(pat1).pattern.Pats(:,1,1)) ~= self.model_.num_rows_ && pat_index < length(pat_names)
+        if length(doc.Patterns_.(pat1).pattern.Pats(:,1,1))/16 ~= self.model.num_rows
+            while length(doc.Patterns_.(pat1).pattern.Pats(:,1,1)) ~= self.model.num_rows && pat_index < length(pat_names)
                 pat_index = pat_index + 1;
                 pat1 = cell2mat(pat_names(pat_index));
             end
             
         end
         
-        if pat_index == length(pat_names) && length(doc.Patterns_.(pat1).pattern.Pats(:,1,1))/16 ~= self.model_.num_rows_
+        if pat_index == length(pat_names) && length(doc.Patterns_.(pat1).pattern.Pats(:,1,1))/16 ~= self.model.num_rows
             waitfor(errordlg("None of the patterns imported match the screen size selected. Please import a different folder or select a new screen size"));
             return;
         end
@@ -954,21 +1007,21 @@ classdef controller < handle %Made this handle class because was having trouble 
         
 
         
-        self.model_.set_pretrial_property(2, pat1);
-        self.model_.set_pretrial_property(3, pos1);
-        self.model_.set_pretrial_property(4, ao1);
+        self.model.set_pretrial_property(2, pat1);
+        self.model.set_pretrial_property(3, pos1);
+        self.model.set_pretrial_property(4, ao1);
         
-        self.model_.set_intertrial_property(2, pat1);
-        self.model_.set_intertrial_property(3, pos1);
-        self.model_.set_intertrial_property(4, ao1);
+        self.model.set_intertrial_property(2, pat1);
+        self.model.set_intertrial_property(3, pos1);
+        self.model.set_intertrial_property(4, ao1);
         
-        self.model_.set_posttrial_property(2, pat1);
-        self.model_.set_posttrial_property(3, pos1);
-        self.model_.set_posttrial_property(4, ao1);
+        self.model.set_posttrial_property(2, pat1);
+        self.model.set_posttrial_property(3, pos1);
+        self.model.set_posttrial_property(4, ao1);
         
-        self.model_.set_block_trial_property([1,2], pat1);
-        self.model_.set_block_trial_property([1,3], pos1);
-        self.model_.set_block_trial_property([1,4], ao1);
+        self.model.set_block_trial_property([1,2], pat1);
+        self.model.set_block_trial_property([1,3], pos1);
+        self.model.set_block_trial_property([1,4], ao1);
         
        
         
@@ -991,7 +1044,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                 pos = pos_names{pos_index};
                 ao = ao_names{ao_index};
                 
-                if length(doc.Patterns_.(pat).pattern.Pats(:,1,1))/16 ~= self.model_.num_rows_
+                if length(doc.Patterns_.(pat).pattern.Pats(:,1,1))/16 ~= self.model.num_rows
                     pat_index = pat_index + 1;
                     pos_index = pos_index + 1;
                     ao_index = ao_index + 1;
@@ -999,7 +1052,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                     continue;
                 end
                 
-                newrow = self.model_.block_trials_(end, 1:end);
+                newrow = self.model.block_trials(end, 1:end);
                 newrow{2} = cell2mat(pat_names(pat_index)); %Only executes if previous if statement did not. Sets new row's pattern
 
                 newrow{3} = pos; 
@@ -1016,9 +1069,9 @@ classdef controller < handle %Made this handle class because was having trouble 
                     newrow{3} = '';
                 end
 
-                self.model_.set_block_trial_property([j,1],newrow);
-                self.block_files_.pattern(end + 1) = string(cell2mat(newrow(2)));
-                self.block_files_.position(end + 1) = string(cell2mat(newrow(3)));
+                self.model.set_block_trial_property([j,1],newrow);
+                self.block_files.pattern(end + 1) = string(cell2mat(newrow(2)));
+                self.block_files.position(end + 1) = string(cell2mat(newrow(3)));
  
 
             end
@@ -1050,11 +1103,11 @@ classdef controller < handle %Made this handle class because was having trouble 
                     imported_folder = document(top_folder_path);
                     waitbar(.5,prog,'Updating...');
                     self.update_doc(imported_folder);
-                    [exp_path, exp_name] = fileparts(self.model_.doc_.top_folder_path_);
-                    self.model_.set_experiment_name(exp_name);
+                    [exp_path, exp_name] = fileparts(self.model.doc.top_folder_path_);
+                    self.model.set_experiment_name(exp_name);
                     self.update_gui();
-                    set(self.num_rows_3_, 'Enable', 'off');
-                    set(self.num_rows_4_, 'Enable', 'off');
+                    set(self.num_rows_3, 'Enable', 'off');
+                    set(self.num_rows_4, 'Enable', 'off');
                 end
                 close(prog);
            case 'File'
@@ -1072,7 +1125,7 @@ classdef controller < handle %Made this handle class because was having trouble 
     
     function imp_file(self)
     
-        if isempty(self.model_.doc_) == 1
+        if isempty(self.model.doc) == 1
             waitfor(errordlg("You must import an Experiment folder first."));
         else
             [imported_file, path] = uigetfile;
@@ -1080,7 +1133,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             if isequal(imported_file,0)
                 %do nothing
             else
-                self.model_.doc_.import_file(imported_file, path);
+                self.model.doc.import_file(imported_file, path);
             end
         end
         
@@ -1095,17 +1148,17 @@ classdef controller < handle %Made this handle class because was having trouble 
 
     function saveas(self, src, event)
         
-        cut_date_off_name = regexp(self.model_.experiment_name_,'-','split');
+        cut_date_off_name = regexp(self.model.experiment_name,'-','split');
         if length(cut_date_off_name) > 1
             exp_name = cut_date_off_name{1}(1:end-2);
         else
-            exp_name = self.model_.get_experiment_name();
+            exp_name = self.model.get_experiment_name();
         end
         dateFormat = 'mm-dd-yy_HH-MM-SS';
         %dateFormat = 30; %ISO8601 format, yyyymmddTHHMMSS (year, month, date, T for time, hours, minutes, seconds) - see matlab docs
         dated_exp_name = strcat(exp_name, datestr(now, dateFormat));
-        self.model_.set_experiment_name(dated_exp_name);
-        [file, path] = uiputfile('*.mat','File Selection', self.model_.experiment_name_);
+        self.model.set_experiment_name(dated_exp_name);
+        [file, path] = uiputfile('*.mat','File Selection', self.model.experiment_name);
         full_path = fullfile(path, file);
         
         if file == 0
@@ -1115,26 +1168,26 @@ classdef controller < handle %Made this handle class because was having trouble 
         prog = waitbar(0,'Please wait...');
         
     %get values of interest from model and store them in struct to save to mat file.
-        vars.block_trials = self.model_.get_block_trials();
-        vars.pretrial = self.model_.get_pretrial();
-        vars.intertrial = self.model_.get_intertrial();
-        vars.posttrial = self.model_.get_posttrial();
-        vars.is_randomized = self.model_.get_is_randomized();
-        vars.repetitions = self.model_.get_repetitions();
-        vars.is_chan1 = self.model_.get_is_chan1();
-        vars.is_chan2 = self.model_.get_is_chan2();
-        vars.is_chan3 = self.model_.get_is_chan3();
-        vars.is_chan4 = self.model_.get_is_chan4();
-        vars.chan1_rate = self.model_.get_chan1_rate();
-        vars.chan2_rate = self.model_.get_chan2_rate();
-        vars.chan3_rate = self.model_.get_chan3_rate();
-        vars.chan4_rate = self.model_.get_chan4_rate();
-        vars.num_rows = self.model_.get_num_rows();
-        vars.experiment_name = self.model_.get_experiment_name();
+        vars.block_trials = self.model.get_block_trials();
+        vars.pretrial = self.model.get_pretrial();
+        vars.intertrial = self.model.get_intertrial();
+        vars.posttrial = self.model.get_posttrial();
+        vars.is_randomized = self.model.get_is_randomized();
+        vars.repetitions = self.model.get_repetitions();
+        vars.is_chan1 = self.model.get_is_chan1();
+        vars.is_chan2 = self.model.get_is_chan2();
+        vars.is_chan3 = self.model.get_is_chan3();
+        vars.is_chan4 = self.model.get_is_chan4();
+        vars.chan1_rate = self.model.get_chan1_rate();
+        vars.chan2_rate = self.model.get_chan2_rate();
+        vars.chan3_rate = self.model.get_chan3_rate();
+        vars.chan4_rate = self.model.get_chan4_rate();
+        vars.num_rows = self.model.get_num_rows();
+        vars.experiment_name = self.model.get_experiment_name();
         
         waitbar(.33,prog,'Saving...');
         
-        self.model_.doc_.saveas(full_path, vars, prog);
+        self.model.doc.saveas(full_path, vars, prog);
         
         
 
@@ -1147,24 +1200,24 @@ classdef controller < handle %Made this handle class because was having trouble 
     %document to save the file.
         
     %Get up to date variables from the model.
-        vars.block_trials = self.model_.get_block_trials();
-        vars.pretrial = self.model_.get_pretrial();
-        vars.intertrial = self.model_.get_intertrial();
-        vars.posttrial = self.model_.get_posttrial();
-        vars.is_randomized = self.model_.get_is_randomized();
-        vars.repetitions = self.model_.get_repetitions();
-        vars.is_chan1 = self.model_.get_is_chan1();
-        vars.is_chan2 = self.model_.get_is_chan2();
-        vars.is_chan3 = self.model_.get_is_chan3;
-        vars.is_chan4 = self.model_.get_is_chan4;
-        vars.chan1_rate = self.model_.get_chan1_rate;
-        vars.chan2_rate = self.model_.get_chan2_rate;
-        vars.chan3_rate = self.model_.get_chan3_rate;
-        vars.chan4_rate = self.model_.get_chan4_rate;
-        vars.num_rows = self.model_.get_num_rows();
-        vars.experiment_name = self.model_.get_experiment_name();
+        vars.block_trials = self.model.get_block_trials();
+        vars.pretrial = self.model.get_pretrial();
+        vars.intertrial = self.model.get_intertrial();
+        vars.posttrial = self.model.get_posttrial();
+        vars.is_randomized = self.model.get_is_randomized();
+        vars.repetitions = self.model.get_repetitions();
+        vars.is_chan1 = self.model.get_is_chan1();
+        vars.is_chan2 = self.model.get_is_chan2();
+        vars.is_chan3 = self.model.get_is_chan3;
+        vars.is_chan4 = self.model.get_is_chan4;
+        vars.chan1_rate = self.model.get_chan1_rate;
+        vars.chan2_rate = self.model.get_chan2_rate;
+        vars.chan3_rate = self.model.get_chan3_rate;
+        vars.chan4_rate = self.model.get_chan4_rate;
+        vars.num_rows = self.model.get_num_rows();
+        vars.experiment_name = self.model.get_experiment_name();
         
-        self.model_.doc_.save(vars);
+        self.model.doc.save(vars);
 
     end
 
@@ -1187,20 +1240,20 @@ classdef controller < handle %Made this handle class because was having trouble 
             %do nothing
         else
         
-            if isempty(self.model_.doc_)
+            if isempty(self.model.doc)
 
                     imported_folder = document(top_folder_path);
                     self.update_doc(imported_folder);
                     [exp_path, exp_name, ext] = fileparts(filepath);
-                   % [exp_path, exp_name] = fileparts(self.model_.doc_.top_folder_path_);
-                    self.model_.set_experiment_name(exp_name);
+                   % [exp_path, exp_name] = fileparts(self.model.doc.top_folder_path_);
+                    self.model.set_experiment_name(exp_name);
                     
                     self.update_gui();
                     
              end
             
 
-            data = self.model_.doc_.open(filepath);
+            data = self.model.doc.open(filepath);
             m = self.model_;
             d = data.exp_parameters;
             
@@ -1255,8 +1308,8 @@ classdef controller < handle %Made this handle class because was having trouble 
 
             
             self.update_gui();
-            set(self.num_rows_3_, 'Enable', 'off');
-            set(self.num_rows_4_, 'Enable', 'off');
+            set(self.num_rows_3, 'Enable', 'off');
+            set(self.num_rows_4, 'Enable', 'off');
         end
     end
     
@@ -1265,7 +1318,7 @@ classdef controller < handle %Made this handle class because was having trouble 
 %Copy to        
         function copy_to(self, src, event)
         
-            checkbox_column_data = horzcat(self.model_.block_trials_(1:end, end));
+            checkbox_column_data = horzcat(self.model.block_trials(1:end, end));
             checked = find(cell2mat(checkbox_column_data));
             checked_count = length(checked);
             
@@ -1275,7 +1328,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             
             elseif checked_count == 1
                 
-                selected = self.model_.block_trials_(checked,1:end-1);
+                selected = self.model.block_trials(checked,1:end-1);
                 selected{:,end+1} = false;
                 list = {'Pre-Trial', 'Inter-Trial', 'Post-Trial'};
                 
@@ -1290,15 +1343,15 @@ classdef controller < handle %Made this handle class because was having trouble 
                     
                         if indx(i) == 1
                            
-                            self.model_.pretrial_ = selected;
+                            self.model.pretrial = selected;
                             
                         elseif indx(i) == 2
                             
-                            self.model_.intertrial_ = selected;
+                            self.model.intertrial = selected;
                             
                         elseif indx(i) == 3
                             
-                            self.model_.posttrial_ = selected;
+                            self.model.posttrial = selected;
                             
                         else
                             disp("There has been an error, please try again.");
@@ -1322,7 +1375,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             
         %Check if any rows in the block are checked, add indexes of any
         %checked ones into checked_block
-            checkbox_block_data = horzcat(self.model_.block_trials_(1:end, end));
+            checkbox_block_data = horzcat(self.model.block_trials(1:end, end));
             checked_block = find(cell2mat(checkbox_block_data));
             checked_block_count = length(checked_block);
         
@@ -1353,27 +1406,27 @@ classdef controller < handle %Made this handle class because was having trouble 
             end
             
             
-            if self.model_.pretrial_{13} == true
-                self.model_.pretrial_ = adjusted_answer;
+            if self.model.pretrial{13} == true
+                self.model.pretrial = adjusted_answer;
             end
 
-            if self.model_.intertrial_{13} == true
-                self.model_.intertrial_ = adjusted_answer;
+            if self.model.intertrial{13} == true
+                self.model.intertrial = adjusted_answer;
             end
 
-            if self.model_.posttrial_{13} == true
-                self.model_.posttrial_ = adjusted_answer;
+            if self.model.posttrial{13} == true
+                self.model.posttrial = adjusted_answer;
             end
 
             if checked_block_count ~= 0
                 for i = 1:checked_block_count
-                    self.model_.block_trials_(checked_block(i),:) = adjusted_answer;
+                    self.model.block_trials(checked_block(i),:) = adjusted_answer;
                 end
 
             end
             
             self.update_gui();
-            %disp(self.model_.block_trials_(2,13));
+            %disp(self.model.block_trials(2,13));
         end
 
 %END OF MAIN MENU CALLBACKS------------------------------------------------
@@ -1383,24 +1436,24 @@ classdef controller < handle %Made this handle class because was having trouble 
       function select_all(self, src, event)
         %assuming here that the number parameters will never differ between
         %trials. 
-        l = length(self.model_.block_trials_(1,:));
+        l = length(self.model.block_trials(1,:));
         if src.Value == false  
-        %disp(length(self.model_.block_trials_(:,1)));
-            for i = 1:length(self.model_.block_trials_(:,1))
-                if cell2mat(self.model_.block_trials_(i, l)) == 1
-                    self.model_.set_block_trial_property([i, l], false);
+        %disp(length(self.model.block_trials(:,1)));
+            for i = 1:length(self.model.block_trials(:,1))
+                if cell2mat(self.model.block_trials(i, l)) == 1
+                    self.model.set_block_trial_property([i, l], false);
                 end
             end
             
         else
-            for i = 1:length(self.model_.block_trials_(:,1))
-                if cell2mat(self.model_.block_trials_(i, l)) == 0
-                    self.model_.set_block_trial_property([i, l], true);
+            for i = 1:length(self.model.block_trials(:,1))
+                if cell2mat(self.model.block_trials(i, l)) == 0
+                    self.model.set_block_trial_property([i, l], true);
                 end
             end
             
         end
-        self.isSelect_all_ = src.Value;
+        self.isSelect_all = src.Value;
         self.update_gui();
         
       end
@@ -1409,14 +1462,14 @@ classdef controller < handle %Made this handle class because was having trouble 
 
         function invert_selection(self, src, event)
 
-            L = length(self.model_.block_trials_(:,1));
-            len = length(self.model_.block_trials_(1,:));
+            L = length(self.model.block_trials(:,1));
+            len = length(self.model.block_trials(1,:));
 
             for i = 1:L
-                if cell2mat(self.model_.block_trials_(i,len)) == 0
-                    self.model_.set_block_trial_property([i, len], true);
-                elseif cell2mat(self.model_.block_trials_(i,len)) == 1
-                    self.model_.set_block_trial_property([i,len], false);
+                if cell2mat(self.model.block_trials(i,len)) == 0
+                    self.model.set_block_trial_property([i, len], true);
+                elseif cell2mat(self.model.block_trials(i,len)) == 1
+                    self.model.set_block_trial_property([i,len], false);
                 else
                     disp('There has been an error, the selected value must be true or false');
                 end
@@ -1435,8 +1488,8 @@ classdef controller < handle %Made this handle class because was having trouble 
                 x = event.Indices(1);
                 y = event.Indices(2);
                 
-                self.current_selected_cell_.index = event.Indices;
-                self.auto_preview_index_ = 1; %A new file has been selected so preview starts over at frame 1
+                self.current_selected_cell.index = event.Indices;
+                self.auto_preview_index = 1; %A new file has been selected so preview starts over at frame 1
                 
                 if y > 1 && y< 8
 
@@ -1451,22 +1504,22 @@ classdef controller < handle %Made this handle class because was having trouble 
                
                 
                  if src.Position == positions.pre
-                    self.current_selected_cell_.table = "pre";
-                    mode = self.model_.pretrial_{1};
-                    dur = self.model_.pretrial_{12}*1000;
+                    self.current_selected_cell.table = "pre";
+                    mode = self.model.pretrial{1};
+                    dur = self.model.pretrial{12}*1000;
                 elseif src.Position == positions.inter
-                    self.current_selected_cell_.table = "inter";
-                    mode = self.model_.intertrial_{1};
-                    dur = self.model_.intertrial_{12}*1000;
+                    self.current_selected_cell.table = "inter";
+                    mode = self.model.intertrial{1};
+                    dur = self.model.intertrial{12}*1000;
                 elseif src.Position == positions.block
-                    self.current_selected_cell_.table = "block";
-                    x = self.current_selected_cell_.index(1);
-                    mode = self.model_.block_trials_{x, 1};
-                    dur = self.model_.block_trials_{x,12}*1000;
+                    self.current_selected_cell.table = "block";
+                    x = self.current_selected_cell.index(1);
+                    mode = self.model.block_trials{x, 1};
+                    dur = self.model.block_trials{x,12}*1000;
                  elseif src.Position == positions.post
-                    self.current_selected_cell_.table = "post";
-                    mode = self.model_.posttrial_{1};
-                    dur = self.model_.posttrial_{12}*1000;
+                    self.current_selected_cell.table = "post";
+                    mode = self.model.posttrial{1};
+                    dur = self.model.posttrial{12}*1000;
                 else
                     waitfor(errordlg("Something has gone wrong, table positions have been corrupted."));
                  end
@@ -1479,41 +1532,41 @@ classdef controller < handle %Made this handle class because was having trouble 
                 
                 if strcmp(file,'') == 1
                 
-                    if isempty(self.model_.doc_) == 1
+                    if isempty(self.model.doc) == 1
                         waitfor(errordlg("Nothing has been imported."));
                     end
                     if event.Indices(2) == 2
                         
-                        pats = self.model_.doc_.Patterns_;
+                        pats = self.model.doc.Patterns_;
                         fields = fieldnames(pats);
                         [index, chose] = listdlg('ListString',fields,'SelectionMode','single');
 
                         if chose == 1
                             
                             chosen_pat = fields{index};
-                            if length(self.model_.doc_.Patterns_.(chosen_pat).pattern.Pats(:,1,1))/16 ~= self.model_.num_rows_
+                            if length(self.model.doc.Patterns_.(chosen_pat).pattern.Pats(:,1,1))/16 ~= self.model.num_rows
                                 waitfor(errordlg("This pattern will not run on the currently selected screen size. Please try again."));
                                 return;
                             end
                             file = cell2mat(fields(index));
 
-                            if strcmp(self.current_selected_cell_.table, "pre") == 1
+                            if strcmp(self.current_selected_cell.table, "pre") == 1
 
-                                self.model_.set_pretrial_property(event.Indices(2), file);
+                                self.model.set_pretrial_property(event.Indices(2), file);
                                 self.update_gui();
 
-                            elseif strcmp(self.current_selected_cell_.table, "inter") == 1
+                            elseif strcmp(self.current_selected_cell.table, "inter") == 1
 
-                                self.model_.set_intertrial_property(event.Indices(2), file);
+                                self.model.set_intertrial_property(event.Indices(2), file);
                                 self.update_gui();
 
-                            elseif strcmp(self.current_selected_cell_.table, "block") == 1
-                                self.model_.set_block_trial_property(event.Indices, file);
+                            elseif strcmp(self.current_selected_cell.table, "block") == 1
+                                self.model.set_block_trial_property(event.Indices, file);
                                 self.update_gui();
 
-                            elseif strcmp(self.current_selected_cell_.table, "post") == 1
+                            elseif strcmp(self.current_selected_cell.table, "post") == 1
 
-                                self.model_.set_posttrial_property(event.Indices(2), file);
+                                self.model.set_posttrial_property(event.Indices(2), file);
                                 self.update_gui();
 
                             else
@@ -1527,30 +1580,30 @@ classdef controller < handle %Made this handle class because was having trouble 
                         edit = self.check_editable(mode, 3);
 
                         if edit == 1
-                            pos = self.model_.doc_.Pos_funcs_;
+                            pos = self.model.doc.Pos_funcs_;
                             fields = fieldnames(pos);
                             [index, chose] = listdlg('ListString',fields,'SelectionMode','single');
                             if chose == 1
                                 file = cell2mat(fields(index));
 
-                                if strcmp(self.current_selected_cell_.table, "pre") == 1
+                                if strcmp(self.current_selected_cell.table, "pre") == 1
 
-                                    self.model_.set_pretrial_property(event.Indices(2), file);
+                                    self.model.set_pretrial_property(event.Indices(2), file);
                                     self.update_gui();
 
-                                elseif strcmp(self.current_selected_cell_.table, "inter") == 1
+                                elseif strcmp(self.current_selected_cell.table, "inter") == 1
 
-                                    self.model_.set_intertrial_property(event.Indices(2), file);
+                                    self.model.set_intertrial_property(event.Indices(2), file);
                                     self.update_gui();
 
-                                elseif strcmp(self.current_selected_cell_.table, "block") == 1
+                                elseif strcmp(self.current_selected_cell.table, "block") == 1
 
-                                    self.model_.set_block_trial_property(event.Indices, file);
+                                    self.model.set_block_trial_property(event.Indices, file);
                                     self.update_gui();
 
-                                elseif strcmp(self.current_selected_cell_.table, "post") == 1
+                                elseif strcmp(self.current_selected_cell.table, "post") == 1
 
-                                    self.model_.set_posttrial_property(event.Indices(2), file);
+                                    self.model.set_posttrial_property(event.Indices(2), file);
                                     self.update_gui();
 
                                 else
@@ -1561,30 +1614,30 @@ classdef controller < handle %Made this handle class because was having trouble 
                         end
                     elseif event.Indices(2) > 3 && event.Indices(2) < 8
 
-                        ao = self.model_.doc_.Ao_funcs_;
+                        ao = self.model.doc.Ao_funcs_;
                         fields = fieldnames(ao);
                         [index, chose] = listdlg('ListString',fields,'SelectionMode','single');
                         if chose == 1
                             file = cell2mat(fields(index));
 
-                            if strcmp(self.current_selected_cell_.table, "pre") == 1
+                            if strcmp(self.current_selected_cell.table, "pre") == 1
 
-                                self.model_.set_pretrial_property(event.Indices(2), file);
+                                self.model.set_pretrial_property(event.Indices(2), file);
                                 self.update_gui();
 
-                            elseif strcmp(self.current_selected_cell_.table, "inter") == 1
+                            elseif strcmp(self.current_selected_cell.table, "inter") == 1
 
-                                self.model_.set_intertrial_property(event.Indices(2), file);
+                                self.model.set_intertrial_property(event.Indices(2), file);
                                 self.update_gui();
 
-                            elseif strcmp(self.current_selected_cell_.table, "block") == 1
+                            elseif strcmp(self.current_selected_cell.table, "block") == 1
 
-                                self.model_.set_block_trial_property(event.Indices, file);
+                                self.model.set_block_trial_property(event.Indices, file);
                                 self.update_gui();
 
-                            elseif strcmp(self.current_selected_cell_.table, "post") == 1
+                            elseif strcmp(self.current_selected_cell.table, "post") == 1
 
-                                self.model_.set_posttrial_property(event.Indices(2), file);
+                                self.model.set_posttrial_property(event.Indices(2), file);
                                 self.update_gui();
 
                             else
@@ -1603,29 +1656,29 @@ classdef controller < handle %Made this handle class because was having trouble 
 
                 if strcmp(file,'') == 0
                     if event.Indices(2) == 2
-                        if isempty(self.model_.doc_) == 1
+                        if isempty(self.model.doc) == 1
                             waitfor(errordlg("You haven't imported anything yet"));
                         end
 
-                        self.current_preview_file_ = self.model_.doc_.Patterns_.(file).pattern.Pats;
+                        self.current_preview_file = self.model.doc.Patterns_.(file).pattern.Pats;
 
-                        x = [0 length(self.current_preview_file_(1,:,1))];
-                        y = [0 length(self.current_preview_file_(:,1,1))];
-                        adjusted_file = zeros(y(2),x(2),length(self.current_preview_file_(1,1,:)));
-                        max_num = max(self.current_preview_file_,[],[1 2]);
-                        for i = 1:length(self.current_preview_file_(1,1,:))
+                        x = [0 length(self.current_preview_file(1,:,1))];
+                        y = [0 length(self.current_preview_file(:,1,1))];
+                        adjusted_file = zeros(y(2),x(2),length(self.current_preview_file(1,1,:)));
+                        max_num = max(self.current_preview_file,[],[1 2]);
+                        for i = 1:length(self.current_preview_file(1,1,:))
                             
-                            adjusted_matrix = self.current_preview_file_(:,:,i) ./ max_num(i);
+                            adjusted_matrix = self.current_preview_file(:,:,i) ./ max_num(i);
                             adjusted_file(:,:,i) = adjusted_matrix(:,:,1);
                         end
 
 
 
                         %for i = 1:30
-                        im = imshow(adjusted_file(:,:,self.auto_preview_index_), 'Colormap',gray);
-                        set(im, 'parent', self.hAxes_)
-                        colormap( self.hAxes_, gray )
-                        set(self.hAxes_, 'XLim', x, 'YLim', y);
+                        im = imshow(adjusted_file(:,:,self.auto_preview_index), 'Colormap',gray);
+                        set(im, 'parent', self.hAxes)
+                        colormap( self.hAxes, gray )
+                        set(self.hAxes, 'XLim', x, 'YLim', y);
                        % pause(1/fr_rate);
 
 
@@ -1637,26 +1690,26 @@ classdef controller < handle %Made this handle class because was having trouble 
                     elseif event.Indices(2) == 3
 
 
-                        self.current_preview_file_ = self.model_.doc_.Pos_funcs_.(file).pfnparam.func;
+                        self.current_preview_file = self.model.doc.Pos_funcs_.(file).pfnparam.func;
 
-                        xax = [0 length(self.current_preview_file_(1,:))];
-                        yax = [min(self.current_preview_file_) max(self.current_preview_file_)];
-                        set(self.hAxes_, 'XLim', xax, 'YLim', yax);
-                        p = plot(self.current_preview_file_);
-                        set(p, 'parent', self.hAxes_);
-                        if dur <= length(self.current_preview_file_(1,:))
+                        xax = [0 length(self.current_preview_file(1,:))];
+                        yax = [min(self.current_preview_file) max(self.current_preview_file)];
+                        set(self.hAxes, 'XLim', xax, 'YLim', yax);
+                        p = plot(self.current_preview_file);
+                        set(p, 'parent', self.hAxes);
+                        if dur <= length(self.current_preview_file(1,:))
                             dur_line = line('XData', [dur, dur], 'YData', [yax(1), yax(2)], 'Color', [1 0 0], 'LineWidth', 2);
                         end
 
                     elseif event.Indices(2) > 3 && event.Indices(2) < 7
 
-                        self.current_preview_file_ = self.model_.doc_.Ao_funcs_.(file).afnparam.func;
+                        self.current_preview_file = self.model.doc.Ao_funcs_.(file).afnparam.func;
 
-                        xax = [0 length(self.current_preview_file_(1,:))];
-                        yax = [min(self.current_preview_file_) max(self.current_preview_file_)];
-                        set(self.hAxes_, 'XLim', xax, 'YLim', yax);
-                        p = plot(self.current_preview_file_);
-                        set(p, 'parent', self.hAxes_);
+                        xax = [0 length(self.current_preview_file(1,:))];
+                        yax = [min(self.current_preview_file) max(self.current_preview_file)];
+                        set(self.hAxes, 'XLim', xax, 'YLim', yax);
+                        p = plot(self.current_preview_file);
+                        set(p, 'parent', self.hAxes);
 
                     end
                 
@@ -1673,28 +1726,28 @@ classdef controller < handle %Made this handle class because was having trouble 
 
         function frame_forward(self, src, event)
 
-            if strcmp(self.current_selected_cell_.table, "pre")
-                filename = string(self.pretrial_table_.Data(self.current_selected_cell_.index(2)));
-            elseif strcmp(self.current_selected_cell_.table, "inter")
-                filename = string(self.intertrial_table_.Data(self.current_selected_cell_.index(2)));
+            if strcmp(self.current_selected_cell.table, "pre")
+                filename = string(self.pretrial_table.Data(self.current_selected_cell.index(2)));
+            elseif strcmp(self.current_selected_cell.table, "inter")
+                filename = string(self.intertrial_table.Data(self.current_selected_cell.index(2)));
 
-            elseif strcmp(self.current_selected_cell_.table, "block")
-                filename = string(self.block_table_.Data(self.current_selected_cell_.index(1),self.current_selected_cell_.index(2)));
+            elseif strcmp(self.current_selected_cell.table, "block")
+                filename = string(self.block_table.Data(self.current_selected_cell.index(1),self.current_selected_cell.index(2)));
 
-            elseif strcmp(self.current_selected_cell_.table, "post")
-                filename = string(self.posttrial_table_.Data(self.current_selected_cell_.index(2)));
+            elseif strcmp(self.current_selected_cell.table, "post")
+                filename = string(self.posttrial_table.Data(self.current_selected_cell.index(2)));
 
             else
                 waitfor(errordlg("Please make sure you have selected a cell and try again"));
             end
 
             if strcmp(filename,'') == 0
-                data = self.model_.doc_.Patterns_.(filename).pattern.Pats;
-                self.auto_preview_index_ = self.auto_preview_index_ + 1;
-                if self.auto_preview_index_ > length(data(1,1,:))
-                    self.auto_preview_index_ = 1;
+                data = self.model.doc.Patterns_.(filename).pattern.Pats;
+                self.auto_preview_index = self.auto_preview_index + 1;
+                if self.auto_preview_index > length(data(1,1,:))
+                    self.auto_preview_index = 1;
                 end
-                preview_data = data(:,:,self.auto_preview_index_);
+                preview_data = data(:,:,self.auto_preview_index);
                 
                 xax = [0 length(preview_data(1,:))];
                 yax = [0 length(preview_data(:,1))];
@@ -1709,8 +1762,8 @@ classdef controller < handle %Made this handle class because was having trouble 
 
                 %for i = 1:30
                 im = imshow(adjusted_matrix(:,:), 'Colormap', gray);
-                set(im, 'parent', self.hAxes_)
-                set(self.hAxes_, 'XLim', xax, 'YLim', yax);
+                set(im, 'parent', self.hAxes)
+                set(self.hAxes, 'XLim', xax, 'YLim', yax);
 
             end
 
@@ -1721,29 +1774,29 @@ classdef controller < handle %Made this handle class because was having trouble 
         
         function frame_back(self, src, event)
 
-            if strcmp(self.current_selected_cell_.table, "pre")
-                filename = string(self.pretrial_table_.Data(self.current_selected_cell_.index(2)));
-            elseif strcmp(self.current_selected_cell_.table, "inter")
-                filename = string(self.intertrial_table_.Data(self.current_selected_cell_.index(2)));
+            if strcmp(self.current_selected_cell.table, "pre")
+                filename = string(self.pretrial_table.Data(self.current_selected_cell.index(2)));
+            elseif strcmp(self.current_selected_cell.table, "inter")
+                filename = string(self.intertrial_table.Data(self.current_selected_cell.index(2)));
 
-            elseif strcmp(self.current_selected_cell_.table, "block")
-                filename = string(self.block_table_.Data(self.current_selected_cell_.index(1),self.current_selected_cell_.index(2)));
+            elseif strcmp(self.current_selected_cell.table, "block")
+                filename = string(self.block_table.Data(self.current_selected_cell.index(1),self.current_selected_cell.index(2)));
 
-            elseif strcmp(self.current_selected_cell_.table, "post")
-                filename = string(self.posttrial_table_.Data(self.current_selected_cell_.index(2)));
+            elseif strcmp(self.current_selected_cell.table, "post")
+                filename = string(self.posttrial_table.Data(self.current_selected_cell.index(2)));
 
             else
                 waitfor(errordlg("Please make sure you have selected a cell and try again"));
             end
 
             if strcmp(filename,'') == 0
-                self.auto_preview_index_ = self.auto_preview_index_ - 1;
+                self.auto_preview_index = self.auto_preview_index - 1;
 
-                if self.auto_preview_index_ < 1
-                    self.auto_preview_index_ = length(self.current_preview_file_(1,1,:));
+                if self.auto_preview_index < 1
+                    self.auto_preview_index = length(self.current_preview_file(1,1,:));
                 end
-                data = self.model_.doc_.Patterns_.(filename).pattern.Pats;
-                preview_data = data(:,:,self.auto_preview_index_);
+                data = self.model.doc.Patterns_.(filename).pattern.Pats;
+                preview_data = data(:,:,self.auto_preview_index);
                 
                 xax = [0 length(preview_data(1,:))];
                 yax = [0 length(preview_data(:,1))];
@@ -1758,8 +1811,8 @@ classdef controller < handle %Made this handle class because was having trouble 
 
                 %for i = 1:30
                 im = imshow(adjusted_matrix(:,:), 'Colormap', gray);
-                set(im, 'parent', self.hAxes_)
-                set(self.hAxes_, 'XLim', xax, 'YLim', yax);
+                set(im, 'parent', self.hAxes)
+                set(self.hAxes, 'XLim', xax, 'YLim', yax);
             end
 
         end
@@ -1768,45 +1821,45 @@ classdef controller < handle %Made this handle class because was having trouble 
         
         function preview_play(self, src, event)
 
-            self.is_paused_ = false;
+            self.is_paused = false;
 
-            if strcmp(self.current_selected_cell_.table, "pre")
+            if strcmp(self.current_selected_cell.table, "pre")
                 
-                filename = string(self.pretrial_table_.Data(self.current_selected_cell_.index(2)));
-                mode = cell2mat(self.model_.pretrial_(1));
+                filename = string(self.pretrial_table.Data(self.current_selected_cell.index(2)));
+                mode = cell2mat(self.model.pretrial(1));
                 if mode == 2
-                    fr_rate = cell2mat(self.model_.pretrial_(9));
+                    fr_rate = cell2mat(self.model.pretrial(9));
                 else
                     fr_rate = 30;
                 end
                 
-            elseif strcmp(self.current_selected_cell_.table, "inter")
+            elseif strcmp(self.current_selected_cell.table, "inter")
                 
-                filename = string(self.intertrial_table_.Data(self.current_selected_cell_.index(2)));
-                mode = cell2mat(self.model_.intertrial_(1));
+                filename = string(self.intertrial_table.Data(self.current_selected_cell.index(2)));
+                mode = cell2mat(self.model.intertrial(1));
                 if mode == 2
-                    fr_rate = cell2mat(self.model_.intertrial_(9));
+                    fr_rate = cell2mat(self.model.intertrial(9));
                 else
                     fr_rate = 30;
                 end
                 
-            elseif strcmp(self.current_selected_cell_.table, "block")
+            elseif strcmp(self.current_selected_cell.table, "block")
                 
-                filename = string(self.block_table_.Data(self.current_selected_cell_.index(1),self.current_selected_cell_.index(2)));
-                mode = cell2mat(self.model_.block_trials_(self.current_selected_cell_.index(1), 1));
+                filename = string(self.block_table.Data(self.current_selected_cell.index(1),self.current_selected_cell.index(2)));
+                mode = cell2mat(self.model.block_trials(self.current_selected_cell.index(1), 1));
                 if mode == 2
-                    fr_rate = cell2mat(self.model_.block_trials_(self.current_selected_cell_.index(1), 9));
+                    fr_rate = cell2mat(self.model.block_trials(self.current_selected_cell.index(1), 9));
                 else
                     fr_rate = 30;
                 end
                 
                 
                 
-            elseif strcmp(self.current_selected_cell_.table, "post")
-                filename = string(self.posttrial_table_.Data(self.current_selected_cell_.index(2)));
-                mode = cell2mat(self.model_.posttrial_(1));
+            elseif strcmp(self.current_selected_cell.table, "post")
+                filename = string(self.posttrial_table.Data(self.current_selected_cell.index(2)));
+                mode = cell2mat(self.model.posttrial(1));
                 if mode == 2
-                    fr_rate = cell2mat(self.model_.posttrial_(9));
+                    fr_rate = cell2mat(self.model.posttrial(9));
                 else
                     fr_rate = 30;
                 end
@@ -1819,12 +1872,12 @@ classdef controller < handle %Made this handle class because was having trouble 
             
 %             
 %             
-%             x = [0 length(self.current_preview_file_(1,:,1))];
-%                         y = [0 length(self.current_preview_file_(:,1,1))];
-%                         adjusted_file = zeros(y(2),x(2),length(self.current_preview_file_(1,1,:)));
-%                         for i = 1:length(self.current_preview_file_(1,1,:))
-%                             max_num = max(self.current_preview_file_(:,:,i));    
-%                             adjusted_matrix = self.current_preview_file_(:,:,i) ./ max_num;
+%             x = [0 length(self.current_preview_file(1,:,1))];
+%                         y = [0 length(self.current_preview_file(:,1,1))];
+%                         adjusted_file = zeros(y(2),x(2),length(self.current_preview_file(1,1,:)));
+%                         for i = 1:length(self.current_preview_file(1,1,:))
+%                             max_num = max(self.current_preview_file(:,:,i));    
+%                             adjusted_matrix = self.current_preview_file(:,:,i) ./ max_num;
 %                             adjusted_file(:,:,i) = adjusted_matrix(:,:,1);
 %                         end
 % 
@@ -1836,41 +1889,41 @@ classdef controller < handle %Made this handle class because was having trouble 
 %                         
 % 
 %                         %for i = 1:30
-%                         im = imshow(adjusted_file(:,:,self.auto_preview_index_), 'Colormap',gray);
-%                         set(im, 'parent', self.hAxes_)
-%                         colormap( self.hAxes_, gray )
-%                         set(self.hAxes_, 'XLim', x, 'YLim', y);
+%                         im = imshow(adjusted_file(:,:,self.auto_preview_index), 'Colormap',gray);
+%                         set(im, 'parent', self.hAxes)
+%                         colormap( self.hAxes, gray )
+%                         set(self.hAxes, 'XLim', x, 'YLim', y);
 %                        % pause(1/fr_rate);
             
             
             
             
             if strcmp(filename,'') == 0
-                len = length(self.current_preview_file_(1,1,:));
-                xax = [0 length(self.current_preview_file_(1,:,1))];
-                yax = [0 length(self.current_preview_file_(:,1,1))];
-                max_num = max(self.current_preview_file_,[],[1 2]);
+                len = length(self.current_preview_file(1,1,:));
+                xax = [0 length(self.current_preview_file(1,:,1))];
+                yax = [0 length(self.current_preview_file(:,1,1))];
+                max_num = max(self.current_preview_file,[],[1 2]);
                 adjusted_file = zeros(yax(2), xax(2), len);
                 for i = 1:len
-                    adjusted_matrix = self.current_preview_file_(:,:,i) ./ max_num(i);
+                    adjusted_matrix = self.current_preview_file(:,:,i) ./ max_num(i);
                     adjusted_file(:,:,i) = adjusted_matrix(:,:,1);
                
                     
                     
                 end
-                im = imshow(adjusted_file(:,:,self.auto_preview_index_), 'Colormap', gray);
-                set(im,'parent', self.hAxes_);
-                set(self.hAxes_, 'XLim', xax, 'YLim', yax );
+                im = imshow(adjusted_file(:,:,self.auto_preview_index), 'Colormap', gray);
+                set(im,'parent', self.hAxes);
+                set(self.hAxes, 'XLim', xax, 'YLim', yax );
 
-                %while self.is_paused_ == 0    
+                %while self.is_paused == 0    
                     for i = 1:len
-                        if self.is_paused_ == false
-                            self.auto_preview_index_ = self.auto_preview_index_ + 1;
-                            if self.auto_preview_index_ > len
-                                self.auto_preview_index_ = 1;
+                        if self.is_paused == false
+                            self.auto_preview_index = self.auto_preview_index + 1;
+                            if self.auto_preview_index > len
+                                self.auto_preview_index = 1;
                             end
-                            %imagesc(self.current_preview_file_.pattern.Pats(:,:,self.auto_preview_index_), 'parent', hAxes);
-                            set(im,'cdata',adjusted_file(:,:,self.auto_preview_index_), 'parent', self.hAxes_);
+                            %imagesc(self.current_preview_file.pattern.Pats(:,:,self.auto_preview_index), 'parent', hAxes);
+                            set(im,'cdata',adjusted_file(:,:,self.auto_preview_index), 'parent', self.hAxes);
                             drawnow
 
                             pause(1/fr_rate);
@@ -1887,7 +1940,7 @@ classdef controller < handle %Made this handle class because was having trouble 
         function preview_pause(self, src, event)
 
 
-            self.is_paused_ = true;
+            self.is_paused = true;
 
         end
 
@@ -1895,15 +1948,15 @@ classdef controller < handle %Made this handle class because was having trouble 
         
         function preview_stop(self,src,event)
 
-            self.is_paused_ = true;
-            self.auto_preview_index_ = 1;
+            self.is_paused = true;
+            self.auto_preview_index = 1;
 
                         %hAxes = gca; 
-            x = [0 length(self.current_preview_file_(1,:,1))];
-            y = [0 length(self.current_preview_file_(:,1,1))];
+            x = [0 length(self.current_preview_file(1,:,1))];
+            y = [0 length(self.current_preview_file(:,1,1))];
      
-            max_num = max(self.current_preview_file_,[],[1 2]);    
-            adjusted_matrix = self.current_preview_file_(:,:,self.auto_preview_index_) ./ max_num(self.auto_preview_index_);
+            max_num = max(self.current_preview_file,[],[1 2]);    
+            adjusted_matrix = self.current_preview_file(:,:,self.auto_preview_index) ./ max_num(self.auto_preview_index);
                 
           
 
@@ -1912,8 +1965,8 @@ classdef controller < handle %Made this handle class because was having trouble 
 
                 %for i = 1:30
             im = imshow(adjusted_matrix(:,:), 'Colormap', gray);
-            set(im, 'parent', self.hAxes_)
-            set(self.hAxes_, 'XLim', x, 'YLim', y);
+            set(im, 'parent', self.hAxes)
+            set(self.hAxes, 'XLim', x, 'YLim', y);
                         
 
 
@@ -1940,19 +1993,19 @@ classdef controller < handle %Made this handle class because was having trouble 
                %axis)
            mode = data{1};
                if mode == 1
-                   self.preview_con_.preview_Mode1();
+                   self.preview_con.preview_Mode1();
                elseif mode == 2
-                   self.preview_con_.preview_Mode2();
+                   self.preview_con.preview_Mode2();
                elseif mode == 3
-                   self.preview_con_.preview_Mode3();
+                   self.preview_con.preview_Mode3();
                elseif mode == 4
-                   self.preview_con_.preview_Mode4();
+                   self.preview_con.preview_Mode4();
                elseif mode == 5
-                   self.preview_con_.preview_Mode4();
+                   self.preview_con.preview_Mode4();
                elseif mode == 6
-                   self.preview_con_.preview_Mode6();
+                   self.preview_con.preview_Mode6();
                elseif mode == 7
-                   self.preview_con_.preview_Mode4();
+                   self.preview_con.preview_Mode4();
                else
                    waitfor(errordlg("Please make sure you have entered a valid mode and try again."));
                end
@@ -1973,18 +2026,18 @@ classdef controller < handle %Made this handle class because was having trouble 
 
         function dry_run(self, src, event)
             
-            experiment_name = self.model_.get_experiment_name();
+            experiment_name = self.model.get_experiment_name();
             num_reps = 0;
             randomize = 0;
             trial = self.check_one_selected;
-            %block_trials = self.model_.get_block_trials();
+            %block_trials = self.model.get_block_trials();
             trial_mode = trial{1};
             trial_duration = trial{12};
            
             trial_fr_rate = trial{9};
            
             
-            %intertrial = self.model_.get_intertrial();
+            %intertrial = self.model.get_intertrial();
             if isempty(trial{10}) == 0
                 LmR_gain = trial{10};
                 LmR_offset = trial{11};
@@ -1993,11 +2046,11 @@ classdef controller < handle %Made this handle class because was having trouble 
                 LmR_offset = 0;
             end
             pre_start = 0;
-            if isempty(self.model_.doc_)
+            if isempty(self.model.doc)
                 waitfor(errordlg("You must import an Experiment Folder first"));
                 return;
             end
-            experiment_folder = self.model_.doc_.top_folder_path_;
+            experiment_folder = self.model.doc.top_folder_path_;
             
             connectHost;
             Panel_com('change_root_directory', experiment_folder);
@@ -2009,13 +2062,13 @@ classdef controller < handle %Made this handle class because was having trouble 
                     return;
                 case 'Start'
             
-                    pattern_index = self.model_.get_pattern_index(trial{2});
+                    pattern_index = self.model.get_pattern_index(trial{2});
                     if ~isempty(trial{3})
-                        position_index = self.model_.get_posfunc_index(trial{3});
+                        position_index = self.model.get_posfunc_index(trial{3});
                     else
                         position_index = 0;
                     end
-                    %ao_index = self.model_.get_ao_index(trial{4});
+                    %ao_index = self.model.get_ao_index(trial{4});
                     Panel_com('set_control_mode', trial_mode);
                     Panel_com('set_pattern_id', pattern_index); 
                    % Panel_com('set_gain_bias', [LmR_gain LmR_offset])
@@ -2057,37 +2110,37 @@ classdef controller < handle %Made this handle class because was having trouble 
             else
 
 
-                for i = self.auto_preview_index_:length(pos_data)
+                for i = self.auto_preview_index:length(pos_data)
                     
-                    if self.is_paused_ == false
+                    if self.is_paused == false
 
                         frame = pos_data(i);
                         disp(frame);
                         set(im,'cdata',pat_obj(:,:,frame));
 
-                        pos.XData = [self.auto_preview_index_ + 1, self.auto_preview_index_ + 1];
+                        pos.XData = [self.auto_preview_index + 1, self.auto_preview_index + 1];
 
                         if ao1 ~= 0
-                            ao1.XData = [self.auto_preview_index_ + 1, self.auto_preview_index_ + 1];
+                            ao1.XData = [self.auto_preview_index + 1, self.auto_preview_index + 1];
                         end
                         if ao2 ~= 0
-                            ao2.XData = [self.auto_preview_index_ + 1, self.auto_preview_index_ + 1];
+                            ao2.XData = [self.auto_preview_index + 1, self.auto_preview_index + 1];
                         end
                         if ao3 ~= 0
-                            ao3.XData = [self.auto_preview_index_ + 1, self.auto_preview_index_ + 1];
+                            ao3.XData = [self.auto_preview_index + 1, self.auto_preview_index + 1];
                         end
                         if ao4 ~= 0
-                            ao4.XData = [self.auto_preview_index_ + 1, self.auto_preview_index_ + 1];
+                            ao4.XData = [self.auto_preview_index + 1, self.auto_preview_index + 1];
                         end
 
                         drawnow limitrate nocallbacks
                         java.lang.Thread.sleep(17);
                         
-                        self.auto_preview_index_ = self.auto_preview_index_ + 1;
+                        self.auto_preview_index = self.auto_preview_index + 1;
                         
                     else
                         
-                        self.auto_preview_index_ = i;
+                        self.auto_preview_index = i;
                         
                     end
                        
@@ -2126,7 +2179,7 @@ classdef controller < handle %Made this handle class because was having trouble 
         %         ylabel(func_axes, y_label);
                 p = plot(func);
                 set(p, 'parent', func_axes);
-                func_line = line('XData',[self.auto_preview_index_,self.auto_preview_index_],'YData',[ylim(1), ylim(2)]);
+                func_line = line('XData',[self.auto_preview_index,self.auto_preview_index],'YData',[ylim(1), ylim(2)]);
                 title(graph_title);
                 xlabel(x_label);
                 ylabel(y_label);
@@ -2136,7 +2189,7 @@ classdef controller < handle %Made this handle class because was having trouble 
         
         function open_run_gui(self, src, event)
             
-            self.run_con_ = run_controller(self.model_);
+            self.run_con = run_controller(self.model_);
             
         end
 
@@ -2221,8 +2274,8 @@ end
 
 function clear_fields(self, mode)
 
-    pos_fields = fieldnames(self.model_.doc_.Pos_funcs_);
-    pat_fields = fieldnames(self.model_.doc_.Patterns_);
+    pos_fields = fieldnames(self.model.doc.Pos_funcs_);
+    pat_fields = fieldnames(self.model.doc.Patterns_);
     pos = '';
     indx = [];
     rate = [];
@@ -2231,7 +2284,7 @@ function clear_fields(self, mode)
     
     if mode == 1
 
-        index_of_pat = find(strcmp(pat_fields(:), [self.model_.block_trials_{self.current_selected_cell_.index(1), 2}]));
+        index_of_pat = find(strcmp(pat_fields(:), [self.model.block_trials{self.current_selected_cell.index(1), 2}]));
         pos = cell2mat(pos_fields(index_of_pat));
         self.set_mode_dep_props(pos, indx, rate, gain, offset);
         
@@ -2255,7 +2308,7 @@ function clear_fields(self, mode)
         %gain, offset, clear others
         
     elseif mode == 5
-        index_of_pat = find(strcmp(pat_fields(:), [self.model_.block_trials_{self.current_selected_cell_.index(1), 2}]));
+        index_of_pat = find(strcmp(pat_fields(:), [self.model.block_trials{self.current_selected_cell.index(1), 2}]));
         pos = cell2mat(pos_fields(index_of_pat));
         gain = 1;
         offset = 0;
@@ -2264,7 +2317,7 @@ function clear_fields(self, mode)
         
     elseif mode == 6
         
-        index_of_pat = find(strcmp(pat_fields(:), [self.model_.block_trials_{self.current_selected_cell_.index(1), 2}]));
+        index_of_pat = find(strcmp(pat_fields(:), [self.model.block_trials{self.current_selected_cell.index(1), 2}]));
         pos = cell2mat(pos_fields(index_of_pat));
         gain = 1;
         offset = 0;
@@ -2283,36 +2336,36 @@ function clear_fields(self, mode)
         gain = '';
         offset = '';
         self.set_mode_dep_props(pos, indx, rate, gain, offset);
-        if strcmp(self.current_selected_cell_.table,"pre") == 1
-            self.model_.set_pretrial_property(2, '');
+        if strcmp(self.current_selected_cell.table,"pre") == 1
+            self.model.set_pretrial_property(2, '');
             for i = 4:7
-                self.model_.set_pretrial_property(i,'');
+                self.model.set_pretrial_property(i,'');
             end
-            self.model_.set_pretrial_property(12,'');
+            self.model.set_pretrial_property(12,'');
             
-        elseif strcmp(self.current_selected_cell_.table,"inter") == 1
-            self.model_.set_intertrial_property(2, '');
+        elseif strcmp(self.current_selected_cell.table,"inter") == 1
+            self.model.set_intertrial_property(2, '');
             for i = 4:7
-                self.model_.set_intertrial_property(i,'');
+                self.model.set_intertrial_property(i,'');
             end
-            self.model_.set_intertrial_property(12,'');
+            self.model.set_intertrial_property(12,'');
             
             
-        elseif strcmp(self.current_selected_cell_.table,"post") == 1
-            self.model_.set_posttrial_property(2, '');
+        elseif strcmp(self.current_selected_cell.table,"post") == 1
+            self.model.set_posttrial_property(2, '');
             for i = 4:7
-                self.model_.set_posttrial_property(i,'');
+                self.model.set_posttrial_property(i,'');
             end
-            self.model_.set_posttrial_property(12,'');
+            self.model.set_posttrial_property(12,'');
             
             
         else
-            x = self.current_selected_cell_.index(1);
-            self.model_.set_block_trial_property([x,2], '');
+            x = self.current_selected_cell.index(1);
+            self.model.set_block_trial_property([x,2], '');
             for i = 4:7
-                self.model_.set_block_trial_property([x,i],'');
+                self.model.set_block_trial_property([x,i],'');
             end
-            self.model_.set_block_trial_property([x,12],'');
+            self.model.set_block_trial_property([x,12],'');
         end
         
     end
@@ -2321,38 +2374,38 @@ end
 
 function set_mode_dep_props(self, pos, indx, rate, gain, offset)
 
-    if strcmp(self.current_selected_cell_.table,"pre") == 1
-        self.model_.set_pretrial_property(3, pos);
-        self.model_.set_pretrial_property(8, indx);
-        self.model_.set_pretrial_property(9, rate);
-        self.model_.set_pretrial_property(10, gain);
-        self.model_.set_pretrial_property(11, offset);
+    if strcmp(self.current_selected_cell.table,"pre") == 1
+        self.model.set_pretrial_property(3, pos);
+        self.model.set_pretrial_property(8, indx);
+        self.model.set_pretrial_property(9, rate);
+        self.model.set_pretrial_property(10, gain);
+        self.model.set_pretrial_property(11, offset);
         self.set_pretrial_files_(3, pos);
             
-    elseif strcmp(self.current_selected_cell_.table,"inter") == 1
-        self.model_.set_intertrial_property(3, pos);
-        self.model_.set_intertrial_property(8, indx);
-        self.model_.set_intertrial_property(9, rate);
-        self.model_.set_intertrial_property(10, gain);
-        self.model_.set_intertrial_property(11, offset);
+    elseif strcmp(self.current_selected_cell.table,"inter") == 1
+        self.model.set_intertrial_property(3, pos);
+        self.model.set_intertrial_property(8, indx);
+        self.model.set_intertrial_property(9, rate);
+        self.model.set_intertrial_property(10, gain);
+        self.model.set_intertrial_property(11, offset);
         self.set_intertrial_files_(3,pos);
 
-    elseif strcmp(self.current_selected_cell_.table,"post") == 1
-        self.model_.set_posttrial_property(3, pos);
-        self.model_.set_posttrial_property(8, indx);
-        self.model_.set_posttrial_property(9, rate);
-        self.model_.set_posttrial_property(10, gain);
-        self.model_.set_posttrial_property(11, offset);
+    elseif strcmp(self.current_selected_cell.table,"post") == 1
+        self.model.set_posttrial_property(3, pos);
+        self.model.set_posttrial_property(8, indx);
+        self.model.set_posttrial_property(9, rate);
+        self.model.set_posttrial_property(10, gain);
+        self.model.set_posttrial_property(11, offset);
         self.set_posttrial_files_(3,pos);
 
     else
-        x = self.current_selected_cell_.index(1);
-        self.model_.set_block_trial_property([x,3], pos);
-        self.model_.set_block_trial_property([x,8], indx);
-        self.model_.set_block_trial_property([x,9], rate);
-        self.model_.set_block_trial_property([x,10], gain);
-        self.model_.set_block_trial_property([x,11], offset);
-        self.set_blocktrial_files_(self.current_selected_cell_.index(1),3,pos);
+        x = self.current_selected_cell.index(1);
+        self.model.set_block_trial_property([x,3], pos);
+        self.model.set_block_trial_property([x,8], indx);
+        self.model.set_block_trial_property([x,9], rate);
+        self.model.set_block_trial_property([x,10], gain);
+        self.model.set_block_trial_property([x,11], offset);
+        self.set_blocktrial_files_(self.current_selected_cell.index(1),3,pos);
 
     end
     
@@ -2377,17 +2430,17 @@ end
 %     
 %     if event.NewValue.Position(2) == .7
 %         
-%         self.update_config_file(self.model_.chan1_rate_, 1);
-%         self.update_config_file(self.model_.chan2_rate_, 2);
-%         self.update_config_file(self.model_.chan3_rate_, 3);
-%         self.update_config_file(self.model_.chan4_rate_, 4);
+%         self.update_config_file(self.model.chan1_rate, 1);
+%         self.update_config_file(self.model.chan2_rate, 2);
+%         self.update_config_file(self.model.chan3_rate, 3);
+%         self.update_config_file(self.model.chan4_rate, 4);
 %         
 %     elseif event.NewValue.Position(2) == .4
 %         
-%         self.model_.set_chan1_rate(str2num(self.configData_{14}(end-3:end)));
-%         self.model_.set_chan2_rate(str2num(self.configData_{15}(end-3:end)));
-%         self.model_.set_chan3_rate(str2num(self.configData_{16}(end-3:end)));
-%         self.model_.set_chan4_rate(str2num(self.configData_{17}(end-3:end)));
+%         self.model.set_chan1_rate(str2num(self.configData_{14}(end-3:end)));
+%         self.model.set_chan2_rate(str2num(self.configData_{15}(end-3:end)));
+%         self.model.set_chan3_rate(str2num(self.configData_{16}(end-3:end)));
+%         self.model.set_chan4_rate(str2num(self.configData_{17}(end-3:end)));
 % 
 %     else
 %         %do nothing, they exited out of the dialog box
@@ -2395,7 +2448,7 @@ end
 %     end
 %     
 %     delete(d);
-%     self.chan1_rate_box_.String = num2str(self.model_.chan1_rate_);
+%     self.chan1_rate_box.String = num2str(self.model.chan1_rate);
 %     
 % end
 
@@ -2413,7 +2466,7 @@ end
      %find selected rows in ALL tables
 
      %finds checked rows in block table
-            checkbox_block_data = horzcat(self.model_.block_trials_(1:end, end));
+            checkbox_block_data = horzcat(self.model.block_trials(1:end, end));
             checked_block = find(cell2mat(checkbox_block_data));
             checked_block_count = length(checked_block);
 
@@ -2424,7 +2477,7 @@ end
             end
 
 
-            if cell2mat(self.model_.pretrial_(13)) == 1
+            if cell2mat(self.model.pretrial(13)) == 1
                 pretrial_checked = 1;
                 checked_trial = 'pre';
             else 
@@ -2432,14 +2485,14 @@ end
 
             end
 
-            if cell2mat(self.model_.intertrial_(13)) == 1
+            if cell2mat(self.model.intertrial(13)) == 1
                 intertrial_checked = 1;
                 checked_trial = 'inter';
             else 
                 intertrial_checked = 0;
             end
 
-            if cell2mat(self.model_.posttrial_(13)) == 1
+            if cell2mat(self.model.posttrial(13)) == 1
                 posttrial_checked = 1;
                 checked_trial = 'post';
             else 
@@ -2459,101 +2512,365 @@ end
             else
       %set data to correct table
                 if strcmp(checked_trial,'pre')
-                    data = self.model_.pretrial_;
+                    data = self.model.pretrial;
                 elseif strcmp(checked_trial,'inter')
-                    data = self.model_.intertrial_;
+                    data = self.model.intertrial;
                 elseif strcmp(checked_trial, 'block')
-                    data = self.model_.block_trials_(checked_block(1),:);
+                    data = self.model.block_trials(checked_block(1),:);
                 elseif strcmp(checked_trial, 'post')
-                    data = self.model_.posttrial_;
+                    data = self.model.posttrial;
                 else
                     waitfor(errordlg("Something went wrong. Please make sure you have exactly one trial selected and try again."));
                 end
             end
         end
 
+        %SETTERS
+        
+         function set.model(self, value)
+            self.model_ = value;
+        end
+        
+        function set.preview_con(self, value)
+            self.preview_con_ = value;
+        end
+        
+        function set.run_con(self, value)
+            self.run_con_ = value;
+        end
+        
+         function set.pretrial_table(self, value)
+            self.pretrial_table_ = value;
+         end
+
+         function set.intertrial_table(self, value)
+            self.intertrial_table_ = value;
+         end
+
+         function set.posttrial_table(self, value)
+            self.posttrial_table_ = value;
+         end
+
+         function set.block_table(self, value)
+            self.block_table_ = value;
+         end
+         
+         function set.pre_files(self, value)
+             self.pre_files_ = value;
+         end
+         
+         function set.block_files(self, value)
+             self.block_files_ = value;
+         end
+         
+         function set.inter_files(self, value)
+             self.inter_files_ = value;
+         end
+         
+         function set.post_files(self, value)
+             self.post_files_ = value;
+         end
+         
+
+        function set.pre_selected_index(self, value)
+            self.pre_selected_index_ = value;
+        end
+        
+        function set.inter_selected_index(self, value)
+            self.inter_selected_index_ = value;
+        end
+        
+        function set.block_selected_index(self, value)
+            self.block_selected_index_ = value;
+        end
+        
+        function set.post_selected_index(self, value)
+            self.post_selected_index_ = value;
+        end
+         
+         function set.current_preview_file(self, value)
+             self.current_preview_file_ = value;
+         end
+         
+         function set.current_selected_cell(self, value)
+             self.current_selected_cell_ = value;
+         end
+         
+         function set.auto_preview_index(self, value)
+             self.auto_preview_index_ = value;
+         end
+         
+         function set.is_paused(self, value)
+             self.is_paused_ = value;
+         end
+
+         function set.chan1(self, value)
+            self.chan1_ = value;
+         end
+
+         function set.chan2(self, value)
+            self.chan2_ = value;
+         end
+
+         function set.chan3(self, value)
+            self.chan3_ = value;
+         end
+         
+         function set.chan4(self, value)
+            self.chan4_ = value;
+         end
+         
+         function set.chan1_rate_box(self, value)
+            self.chan1_rate_box_ = value;
+         end
+         
+         function set.chan2_rate_box(self, value)
+            self.chan2_rate_box_ = value;
+         end
+         
+         function set.chan3_rate_box(self, value)
+            self.chan3_rate_box_ = value;
+         end
+         
+         function set.chan4_rate_box(self, value)
+            self.chan4_rate_box_ = value;
+         end
+         
+         function set.isSelect_all(self, value)
+            self.isSelect_all_ = value;
+         end
+         
+         function set.isRandomized_radio(self, value)
+            self.isRandomized_radio_ = value;
+         end
+         
+         function set.isSequential_radio(self, value)
+             self.isSequential_radio_ = value;
+         end
+         
+         function set.repetitions_box(self, value)
+            self.repetitions_box_ = value;
+         end
+         
+         function set.bg2(self, value)
+             self.bg2_ = value;
+         end
+         
+         function set.num_rows_3(self, value)
+             self.num_rows_3_ = value;
+         end
+         
+         function set.num_rows_4(self, value)
+             self.num_rows_4_ = value;
+         end
+         
+         function set.bg(self, value)
+             self.bg_ = value;
+         end
+         
+         function set.isSelect_all_box(self, value)
+             self.isSelect_all_box_ = value;
+         end
+         
+         function set.f(self, value)
+             self.f_ = value;
+         end
+         
+         function set.preview_panel(self, value)
+             self.preview_panel_ = value;
+         end
+         
+         function set.hAxes(self, value)
+             self.hAxes_ = value;
+         end
+         
+         function set.exp_name_box(self, value)
+             self.exp_name_box_ = value;
+         end
 
 
 
-%GETTERS OF GUI OBJECT VALUES
+% GETTERS
+
+        
+        function output = get.model(self)
+            output = self.model_;
+        end
+        
+        function output = get.preview_con(self)
+            output = self.preview_con_;
+        end
+        
+        function output = get.run_con(self)
+            output = self.run_con_;
+        end
+        
+         function output = get.pretrial_table(self)
+            output = self.pretrial_table_;
+         end
+
+         function output = get.intertrial_table(self)
+            output = self.intertrial_table_;
+         end
+
+         function output = get.posttrial_table(self)
+            output = self.posttrial_table_;
+         end
+
+         function output = get.block_table(self)
+            output = self.block_table_;
+         end
+         
+         function output = get.pre_files(self)
+             output = self.pre_files_;
+         end
+         
+         function output = get.block_files(self)
+             output = self.block_files_;
+         end
+         
+         function output = get.inter_files(self)
+             output = self.inter_files_;
+         end
+         
+         function output = get.post_files(self)
+             output = self.post_files_;
+         end
+         
+
+        function output = get.pre_selected_index(self)
+            output = self.pre_selected_index_;
+        end
+        
+        function output = get.inter_selected_index(self)
+            output = self.inter_selected_index_;
+        end
+        
+        function output = get.block_selected_index(self)
+            output = self.block_selected_index_;
+        end
+        
+        function output = get.post_selected_index(self)
+            output = self.post_selected_index_;
+        end
+         
+         function output = get.current_preview_file(self)
+             output = self.current_preview_file_;
+         end
+         
+         function output = get.current_selected_cell(self)
+             output = self.current_selected_cell_;
+         end
+         
+         function output = get.auto_preview_index(self)
+             output = self.auto_preview_index_;
+         end
+         
+         function output = get.is_paused(self)
+             output = self.is_paused_;
+         end
 
 
-%          function output = get.pretrial_table(self)
-%             output = self.pretrial_table_;
-%          end
-% 
-%          function output = get.intertrial_table(self)
-%             output = self.intertrial_table_;
-%          end
-% 
-%          function output = get.posttrial_table(self)
-%             output = self.posttrial_table_;
-%          end
-% 
-%          function output = get.block_table(self)
-%             output = self.block_table_;
-%          end
-% 
-%          function output = get.chan1(self)
-%             output = self.chan1_;
-%          end
-% 
-%          function output = get.chan2(self)
-%             output = self.chan2_;
-%          end
-% 
-%          function output = get.chan3(self)
-%             output = self.chan3_;
-%          end
-%          
-%          function output = get.chan4(self)
-%             output = self.chan4_;
-%          end
-%          
-%          function output = get.chan1_rate_box(self)
-%             output = self.chan1_rate_box_;
-%          end
-%          
-%          function output = get.chan2_rate_box(self)
-%             output = self.chan2_rate_box_;
-%          end
-%          
-%          function output = get.chan3_rate_box(self)
-%             output = self.chan3_rate_box_;
-%          end
-%          
-%          function output = get.chan4_rate_box(self)
-%             output = self.chan4_rate_box_;
-%          end
-%          
-%          function output = get.isSelect_all(self)
-%             output = self.isSelect_all_;
-%          end
-%          
-%          function output = get.isRandomized_box(self)
-%             output = self.isRandomized_box_;
-%          end
-%          
-%          function output = get.repetitions_box(self)
-%             output = self.repetitions_box_;
-%          end
+         function output = get.chan1(self)
+            output = self.chan1_;
+         end
+
+         function output = get.chan2(self)
+            output = self.chan2_;
+         end
+
+         function output = get.chan3(self)
+            output = self.chan3_;
+         end
+         
+         function output = get.chan4(self)
+            output = self.chan4_;
+         end
+         
+         function output = get.chan1_rate_box(self)
+            output = self.chan1_rate_box_;
+         end
+         
+         function output = get.chan2_rate_box(self)
+            output = self.chan2_rate_box_;
+         end
+         
+         function output = get.chan3_rate_box(self)
+            output = self.chan3_rate_box_;
+         end
+         
+         function output = get.chan4_rate_box(self)
+            output = self.chan4_rate_box_;
+         end
+         
+         function output = get.isSelect_all(self)
+            output = self.isSelect_all_;
+         end
+         
+         function output = get.isRandomized_radio(self)
+            output = self.isRandomized_radio_;
+         end
+         
+         function output = get.isSequential_radio(self)
+             output = self.isSequential_radio_;
+         end
+         
+         function output = get.repetitions_box(self)
+            output = self.repetitions_box_;
+         end
+         
+         function output = get.bg2(self)
+             output = self.bg2_;
+         end
+         
+         function output = get.num_rows_3(self)
+             output = self.num_rows_3_;
+         end
+         
+         function output = get.num_rows_4(self)
+             output = self.num_rows_4_;
+         end
+         
+         function output = get.bg(self)
+             output = self.bg_;
+         end
+         
+         function output = get.isSelect_all_box(self)
+             output = self.isSelect_all_box_;
+         end
+         
+         function output = get.f(self)
+             output = self.f_;
+         end
+         
+         function output = get.preview_panel(self)
+             output = self.preview_panel_;
+         end
+         
+         function output = get.hAxes(self)
+             output = self.hAxes_;
+         end
+         
+         function output = get.exp_name_box(self)
+             output = self.exp_name_box_;
+         end
+
          
 %SETTERS OF GUI OBJECT VALUES
 
 
 
          function set_pretrial_table_data(self)
-             class(self.model_.pretrial_);
-            self.pretrial_table_.Data = self.model_.pretrial_;
+            self.pretrial_table.Data = self.model.pretrial;
          end
 
          function set_intertrial_table_data(self)
-            self.intertrial_table_.Data = self.model_.intertrial_;
+            self.intertrial_table.Data = self.model.intertrial;
          end
 
          function set_posttrial_table_data(self)
 
-            self.posttrial_table_.Data = self.model_.posttrial_;
+            self.posttrial_table.Data = self.model.posttrial;
 
          end
 
@@ -2561,13 +2878,13 @@ end
  
 %              
 %              
-%              %disp(self.model_.block_trials_);
+%              %disp(self.model.block_trials);
 % 
 %              
-%             self.block_table_.Data{x, y} = self.model_.block_trials_{x,y};
+%             self.block_table_.Data{x, y} = self.model.block_trials{x,y};
 %             
 %             
-%             %set(self.block_table_, 'data', self.model_.block_trials_);
+%             %set(self.block_table_, 'data', self.model.block_trials);
 %          end
          
          function set_block_table_data(self)
@@ -2582,12 +2899,12 @@ end
 %              %%%%%%%%%%%%%%%%%%and see if that fixes it, if not, ask Mike
                 %%%%%%%%%%%%%%%%%%if they have a release preference. 
              
-            jTable = findjobj(self.block_table_);
+            jTable = findjobj(self.block_table);
             jScrollPane = jTable.getComponent(0);
             javaObjectEDT(jScrollPane);
             currentViewPos = jScrollPane.getViewPosition;
              
-             self.block_table_.Data = self.model_.block_trials_;
+             self.block_table.Data = self.model.block_trials;
              
                          
             pause(0);
@@ -2595,83 +2912,83 @@ end
          end
 
          function set_bg_selection(self)
-            if self.model_.is_randomized_ == 1
-                set(self.bg_,'SelectedObject',self.isRandomized_radio_);
+            if self.model.is_randomized == 1
+                set(self.bg,'SelectedObject',self.isRandomized_radio);
             else
-                set(self.bg_,'SelectedObject',self.isSequential_radio_);
+                set(self.bg,'SelectedObject',self.isSequential_radio);
             end
          end
 
          function set_repetitions_box_val(self)
-            self.repetitions_box_.String = num2str(self.model_.repetitions_);
+            self.repetitions_box.String = num2str(self.model.repetitions);
          end
          
          function set_isSelect_all_box_val(self)
-             self.isSelect_all_box_.Value = self.isSelect_all_;
+             self.isSelect_all_box.Value = self.isSelect_all;
          end
 
          function set_chan1_val(self)
-            self.chan1_.Value = self.model_.is_chan1_;
+            self.chan1.Value = self.model.is_chan1;
          end
          
          function set_chan2_val(self)
-            self.chan2_.Value = self.model_.is_chan2_;
+            self.chan2.Value = self.model.is_chan2;
          end
          
          function set_chan3_val(self)
-            self.chan3_.Value = self.model_.is_chan3_;
+            self.chan3.Value = self.model.is_chan3;
          end
          
          function set_chan4_val(self)
-            self.chan4_.Value = self.model_.is_chan4_;
+            self.chan4.Value = self.model.is_chan4;
          end
          
          function set_chan1_rate_box_val(self)
 
-            self.chan1_rate_box_.String = num2str(self.model_.chan1_rate_);
+            self.chan1_rate_box.String = num2str(self.model.chan1_rate);
          end
          
          function set_chan2_rate_box_val(self)
 
-            self.chan2_rate_box_.String = num2str(self.model_.chan2_rate_);
+            self.chan2_rate_box.String = num2str(self.model.chan2_rate);
 
          end
 
          function set_chan3_rate_box_val(self)
 
-            self.chan3_rate_box_.String = num2str(self.model_.chan3_rate_);
+            self.chan3_rate_box.String = num2str(self.model.chan3_rate);
          end
          
          function set_chan4_rate_box_val(self)
-            self.chan4_rate_box_.String = num2str(self.model_.chan4_rate_);
+            self.chan4_rate_box.String = num2str(self.model.chan4_rate);
          end
          
          function set_bg2_selection(self)
             
-             value = get(self.num_rows_3_, 'Enable');
+             value = get(self.num_rows_3, 'Enable');
              if strcmp(value,'off') == 1
                  %do nothing
              else
-                if self.model_.num_rows_ == 3
-                    set(self.bg2_,'SelectedObject',self.num_rows_3_);
+                if self.model.num_rows == 3
+                    set(self.bg2,'SelectedObject',self.num_rows_3);
                 else
-                    set(self.bg2_,'SelectedObject',self.num_rows_4_);
+                    set(self.bg2,'SelectedObject',self.num_rows_4);
                 end
              end
             
          end
          
          function set_exp_name(self)
-             set(self.exp_name_box_,'String', self.model_.experiment_name_);
+             set(self.exp_name_box,'String', self.model.experiment_name);
          end
 
          
              
          
          
-%          function [self] = setfield(self.pre_files_,'pattern', new)
+%          function [self] = setfield(self.pre_files,'pattern', new)
 %          
-%             self.pre_files_.pattern = new;
+%             self.pre_files.pattern = new;
 %              
 %          end
          
@@ -2681,22 +2998,22 @@ end
              new_value = string(new_value);
               
             if y == 2
-                self.pre_files_.pattern = new_value;
+                self.pre_files.pattern = new_value;
             end
             if y == 3
-                self.pre_files_.position = new_value;
+                self.pre_files.position = new_value;
             end
             if y == 4
-                self.pre_files_.ao1 = new_value;
+                self.pre_files.ao1 = new_value;
             end
             if y == 5
-                self.pre_files_.ao2 = new_value;
+                self.pre_files.ao2 = new_value;
             end
             if y == 6
-                self.pre_files_.ao3 = new_value;
+                self.pre_files.ao3 = new_value;
             end
             if y == 7
-                self.pre_files_.ao4 = new_value;
+                self.pre_files.ao4 = new_value;
             end
          end
 
@@ -2706,22 +3023,22 @@ end
              new_value = string(new_value);
             
             if y == 2
-                self.inter_files_.pattern = new_value;
+                self.inter_files.pattern = new_value;
             end
             if y == 3
-                self.inter_files_.position = new_value;
+                self.inter_files.position = new_value;
             end
             if y == 4
-                self.inter_files_.ao1 = new_value;
+                self.inter_files.ao1 = new_value;
             end
             if y == 5
-                self.inter_files_.ao2 = new_value;
+                self.inter_files.ao2 = new_value;
             end
             if y == 6
-                self.inter_files_.ao3 = new_value;
+                self.inter_files.ao3 = new_value;
             end
             if y == 7
-                self.inter_files_.ao4 = new_value;
+                self.inter_files.ao4 = new_value;
             end
          end
          
@@ -2731,22 +3048,22 @@ end
              new_value = string(new_value);
             
             if y == 2
-                self.post_files_.pattern = new_value;
+                self.post_files.pattern = new_value;
             end
             if y == 3
-                self.post_files_.position = new_value;
+                self.post_files.position = new_value;
             end
             if y == 4
-                self.post_files_.ao1 = new_value;
+                self.post_files.ao1 = new_value;
             end
             if y == 5
-                self.post_files_.ao2 = new_value;
+                self.post_files.ao2 = new_value;
             end
             if y == 6
-                self.post_files_.ao3 = new_value;
+                self.post_files.ao3 = new_value;
             end
             if y == 7
-                self.post_files_.ao4 = new_value;
+                self.post_files.ao4 = new_value;
             end
          end
          
@@ -2755,23 +3072,23 @@ end
              new_value = string(new_value);
             
             if y == 2
-                %disp(self.block_files_.pattern(x));
-                self.block_files_.pattern(x) = new_value;
+                %disp(self.block_files.pattern(x));
+                self.block_files.pattern(x) = new_value;
             end
             if y == 3
-                self.block_files_.position(x) = new_value;
+                self.block_files.position(x) = new_value;
             end
             if y == 4
-                self.block_files_.ao1(x) = new_value;
+                self.block_files.ao1(x) = new_value;
             end
             if y == 5
-                self.block_files_.ao2(x) = new_value;
+                self.block_files.ao2(x) = new_value;
             end
             if y == 6
-                self.block_files_.ao3(x) = new_value;
+                self.block_files.ao3(x) = new_value;
             end
             if y == 7
-                self.block_files_.ao4(x) = new_value;
+                self.block_files.ao4(x) = new_value;
             end
          end
  

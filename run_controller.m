@@ -28,20 +28,20 @@ classdef run_controller < handle
     methods
         
         %contstructor
-        function self = run_controller(model)
-            self.fig_ = figure('Name', 'Fly Experiment Conductor', 'NumberTitle', 'off', 'units','pixels','MenuBar', 'none', ...
+        function self = run_controller(mainmodel)
+            self.fig = figure('Name', 'Fly Experiment Conductor', 'NumberTitle', 'off', 'units','pixels','MenuBar', 'none', ...
                 'ToolBar', 'none', 'Resize', 'off');
-            self.model_ = model;
+            self.model = mainmodel;
             self.layout();
-%             self.total_trials_ = self.model_.get_repetitions()*length(self.model_.block_trials_{:,1});
-%             if strcmp(self.model_.pretrial{2},'') == 0
+%             self.total_trials_ = self.model.get_repetitions()*length(self.model.block_trials_{:,1});
+%             if strcmp(self.model.pretrial{2},'') == 0
 %                 self.total_trials_ = self.total_trials_ + 1;
 %             end
-%             if strcmp(self.model_.posttrial{2},'') == 0
+%             if strcmp(self.model.posttrial{2},'') == 0
 %                 self.total_trials_ = self.total_trials_ + 1;
 %             end
-%             if strcmp(self.model_.intertrial{2},'') == 0
-%                 self.total_trials_ = self.total_trials_ + self.model_.get_repetitions() - 1;%%%%%%%IS THIS CORRECT? IS THERE AN INTERTRIAL AFTER THE LAST repetition or before the first repetition?
+%             if strcmp(self.model.intertrial{2},'') == 0
+%                 self.total_trials_ = self.total_trials_ + self.model.get_repetitions() - 1;%%%%%%%IS THIS CORRECT? IS THERE AN INTERTRIAL AFTER THE LAST repetition or before the first repetition?
 %             end
 
             
@@ -52,30 +52,30 @@ classdef run_controller < handle
         function layout(self)
            pix = get(0, 'screensize');
            fig_size = [.25*pix(3), .25*pix(4), .5*pix(3), .5*pix(4)];
-           set(self.fig_,'Position',fig_size);
+           set(self.fig,'Position',fig_size);
 
            
            
-            start_button = uicontrol(self.fig_,'Style','pushbutton', 'String', 'Run', ...
+            start_button = uicontrol(self.fig,'Style','pushbutton', 'String', 'Run', ...
                 'units', 'pixels', 'Position', [15, fig_size(4)- 305, 115, 85],'Callback', @self.test_progress_bar);
-            settings_pan = uipanel(self.fig_, 'Title', 'Settings', 'FontSize', 13, 'units', 'pixels', ...
+            settings_pan = uipanel(self.fig, 'Title', 'Settings', 'FontSize', 13, 'units', 'pixels', ...
                 'Position', [15, fig_size(4) - 215, 370, 200]);
-            metadata_pan = uipanel(self.fig_, 'Title', 'Metadata', 'units', 'pixels', ...
+            metadata_pan = uipanel(self.fig, 'Title', 'Metadata', 'units', 'pixels', ...
                 'FontSize', 13, 'Position', [fig_size(3) - 300, fig_size(4) - 265, 275, 250]);
-            status_pan = uipanel(self.fig_, 'Title', 'Status', 'FontSize', 13, 'units', 'pixels', ...
+            status_pan = uipanel(self.fig, 'Title', 'Status', 'FontSize', 13, 'units', 'pixels', ...
                 'Position', [15, 15, fig_size(3) - 30, fig_size(4)*.2]); 
-            self.progress_axes_ = axes(self.fig_, 'units','pixels', 'Position', [15, fig_size(4)*.2+30, fig_size(3) - 15 ,50]);
-            axes_label = uicontrol(self.fig_, 'Style', 'text', 'String', 'Progress:', 'FontSize', 13, ...
+            self.progress_axes = axes(self.fig, 'units','pixels', 'Position', [15, fig_size(4)*.2+30, fig_size(3) - 15 ,50]);
+            axes_label = uicontrol(self.fig, 'Style', 'text', 'String', 'Progress:', 'FontSize', 13, ...
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [15, fig_size(4)*.2 + 85, 100, 20]);
-            self.progress_bar_ = barh(0, 'Parent', self.progress_axes_,'BaseValue', 0);
-            self.progress_axes_.XAxis.Limits = [0 1];
-           % self.progress_axes_.YAxis.Visible = 'off';
-           % self.progress_axes_.XAxis.Visible = 'off';
-           self.progress_axes_.YTickLabel = [];
-           self.progress_axes_.XTickLabel = [];
-           self.progress_axes_.XTick = [];
-           self.progress_axes_.YTick = [];
-           reps = self.model_.get_repetitions();
+            self.progress_bar = barh(0, 'Parent', self.progress_axes,'BaseValue', 0);
+            self.progress_axes.XAxis.Limits = [0 1];
+           % self.progress_axes.YAxis.Visible = 'off';
+           % self.progress_axes.XAxis.Visible = 'off';
+           self.progress_axes.YTickLabel = [];
+           self.progress_axes.XTickLabel = [];
+           self.progress_axes.XTick = [];
+           self.progress_axes.YTick = [];
+           reps = self.model.repetitions;
            for i = 1:reps
                x = (1/reps)*i;
                line('XData', [x, x], 'YDATA', [0,2]);
@@ -90,11 +90,11 @@ classdef run_controller < handle
                 'Position', [115, 200, 150, 18]);
             exp_name_label = uicontrol(metadata_pan, 'Style', 'text', 'String', 'Experiment Name:', ...
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 175, 100, 15]);
-            exp_name_box = uicontrol(metadata_pan, 'Style', 'edit', 'String', self.model_.experiment_name_, 'units', 'pixels', 'Position', ...
+            exp_name_box = uicontrol(metadata_pan, 'Style', 'edit', 'String', self.model.experiment_name_, 'units', 'pixels', 'Position', ...
                 [115, 175, 150, 18], 'Callback', @update_experiment_name);
             fly_name_label = uicontrol(metadata_pan, 'Style', 'text', 'String', 'Fly Name:', ...
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 150, 100, 15]);
-            fly_name_box = uicontrol(metadata_pan, 'Style', 'edit', 'String', self.fly_name_, ...
+            fly_name_box = uicontrol(metadata_pan, 'Style', 'edit', 'String', self.fly_name, ...
                 'units', 'pixels', 'Position', [115, 150, 150, 18], 'Callback', @self.update_fly_name);
             fly_genotype_label = uicontrol(metadata_pan, 'Style', 'text', 'String', 'Fly Genotype', ...
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 125, 100, 15]);
@@ -137,11 +137,11 @@ classdef run_controller < handle
         end
         
         function update_progress(self, rep, cond)
-            increment = 1/(self.model_.repetitions_ * length(self.model_.block_trials_(:,1)));
+            increment = 1/(self.model.repetitions_ * length(self.model.block_trials_(:,1)));
 
-            distance = ((rep - 1)*length(self.model_.block_trials_(:,1)) + cond)*increment;
-            self.progress_axes_.Title.String = "Rep " + rep + " of " + self.model_.repetitions_ + ", Trial " + cond + " of " + length(self.model_.block_trials_(:,1));
-            self.progress_bar_.YData = distance;
+            distance = ((rep - 1)*length(self.model.block_trials_(:,1)) + cond)*increment;
+            self.progress_axes.Title.String = "Rep " + rep + " of " + self.model.repetitions_ + ", Trial " + cond + " of " + length(self.model.block_trials_(:,1));
+            self.progress_bar.YData = distance;
             
             drawnow;
             
@@ -149,8 +149,8 @@ classdef run_controller < handle
         
         function test_progress_bar(self, src, event)
         
-            reps = self.model_.get_repetitions();
-            trials = length(self.model_.block_trials_(:,1));
+            reps = self.model.get_repetitions();
+            trials = length(self.model.block_trials_(:,1));
             for i = 1:reps
                 for j = 1:trials
                     
@@ -165,14 +165,14 @@ classdef run_controller < handle
         function run(self, src, event)
             %Get necessary data
             
-            experiment_name = self.model_.get_experiment_name();
-            num_reps = self.model_.get_repetitions();
-            randomize = self.model_.get_is_randomized();
+            experiment_name = self.model.get_experiment_name();
+            num_reps = self.model.get_repetitions();
+            randomize = self.model.get_is_randomized();
             
-            pretrial = self.model_.get_pretrial();
-            block_trials = self.model_.get_block_trials();
-            intertrial = self.model_.get_intertrial();
-            posttrial = self.model_.get_posttrial();
+            pretrial = self.model.get_pretrial();
+            block_trials = self.model.get_block_trials();
+            intertrial = self.model.get_intertrial();
+            posttrial = self.model.get_posttrial();
             
             trial_duration = block_trials{1,12};
             intertrial_duration = intertrial{12};
@@ -185,8 +185,8 @@ classdef run_controller < handle
             %AT ONCE.
             %pretrial
             pretrial_mode = pretrial{1};
-            pretrial_pat_id = self.model_.get_pattern_index(pretrial{2});
-            pretrial_posfunc_id = self.model_.get_posfunc_index(pretrial{3});
+            pretrial_pat_id = self.model.get_pattern_index(pretrial{2});
+            pretrial_posfunc_id = self.model.get_posfunc_index(pretrial{3});
             
             if ~isempty(pretrial{10})
                 pretrial_gain = pretrial{10};
@@ -203,8 +203,8 @@ classdef run_controller < handle
             
             %first run of block_trials
 %             trial_mode = block_trials{1,1};
-%             pat_index = self.model_.get_pattern_index(block_trials{1,2});
-%             posfunc_index = self.model_.get_posfunc_index(block_trials{1,3});
+%             pat_index = self.model.get_pattern_index(block_trials{1,2});
+%             posfunc_index = self.model.get_posfunc_index(block_trials{1,3});
             if ~isempty(block_trials{1,10})
                 LmR_gain = block_trials{1,10};
                 LmR_offset = block_trials{1,11};
@@ -217,8 +217,8 @@ classdef run_controller < handle
             
             %intertrial values
             intertrial_mode = intertrial{1};
-            intertrial_pat_id = self.model_.get_pattern_index(intertrial{2});
-            intertrial_posfunc_id = self.model_.get_posfunc_index(intertrial{3});
+            intertrial_pat_id = self.model.get_pattern_index(intertrial{2});
+            intertrial_posfunc_id = self.model.get_posfunc_index(intertrial{3});
             if ~isempty(intertrial{10})
                 intertrial_gain = intertrial{10};
                 intertrial_offset = intertrial{11};
@@ -230,8 +230,8 @@ classdef run_controller < handle
            
             %posttrial values
             posttrial_mode = posttrial{1};
-            posttrial_pat_id = self.model_.get_pattern_index(posttrial{2});
-            posttrial_posfunc_id = self.model_.get_posfunc_index(posttrial{3});
+            posttrial_pat_id = self.model.get_pattern_index(posttrial{2});
+            posttrial_posfunc_id = self.model.get_posfunc_index(posttrial{3});
             if ~isempty(posttrial{10})
                 posttrial_gain = posttrial{10};
                 posttrial_offset = posttrial{11};
@@ -277,7 +277,7 @@ classdef run_controller < handle
             
             %THIS METHOD will create an array like [0, 2, 3] if ao channels
             %1,3, and 4 are active. Is this correct??????????????
-            channels = [self.model_.get_is_chan1(), self.model_.get_is_chan2(), self.model_.get_is_chan3(), self.model_.get_is_chan4()];
+            channels = [self.model.get_is_chan1(), self.model.get_is_chan2(), self.model.get_is_chan3(), self.model.get_is_chan4()];
             channel_nums = [0,1,2,3];
             
             j = 1;
@@ -296,23 +296,23 @@ classdef run_controller < handle
             posttrial_ao_funcs = [];
             for i = 1:length(active_ao_channels)
                 channel_num = active_ao_channels(i);
-                pretrial_ao_indices(i) = self.model_.get_ao_index(pretrial{channel_num + 4});
-                ao_indices(i) = self.model_.get_ao_index(block_trials{1,channel_num + 4});
-                intertrial_ao_indices(i) = self.model_.get_ao_index(intertrial{channel_num + 4});
-                posttrial_ao_indices(i) = self.model_.get_ao_index(posttrial{channel_num + 4});
+                pretrial_ao_indices(i) = self.model.get_ao_index(pretrial{channel_num + 4});
+                ao_indices(i) = self.model.get_ao_index(block_trials{1,channel_num + 4});
+                intertrial_ao_indices(i) = self.model.get_ao_index(intertrial{channel_num + 4});
+                posttrial_ao_indices(i) = self.model.get_ao_index(posttrial{channel_num + 4});
             end
          
             
             
             %% PREPARE EXPERIMENT COFIGURATION
-            if strcmp(self.model_.doc_.save_filename_,'') == 1
+            if strcmp(self.model.doc_.save_filename_,'') == 1
                 waitfor(errordlg("You didn't save this experiment. Please go back and save then run the experiment again."));
                 return
             end
-            [experiment_path, g4p_filename, ext] = fileparts(self.model_.doc_.save_filename_);
+            [experiment_path, g4p_filename, ext] = fileparts(self.model.doc_.save_filename_);
             experiment_folder = experiment_path;
 
-            num_conditions = length(self.model_.block_trials_(:,1));
+            num_conditions = length(self.model.block_trials_(:,1));
             if ~exist(fullfile(experiment_folder,'Log Files'),'dir')
                 mkdir(experiment_folder,'Log Files');
             end
@@ -323,7 +323,7 @@ classdef run_controller < handle
                 waitfor(errordlg('unsorted files present in "Log Files" folder, remove before restarting experiment\n'));
                 return
             end
-            if exist([experiment_folder '\Results\' self.fly_name_],'dir')
+            if exist([experiment_folder '\Results\' self.fly_name],'dir')
                 waitfor(errordlg('Results folder already exists with that fly name\n'));
                 return
             end
@@ -343,8 +343,12 @@ classdef run_controller < handle
             start = questdlg('Start Experiment?','Confirm Start','Start','Cancel','Start');
             if pre_start==1 %start with 10 seconds of closed loop stripe fixation
                 Panel_com('set_control_mode',pretrial_mode);
-                Panel_com('set_pattern_func_id',pretrial_posfunc_id);
-                Panel_com('set_gain_bias', [pretrial_gain, pretrial_offset]);
+                if pretrial_posfunc_id ~= 0
+                    Panel_com('set_pattern_func_id',pretrial_posfunc_id);
+                end
+                if ~isempty(pretrial_gain)
+                    Panel_com('set_gain_bias', [pretrial_gain, pretrial_offset]);
+                end
                 Panel_com('set_pattern_id', pretrial_pat_id);
                
                 for i = 1:length(pretrial_ao_funcs)
@@ -397,11 +401,11 @@ classdef run_controller < handle
                         
                         self.update_progress(r, c);
                         cond = exp_order(r,c); % + exclude_stripe
-                        pat_id = self.model_.get_pattern_index(block_trials{cond,2});
-                        pos_func_id = self.model_.get_posfunc_index(block_trials{cond,3});
+                        pat_id = self.model.get_pattern_index(block_trials{cond,2});
+                        pos_func_id = self.model.get_posfunc_index(block_trials{cond,3});
                         trial_mode = block_trials{cond,1};
                         for i = 1:length(active_ao_channels)
-                            ao_func_indices(i) = self.model_.get_ao_index(block_trials{cond, active_ao_channels(i)+ 4});
+                            ao_func_indices(i) = self.model.get_ao_index(block_trials{cond, active_ao_channels(i)+ 4});
                         end
 
                         %intertrial portion
@@ -411,7 +415,9 @@ classdef run_controller < handle
                         if inter_type == 1
                             Panel_com('set_control_mode', intertrial_mode);
                             Panel_com('set_pattern_id', intertrial_pat_id );
-                            Panel_com('set_pattern_func_id',intertrial_posfunc_id);
+                            if intertrial_posfunc_id ~= 0
+                                Panel_com('set_pattern_func_id',intertrial_posfunc_id);
+                            end
                             if intertrial_mode == 3
                                 Panel_com('set_position_x', intertrial{8});
                             end
@@ -454,7 +460,7 @@ classdef run_controller < handle
                         if trial_mode == 3
                             Panel_com('set_position_x', block_trials{cond,8});
                         end
-    %                     counter = "Rep " + num2str(r) + " of " + num2str(num_reps) + ", cond " + num2str(c) + " of " + num2str(num_conditions) +": " + strjoin(self.model_.doc_.currentExp_.currentExp.pattern.pattNames(pat_id));
+    %                     counter = "Rep " + num2str(r) + " of " + num2str(num_reps) + ", cond " + num2str(c) + " of " + num2str(num_conditions) +": " + strjoin(self.model.doc_.currentExp_.currentExp.pattern.pattNames(pat_id));
     %                     disp(counter);
 
                         %%%%%%How does this work? what does the zero represent?
@@ -497,9 +503,9 @@ classdef run_controller < handle
                 Panel_com('stop_log');
                 disconnectHost;
                 pause(1);
-                movefile([experiment_folder '\Log Files\*'],fullfile(experiment_folder,'Results',self.fly_name_));
+                movefile([experiment_folder '\Log Files\*'],fullfile(experiment_folder,'Results',self.fly_name));
                 %save([experiment_folder '\Log Files\exp_order.mat'],'exp_order')
-                self.progress_axes_.Title.String = "Experiment Completed.";
+                self.progress_axes.Title.String = "Experiment Completed.";
                 drawnow;
 
             
@@ -522,16 +528,57 @@ classdef run_controller < handle
         
         %SETTERS
 
-        function set_fly_name(self, new_value)
-            self.fly_name_ = new_value;
+        
+        function set.model(self, value)
+            self.model_ = value;
         end
         
+        function set.fig(self, value)
+            self.fig_ = value;
+        end
+        
+        function set.fly_name(self, value)
+            self.fly_name_ = value;
+        end
+        
+        function set.progress_axes(self, value)
+            self.progress_axes_ = value;
+        end
+        
+        function set.progress_bar(self, value)
+            self.progress_bar_ = value;
+        end
+
+%         function set_fly_name(self, new_value)
+%             self.fly_name_ = new_value;
+%         end
+%         
         
         %GETTERS
         
-        function [output] = get_fly_name(self)
-            output = self.fly_name_;
+        function value = get.model(self)
+           value = self.model_;
         end
+        
+        function value = get.fig(self)
+            value = self.fig_;
+        end
+        
+        function value = get.fly_name(self)
+            value = self.fly_name_;
+        end
+        
+        function value = get.progress_axes(self)
+            value = self.progress_axes_;
+        end
+        
+        function value = get.progress_bar(self)
+            value = self.progress_bar_;
+        end
+        
+%         function [output] = get_fly_name(self)
+%             output = self.fly_name_;
+%         end
         
         
         
