@@ -290,7 +290,7 @@ classdef controller < handle %Made this handle class because was having trouble 
 
             self.hAxes = axes(self.f, 'units', 'pixels', 'OuterPosition', [200, 125, 1280 ,427], 'XLim', [0 200], 'YLim', [0 65]);
             
-            self.exp_name_box = uicontrol(self.f, 'Style', 'edit', 'String', self.model.experiment_name, ...
+            self.exp_name_box = uicontrol(self.f, 'Style', 'edit', ...
                 'FontSize', 14, 'units', 'pixels', 'Position', ...
                 [pos_panel_(1)+ (pos_panel_(3)/2) - 200, pos_panel_(2) - 100, 400, 30], 'Callback', @self.update_experiment_name);
             
@@ -302,7 +302,7 @@ classdef controller < handle %Made this handle class because was having trouble 
        %Drop down menu and associated labels and buttons
 
             menu = uimenu(self.f, 'Text', 'File');
-            menu_import = uimenu(menu, 'Text', 'Import', 'Callback', @self.imp_folder);
+            menu_import = uimenu(menu, 'Text', 'Import', 'Callback', @self.import);
             menu_open = uimenu(menu, 'Text', 'Open', 'Callback', @self.open_file);
             menu_saveas = uimenu(menu, 'Text', 'Save as', 'Callback', @self.saveas);
             menu_save = uimenu(menu, 'Text', 'Save', 'Callback', @self.save);
@@ -434,7 +434,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             self.set_chan3_rate_box_val();
             self.set_chan4_rate_box_val();
             self.set_bg2_selection();
-            self.set_exp_name();
+            %self.set_exp_name();
             
 
 
@@ -738,7 +738,7 @@ classdef controller < handle %Made this handle class because was having trouble 
         
         function update_doc(self, new_value)
             
-            self.model.set_doc(new_value);
+            self.model.doc = new_value;
         end
         
         function update_preview_con(self, new_value)
@@ -767,7 +767,8 @@ classdef controller < handle %Made this handle class because was having trouble 
             
             new_val = src.String;
            
-            self.model.set_experiment_name(new_val);
+            self.model.doc.experiment_name = new_val;
+            self.set_exp_name();
             self.update_gui();
         end
        
@@ -776,7 +777,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             %open config file
             %change appropriate rate
             %save and close config file
-            configData = self.model.get_config_data();
+            configData = self.model.configData();
 
             settings_data = strtrim(regexp( fileread('G4_Protocol_Designer_Settings.m'),'\n','split'));
             filepath_line = find(contains(settings_data,'Configuration File Path:'));
@@ -1088,33 +1089,18 @@ classdef controller < handle %Made this handle class because was having trouble 
 %MAIN MENU CALLBACK FUNCTIONS----------------------------------------------
 
 %Import
-    function imp_folder(self, src, event)
+    function import(self, src, event)
        
-       answer = questdlg('Would you like to import an Experiment folder or a file?',...
+       answer = questdlg('Would you like to import a folder or a file?',...
            'Import', 'Folder', 'File', 'Cancel', 'Folder');
        
        switch answer
            case 'Folder'
-                top_folder_path = uigetdir;
-                prog = waitbar(0, 'Importing...', 'WindowStyle', 'modal');
-                if isequal (top_folder_path,0)
-                    %do nothing
-                else
-                    imported_folder = document(top_folder_path);
-                    waitbar(.5,prog,'Updating...');
-                    self.update_doc(imported_folder);
-                    [exp_path, exp_name] = fileparts(self.model.doc.top_folder_path_);
-                    self.model.set_experiment_name(exp_name);
-                    self.update_gui();
-                    set(self.num_rows_3, 'Enable', 'off');
-                    set(self.num_rows_4, 'Enable', 'off');
-                end
-                close(prog);
+               self.import_folder();
+
            case 'File'
-               prog = waitbar(0, 'Importing...', 'WindowStyle', 'modal');
-               self.imp_file();
-               waitbar(1, prog, 'Finished');
-               close(prog);
+                self.import_file()
+
            case 'Cancel'
                %do nothing
        end
@@ -1123,24 +1109,60 @@ classdef controller < handle %Made this handle class because was having trouble 
 
     end
     
-    function imp_file(self)
-    
-        if isempty(self.model.doc) == 1
-            waitfor(errordlg("You must import an Experiment folder first."));
+    function import_folder(self)
+        
+        path = uigetdir;
+        
+        if isequal(path, 0)
+            %do nothing
         else
-            [imported_file, path] = uigetfile;
-            
-            if isequal(imported_file,0)
-                %do nothing
-            else
-                self.model.doc.import_file(imported_file, path);
+            if isempty(self.model.doc)
+                imported_data = document();
+                self.update_doc(imported_data);
             end
+                
+            self.model.doc.import_folder(path);
+            
+            
+
+            self.set_exp_name();
+
+            set(self.num_rows_3, 'Enable', 'off');
+            set(self.num_rows_4, 'Enable', 'off');
+            
+            self.update_gui();
+            
+                
         end
+            
+    end
+    
+    function import_file(self)
+        
+        [imported_file, path] = uigetfile;
+        prog = waitbar(0, 'Importing...', 'WindowStyle', 'modal');
+        if isequal(imported_file,0)
+            %do nothing
+        else
+    
+            if isempty(self.model.doc)
+                imported_data = document();
+                self.update_doc(imported_data);
+            end
+
+            self.model.doc.import_file(imported_file, path);
+            waitbar(1, prog, 'Finishing');
+            set(self.num_rows_3, 'Enable', 'off');
+            set(self.num_rows_4, 'Enable', 'off');
+            self.update_gui();
+            close(prog);
+        end
+     end
         
         
        
     
-    end
+    
     
     
 
@@ -1148,17 +1170,17 @@ classdef controller < handle %Made this handle class because was having trouble 
 
     function saveas(self, src, event)
         
-        cut_date_off_name = regexp(self.model.experiment_name,'-','split');
+        cut_date_off_name = regexp(self.model.doc.experiment_name,'-','split');
         if length(cut_date_off_name) > 1
             exp_name = cut_date_off_name{1}(1:end-2);
         else
-            exp_name = self.model.get_experiment_name();
+            exp_name = self.model.doc.experiment_name;
         end
         dateFormat = 'mm-dd-yy_HH-MM-SS';
         %dateFormat = 30; %ISO8601 format, yyyymmddTHHMMSS (year, month, date, T for time, hours, minutes, seconds) - see matlab docs
         dated_exp_name = strcat(exp_name, datestr(now, dateFormat));
-        self.model.set_experiment_name(dated_exp_name);
-        [file, path] = uiputfile('*.mat','File Selection', self.model.experiment_name);
+        self.model.doc.experiment_name = dated_exp_name;
+        [file, path] = uiputfile('*.mat','File Selection', self.model.doc.experiment_name);
         full_path = fullfile(path, file);
         
         if file == 0
@@ -1168,22 +1190,22 @@ classdef controller < handle %Made this handle class because was having trouble 
         prog = waitbar(0,'Please wait...');
         
     %get values of interest from model and store them in struct to save to mat file.
-        vars.block_trials = self.model.get_block_trials();
-        vars.pretrial = self.model.get_pretrial();
-        vars.intertrial = self.model.get_intertrial();
-        vars.posttrial = self.model.get_posttrial();
-        vars.is_randomized = self.model.get_is_randomized();
-        vars.repetitions = self.model.get_repetitions();
-        vars.is_chan1 = self.model.get_is_chan1();
-        vars.is_chan2 = self.model.get_is_chan2();
-        vars.is_chan3 = self.model.get_is_chan3();
-        vars.is_chan4 = self.model.get_is_chan4();
-        vars.chan1_rate = self.model.get_chan1_rate();
-        vars.chan2_rate = self.model.get_chan2_rate();
-        vars.chan3_rate = self.model.get_chan3_rate();
-        vars.chan4_rate = self.model.get_chan4_rate();
-        vars.num_rows = self.model.get_num_rows();
-        vars.experiment_name = self.model.get_experiment_name();
+        vars.block_trials = self.model.block_trials();
+        vars.pretrial = self.model.pretrial();
+        vars.intertrial = self.model.intertrial();
+        vars.posttrial = self.model.posttrial();
+        vars.is_randomized = self.model.is_randomized();
+        vars.repetitions = self.model.repetitions();
+        vars.is_chan1 = self.model.is_chan1();
+        vars.is_chan2 = self.model.is_chan2();
+        vars.is_chan3 = self.model.is_chan3();
+        vars.is_chan4 = self.model.is_chan4();
+        vars.chan1_rate = self.model.chan1_rate();
+        vars.chan2_rate = self.model.chan2_rate();
+        vars.chan3_rate = self.model.chan3_rate();
+        vars.chan4_rate = self.model.chan4_rate();
+        vars.num_rows = self.model.num_rows();
+        vars.experiment_name = self.model.doc.experiment_name;
         
         waitbar(.33,prog,'Saving...');
         
@@ -1200,22 +1222,22 @@ classdef controller < handle %Made this handle class because was having trouble 
     %document to save the file.
         
     %Get up to date variables from the model.
-        vars.block_trials = self.model.get_block_trials();
-        vars.pretrial = self.model.get_pretrial();
-        vars.intertrial = self.model.get_intertrial();
-        vars.posttrial = self.model.get_posttrial();
-        vars.is_randomized = self.model.get_is_randomized();
-        vars.repetitions = self.model.get_repetitions();
-        vars.is_chan1 = self.model.get_is_chan1();
-        vars.is_chan2 = self.model.get_is_chan2();
-        vars.is_chan3 = self.model.get_is_chan3;
-        vars.is_chan4 = self.model.get_is_chan4;
-        vars.chan1_rate = self.model.get_chan1_rate;
-        vars.chan2_rate = self.model.get_chan2_rate;
-        vars.chan3_rate = self.model.get_chan3_rate;
-        vars.chan4_rate = self.model.get_chan4_rate;
-        vars.num_rows = self.model.get_num_rows();
-        vars.experiment_name = self.model.get_experiment_name();
+        vars.block_trials = self.model.block_trials();
+        vars.pretrial = self.model.pretrial();
+        vars.intertrial = self.model.intertrial();
+        vars.posttrial = self.model.posttrial();
+        vars.is_randomized = self.model.is_randomized();
+        vars.repetitions = self.model.repetitions();
+        vars.is_chan1 = self.model.is_chan1();
+        vars.is_chan2 = self.model.is_chan2();
+        vars.is_chan3 = self.model.is_chan3;
+        vars.is_chan4 = self.model.is_chan4;
+        vars.chan1_rate = self.model.chan1_rate;
+        vars.chan2_rate = self.model.chan2_rate;
+        vars.chan3_rate = self.model.chan3_rate;
+        vars.chan4_rate = self.model.chan4_rate;
+        vars.num_rows = self.model.num_rows();
+        vars.experiment_name = self.model.doc.experiment_name;
         
         self.model.doc.save(vars);
 
@@ -1242,11 +1264,13 @@ classdef controller < handle %Made this handle class because was having trouble 
         
             if isempty(self.model.doc)
 
-                    imported_folder = document(top_folder_path);
+                    imported_folder = document();
                     self.update_doc(imported_folder);
+                    self.model.doc.import_folder(top_folder_path);
                     [exp_path, exp_name, ext] = fileparts(filepath);
                    % [exp_path, exp_name] = fileparts(self.model.doc.top_folder_path_);
-                    self.model.set_experiment_name(exp_name);
+                    self.model.doc.experiment_name = exp_name;
+                    self.set_exp_name();
                     
                     self.update_gui();
                     
@@ -1254,7 +1278,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             
 
             data = self.model.doc.open(filepath);
-            m = self.model_;
+            m = self.model;
             d = data.exp_parameters;
             
             %Set parameters outside tables
@@ -1537,7 +1561,11 @@ classdef controller < handle %Made this handle class because was having trouble 
                     end
                     if event.Indices(2) == 2
                         
-                        pats = self.model.doc.Patterns_;
+                        pats = self.model.doc.Patterns;
+                        if isempty(fieldnames(pats))
+                            waitfor(errordlg("You haven't imported any patterns yet."));
+                            return;
+                        end
                         fields = fieldnames(pats);
                         [index, chose] = listdlg('ListString',fields,'SelectionMode','single');
 
@@ -1580,7 +1608,12 @@ classdef controller < handle %Made this handle class because was having trouble 
                         edit = self.check_editable(mode, 3);
 
                         if edit == 1
-                            pos = self.model.doc.Pos_funcs_;
+                            pos = self.model.doc.Pos_funcs;
+                            if isempty(fieldnames(pos))
+                                waitfor(errordlg("You have not imported any position functions yet."));
+                                return;
+                            end
+                            
                             fields = fieldnames(pos);
                             [index, chose] = listdlg('ListString',fields,'SelectionMode','single');
                             if chose == 1
@@ -1614,7 +1647,11 @@ classdef controller < handle %Made this handle class because was having trouble 
                         end
                     elseif event.Indices(2) > 3 && event.Indices(2) < 8
 
-                        ao = self.model.doc.Ao_funcs_;
+                        ao = self.model.doc.Ao_funcs;
+                        if isempty(fieldnames(ao))
+                            waitfor(errordlg("You haven't imported any AO functions yet."));
+                            return;
+                        end
                         fields = fieldnames(ao);
                         [index, chose] = listdlg('ListString',fields,'SelectionMode','single');
                         if chose == 1
@@ -2026,18 +2063,18 @@ classdef controller < handle %Made this handle class because was having trouble 
 
         function dry_run(self, src, event)
             
-            experiment_name = self.model.get_experiment_name();
+            experiment_name = self.model.doc.experiment_name;
             num_reps = 0;
             randomize = 0;
             trial = self.check_one_selected;
-            %block_trials = self.model.get_block_trials();
+            %block_trials = self.model.block_trials();
             trial_mode = trial{1};
             trial_duration = trial{12};
            
             trial_fr_rate = trial{9};
            
             
-            %intertrial = self.model.get_intertrial();
+            %intertrial = self.model.intertrial();
             if isempty(trial{10}) == 0
                 LmR_gain = trial{10};
                 LmR_offset = trial{11};
@@ -2979,7 +3016,7 @@ end
          end
          
          function set_exp_name(self)
-             set(self.exp_name_box,'String', self.model.experiment_name);
+             set(self.exp_name_box,'String', self.model.doc.experiment_name);
          end
 
          

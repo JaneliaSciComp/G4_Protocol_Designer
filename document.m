@@ -10,6 +10,7 @@ classdef document < handle
         Ao_funcs_
         save_filename_
         currentExp_
+        experiment_name_
         
     end
     
@@ -22,57 +23,26 @@ classdef document < handle
         Ao_funcs
         save_filename
         currentExp
+        experiment_name
         
     end
     
     methods
         
-%         function self = document()
-%         
-%             self.top_folder_path_ = '';
-% %             self.Patterns_ = struct;
-% %             self.Pos_funcs_ = struct;
-% %             self.Ao_funcs_ = struct;
-%         
-%         end
+        function self = document()
+        
+            self.top_folder_path = '';
+            self.top_export_path = '';
+            self.Patterns = struct;
+            self.Pos_funcs = struct;
+            self.Ao_funcs = struct;
+            self.save_filename = '';
+            self.currentExp = struct;
+            self.experiment_name = '';
+        
+        end
        function [export_successful] = export(self, vars)
            
-           %Check if experiment folder for that experiment name already
-           %exists - if it does, confirm the user wants to recycle the old
-           %folder and replace it with the new one.
-%             if exist(self.top_export_path_, 'dir') == 7
-%                 question = "A folder for experiment " + vars.experiment_name + " already exists. Are you sure you want to replace it?";
-%                 replace = questdlg(question);
-%                 if strcmp(replace, 'Yes') == 1
-%                     confirm = "Are you sure you want to send " + vars.experiment_name + " to the recycle bin?";
-%                     confirmation = questdlg(confirm);
-%                     if strcmp(confirmation, 'Yes') == 1
-%                         recycle('on')
-%                         rmdir(self.top_export_path_,'s');
-%                     elseif strcmp(confirmation,'')==1 || strcmp(confirmation,'Cancel')==1
-%                         export_successful = 2; 
-%                         return;
-%                         
-%                     else
-%                         export_successful = 0;
-%                         return;
-% 
-%                     end
-%                 elseif strcmp(replace,'') == 1 || strcmp(replace,'Cancel') == 1
-%                     export_successful = 2;
-%                     return;
-%                     
-%                     
-%                 else
-%                     export_successful = 0;
-%                     return;
-%                 end
-%                
-%                 
-%             end
-            
-                        
-            %[path, name, ext] =  fileparts(self.save_filename_);
 
             Exppath = self.top_export_path;
 
@@ -448,7 +418,8 @@ classdef document < handle
             
             
         end
-        
+ 
+%Import a file, called from controller when a file instead of folder is imported------------------------------------------------------
         function import_file(self, file, path)
 
             file_full = fullfile(path, file);
@@ -497,46 +468,78 @@ classdef document < handle
         
         end
         
-        
-        function self = document(path)
+%Import an EXPERIMENT folder, called from import_folder after determining it's an experiment folder -----------------------------------------------------        
+        function [imported_message] = import_experiment_folder(self, path)
             
             self.top_folder_path = path;
-
-            %use fullfile to create the file path to each folder in
-            %Experiment
-            
             pat_folder = fullfile(self.top_folder_path, 'Patterns');
             pos_folder = fullfile(self.top_folder_path, 'Functions');
             ao_folder = fullfile(self.top_folder_path, 'Analog Output Functions');
-            %results_folder = fullfile(self.top_folder_path, 'Results');
             currentExp_path = fullfile(self.top_folder_path, 'currentExp.mat');
-
+            
+            [partialpath, name] = fileparts(self.top_folder_path);
+            self.experiment_name = name;
+            
             if ~isfolder(pat_folder)
-
-                errordlg("Cannot find the Patterns folder in Experiment.");
-
+                waitfor(errordlg("Cannot find a Patterns folder. No patterns will be imported."));
+                pat_folder = 0;
             end
             if ~isfolder(pos_folder)
-
-                errordlg("Cannot find the Functions folder in Experiment.");
-
+                waitfor(errordlg("Cannot find a Functions folder. No position functions will be imported."));
+                pos_folder = 0;
             end
             if ~isfolder(ao_folder)
-
-                errordlg("Cannot find the Analog Output Functions folder in Experiment.");
-
+                waitfor(errordlg("Cannot find an Analog Output Functions folder. No ao functions will be imported."));
+                ao_folder = 0;
             end
-            if ~isfile(currentExp_path)
-
-                errordlg("Cannot find the currentExp.mat file in Experiment.");
-
+            
+            if isempty(fieldnames(self.currentExp))
+                currentExp_replaced = 0;
+                self.currentExp = load(currentExp_path);
+            else
+                currentExp_replaced = 1;
+                self.currentExp = load(currentExp_path);
             end
-
-
+            %self.save_filename = '';
+            
+            if pat_folder == 0
+                %do nothing
+            else 
+                [pats_failed, pats_imported] = self.import_pattern_folder(pat_folder);
+            end
+            
+            if pos_folder == 0
+                %do nothing
+            else
+               [pos_failed, pos_imported] = self.import_function_folder(pos_folder);
+            end
+            
+            if ao_folder == 0
+                %do nothing
+            else
+               [ao_failed, ao_imported] = self.import_ao_folder(ao_folder);
+            end
+            
+            imported_message = pats_imported + " patterns imported, " + pos_imported + " functions imported, and " + ao_imported + " AO functions imported." ...
+                + newline + pats_failed + " patterns failed, " + pos_failed + " functions failed, and " + ao_failed + " AO functions failed.";
+            if currentExp_replaced == 1
+                imported_message = imported_message + newline + "1 currentExp file imported and replaced previous currentExp file.";
+            else
+                imported_message = imported_message + newline + "1 currentExp file imported.";
+            end
+            
+            
+        end
+            
+%Import a PATTERN folder, called from import_folder after determining the folder is a pattern folder, or from import_experiment_folder--------------
+            
+        function [pats_failed, pats_imported] = import_pattern_folder(self, pat_folder)
             %pull all .mat filenames out of Patterns folder and make a
             %list of them
 
             %establishes what type of files I want to pull, *.mat
+            pats_failed = 0;
+            pats_imported= 0;
             pat_file_pattern = sprintf('%s/*.mat', pat_folder);
 
             %takes all contents from pat_folder that match
@@ -550,44 +553,136 @@ classdef document < handle
 
             %go through list and load each file
             for k = 1:num_of_patterns
-                %create path to kth .mat file in Patterns folder
-                filepath = fullfile(pat_folder, string(list_pat_names(k)));
+                %check that a pattern of this name has not already been
+                %imported
+                filepath = fullfile(pat_folder, list_pat_names{k});
                 [path, name, ext] = fileparts(filepath);
-                self.Patterns.(name) = load(filepath);
+                if ~isfield(self.Patterns, name)
+                    %create path to kth .mat file in Patterns folder
+                    
+                    self.Patterns.(name) = load(filepath);
+                    pats_imported = pats_imported + 1;
+                else
+                    pats_failed = pats_failed + 1;
+                end
             end
+           
+        end
 
-
+%Import a function folder, called from sampe places as import_pattern folder-----------------------------------
+        function [pos_failed, pos_imported] = import_function_folder(self, pos_folder)
+            
+            pos_imported = 0;
+            pos_failed = 0;
             pos_file_pattern = sprintf('%s/*.mat', pos_folder);
             all_position_files = dir(pos_file_pattern);
             list_pos_names = {all_position_files.name};
             num_of_positions = length(list_pos_names);
 
             for m = 1:num_of_positions
-                filepath = fullfile(pos_folder, string(list_pos_names(m)));
+                filepath = fullfile(pos_folder, list_pos_names{m});
                 [path, name, ext] = fileparts(filepath);
-                self.Pos_funcs.(name) = load(filepath);
+                if ~isfield(self.Pos_funcs, name)
+                    
+                    self.Pos_funcs.(name) = load(filepath);
+                    pos_imported = pos_imported + 1;
+                    
+                else
+                    pos_failed = pos_failed + 1;
+                end
             end
-
+            
+        end
+        
+%Import an AO folder, called from same places as import_pattern_folder-----------------------------------------------------
+        function [ao_failed, ao_imported] = import_ao_folder(self, ao_folder)
+            
+            ao_failed = 0;
+            ao_imported = 0;
             ao_file_pattern = sprintf('%s/*.mat', ao_folder);
             all_ao_files = dir(ao_file_pattern);
             list_ao_names = {all_ao_files.name};
             num_of_ao = length(list_ao_names);
 
             for j = 1:num_of_ao
-                filepath = fullfile(ao_folder, string(list_ao_names(j)));
+                
+                filepath = fullfile(ao_folder, list_ao_names{j});
                 [path, name, ext] = fileparts(filepath);
-                self.Ao_funcs.(name) = load(filepath);
+                if ~isfield(self.Ao_funcs, name)
+                    
+                    self.Ao_funcs.(name) = load(filepath);
+                    ao_imported = ao_imported + 1;
+                else
+                    ao_failed = ao_failed + 1;
+                end
             end
-            [path, name, ext] = fileparts(currentExp_path);
-            self.currentExp = load(currentExp_path);
-            self.save_filename = '';
+            
+            
+        end
+        
+%Import a folder, called from the controller and calls more specific import functions for each type of folder ---------------------------------        
+        function import_folder(self, path)
+            
+            exp_file = fullfile(path, 'currentExp.mat');
+            
+            pat_file_pattern = sprintf('%s/*.pat', path);
+            all_pat_files = dir(pat_file_pattern);
+            
+            func_file_pattern = sprintf('%s/*.pfn',path);
+            all_func_files = dir(func_file_pattern);
+            
+            ao_file_pattern = sprintf('%s/*.afn',path);
+            all_ao_files = dir(ao_file_pattern);
+            
+            
+            if isfile(exp_file)
+                
+                prog = waitbar(0, 'Importing...', 'WindowStyle', 'modal'); %start waiting bar
+                imported_message = self.import_experiment_folder(path); %do the import
+                waitbar(1, prog, 'Finishing...');
+                close(prog); %finish and close the waiting bar
+                waitfor(msgbox(imported_message, 'Import Successful')); %display message with import numbers.
+                
+            elseif ~isempty(all_pat_files)
+                
+                prog = waitbar(0, 'Importing...', 'WindowStyle', 'modal');
+                [pats_failed, pats_imported] = self.import_pattern_folder(path);
+                waitbar(1, prog, 'Finishing...');
+                close(prog);
+                imported_message = pats_imported + " patterns imported. " + newline + pats_failed + " patterns failed.";
+                waitfor(msgbox(imported_message, 'Import Successful'));
+                
+            elseif ~isempty(all_func_files)
+                prog = waitbar(0, 'Importing...', 'WindowStyle', 'modal');
+                [pos_failed, pos_imported] = self.import_function_folder(path);
+                waitbar(1, prog, 'Finishing...');
+                close(prog);
+                imported_message = pos_imported + " position functions imported. " + newline + pos_failed + " position functions failed.";
+                waitfor(msgbox(imported_message, 'Import Successful'));
+                
+            elseif ~isempty(all_ao_files)
+                
+                prog = waitbar(0, 'Importing...', 'WindowStyle', 'modal');
+                [ao_failed, ao_imported] = self.import_ao_folder(path);
+                waitbar(1, prog, 'Finishing...');
+                close(prog);
+                imported_message = ao_imported + " AO functions imported. " + newline + ao_failed + " AO functions failed.";
+                waitfor(msgbox(imported_message, 'Import Successful'));
+                
+            else
+                waitfor(errordlg(['I do not recognize this as a pattern, function, ao, or experiment folder. ', ...
+                'If it is an experiment folder, please make sure it has a currentExp.mat file. ', ...
+                'If it is a pattern, function, or ao folder, please make sure it has the corresponding .pat, .pfn, or .afn files. ']));
+                return;
+            end
+
 
 
         end
         
         %Setters
         
-        function self = set.top_folder_path(self, value)
+        function set.top_folder_path(self, value)
             self.top_folder_path_ = value;
         end
         
@@ -613,6 +708,10 @@ classdef document < handle
         
         function set.currentExp(self, value)
             self.currentExp_ = value;
+        end
+        
+        function set.experiment_name(self, value)
+            self.experiment_name_ = value;
         end
         
         %Getters
@@ -644,6 +743,10 @@ classdef document < handle
         
         function value = get.currentExp(self)
             value = self.currentExp_;
+        end
+        
+        function value = get.experiment_name(self)
+            value = self.experiment_name_;
         end
         
 

@@ -34,7 +34,7 @@ classdef model_class < handle
      
 %RUN INFORMATION
 
-        experiment_name_
+       % experiment_name_
         %fly_name_
         
     end
@@ -65,7 +65,7 @@ classdef model_class < handle
         chan4_rate
         
         
-        experiment_name
+       % experiment_name
         %fly_name
      
     end
@@ -201,7 +201,7 @@ classdef model_class < handle
             self.is_chan4 = 0;
             
             
-            self.experiment_name = '';
+           % self.doc.experiment_name = '';
 %            self.fly_name_ = 'Fly Name';
             
 
@@ -542,10 +542,10 @@ classdef model_class < handle
             
         end
         
-        function set_experiment_name(self, new_value)
-            self.experiment_name = new_value;
-        end
-        
+%         function set_experiment_name(self, new_value)
+%             self.experiment_name = new_value;
+%         end
+%         
 
   
         
@@ -634,10 +634,10 @@ classdef model_class < handle
             self.chan4_rate_ = value;
         end
         
-        function set.experiment_name(self, value)
-            self.experiment_name_ = value;
-        end
-            
+%         function set.experiment_name(self, value)
+%             self.experiment_name_ = value;
+%         end
+%             
 
 %         function set_fly_name(self, new_value)
 %             self.fly_name_ = new_value;
@@ -731,10 +731,10 @@ classdef model_class < handle
             output = self.configData_;
         end
         
-        function output = get.experiment_name(self)
-            output = self.experiment_name_;
-        end
-        
+%         function output = get.experiment_name(self)
+%             output = self.experiment_name_;
+%         end
+%         
 %         function output = get_fly_name(self)
 %             output = self.fly_name_;
 %         end
