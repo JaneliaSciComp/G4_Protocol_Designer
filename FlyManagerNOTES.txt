@@ -4,6 +4,7 @@ Notes on using the Fly Protocol Designer software so far:
 START-UP
 
 Before running - Open the G4_Protocol_Designer_Settings.m file and check the path to your panel configuration file. If this path is incorrect, you'll get an error.
+
 To run, open the script.m file and run in matlab. This and the settings file should be the only ones you have to open. 
 	- Note: If you get an error regarding "findjobj" when you run the script file, check to make sure findjobj, a folder 
 	inside the project folder with everything else, is on your matlab path. Let me know if this happens, because it shouldn't.
@@ -16,6 +17,10 @@ Entering Data:
 pattern files which do not match the selected screen size, you will get an error. Once a folder has been
 imported, the screen size option will become uneditable, meaning if you need to change screen size, you will
 need to exit the application and restart it.
+
+- You can import an experiment folder with a currentExp.mat file, a folder of patterns, functions, or ao functions, or a single .mat file. 
+When importing a folder, the first thing it looks for is the currentExp.mat. If there isn't one, but there are subfolders, it will not work. 
+So you can't, say, import a folder which contains a patterns folder and a functions folder but nothing else. You can import those two folders separately.
 
 - Right now, if you have already opened another .g4p file or autopopulated an imported folder, you cannot open another .g4p file. You have to restart the 
 application to open a new experiment. You can import additional files then add them manually to the tables.  
@@ -58,6 +63,10 @@ SAVING:
 
 - Please make sure you change the experiment name before saving. If it is the first time you have saved this experiment, use
 "Save As" under the file menu. Similarly, use "Save as" if you have previously saved this experiment, but want to save it again under a new name.
+
+- When naming a file, please do not use any "-" characters. Use underscores instead. This is because the program must remove any old time stamp from the name
+and add an updated one, and uses dashes as the delimiter to find the time stamp. If you have any dashes in your filename, you'll
+lose the text after the first dash. 
 
 - Opening a previously saved .g4p file will automatically import the Experiment folder in which it is located. You may use "Save" to replace the 
 .g4p file and its Experiment folder with the updated file and a new export using the updated information. Remember that using "Save" will ALWAYS

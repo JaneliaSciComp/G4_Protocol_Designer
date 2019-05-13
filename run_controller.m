@@ -2,10 +2,23 @@ classdef run_controller < handle
    
     properties
         model_;
+        doc_;
         fig_;
-        fly_name_;
+        
+        
+        %GUI objects
         progress_axes_;
         progress_bar_;
+        experimenter_box_
+        exp_name_box_
+        fly_name_box_
+        fly_genotype_box_
+        date_and_time_box_
+        exp_type_menu_
+        plotting_checkbox_
+        plotting_textbox_
+        processing_checkbox_
+        processing_textbox_
         %total_trials_;
 
         
@@ -14,10 +27,21 @@ classdef run_controller < handle
     
     properties (Dependent)
         model;
+        doc;
         fig;
-        fly_name;
+
         progress_axes;
         progress_bar;
+        experimenter_box
+        exp_name_box
+        fly_name_box
+        fly_genotype_box
+        date_and_time_box
+        exp_type_menu
+        plotting_checkbox
+        plotting_textbox
+        processing_checkbox
+        processing_textbox
        % total_trials;
         
         
@@ -28,10 +52,19 @@ classdef run_controller < handle
     methods
         
         %contstructor
-        function self = run_controller(mainmodel)
+        function self = run_controller(varargin)
             self.fig = figure('Name', 'Fly Experiment Conductor', 'NumberTitle', 'off', 'units','pixels','MenuBar', 'none', ...
                 'ToolBar', 'none', 'Resize', 'off');
-            self.model = mainmodel;
+            self.model = run_model();
+            self.doc = document();
+            
+            
+            if ~isempty(varargin)
+                
+                self.doc = varargin{1};
+                
+            end
+            
             self.layout();
 %             self.total_trials_ = self.model.get_repetitions()*length(self.model.block_trials_{:,1});
 %             if strcmp(self.model.pretrial{2},'') == 0
@@ -55,9 +88,11 @@ classdef run_controller < handle
            set(self.fig,'Position',fig_size);
 
            
+           menu = uimenu(self.fig, 'Text', 'File');
+           menu_open = uimenu(menu, 'Text', 'Open', 'Callback', @self.open_g4p_file);
            
             start_button = uicontrol(self.fig,'Style','pushbutton', 'String', 'Run', ...
-                'units', 'pixels', 'Position', [15, fig_size(4)- 305, 115, 85],'Callback', @self.test_progress_bar);
+                'units', 'pixels', 'Position', [15, fig_size(4)- 305, 115, 85],'Callback', @self.run);
             settings_pan = uipanel(self.fig, 'Title', 'Settings', 'FontSize', 13, 'units', 'pixels', ...
                 'Position', [15, fig_size(4) - 215, 370, 200]);
             metadata_pan = uipanel(self.fig, 'Title', 'Metadata', 'units', 'pixels', ...
@@ -75,7 +110,7 @@ classdef run_controller < handle
            self.progress_axes.XTickLabel = [];
            self.progress_axes.XTick = [];
            self.progress_axes.YTick = [];
-           reps = self.model.repetitions;
+           reps = self.doc.repetitions;
            for i = 1:reps
                x = (1/reps)*i;
                line('XData', [x, x], 'YDATA', [0,2]);
@@ -86,61 +121,115 @@ classdef run_controller < handle
             %Settings required from user
             experimenter_label = uicontrol(metadata_pan, 'Style', 'text', 'String', 'Experimenter:', ...
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 200, 100, 15]);
-            experimenter_box = uicontrol(metadata_pan, 'Style', 'edit', 'units', 'pixels', ...
-                'Position', [115, 200, 150, 18]);
+            self.experimenter_box = uicontrol(metadata_pan, 'Style', 'edit', 'units', 'pixels', ...
+                'String', self.model.experimenter, 'Position', [115, 200, 150, 18], 'Callback', @self.update_experimenter);
             exp_name_label = uicontrol(metadata_pan, 'Style', 'text', 'String', 'Experiment Name:', ...
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 175, 100, 15]);
-            exp_name_box = uicontrol(metadata_pan, 'Style', 'edit', 'String', self.model.doc.experiment_name, 'units', 'pixels', 'Position', ...
-                [115, 175, 150, 18], 'Callback', @update_experiment_name);
+            self.exp_name_box = uicontrol(metadata_pan, 'Style', 'edit', 'String', self.doc.experiment_name, 'units', 'pixels', 'Position', ...
+                [115, 175, 150, 18], 'Callback', @self.update_experiment_name);
             fly_name_label = uicontrol(metadata_pan, 'Style', 'text', 'String', 'Fly Name:', ...
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 150, 100, 15]);
-            fly_name_box = uicontrol(metadata_pan, 'Style', 'edit', 'String', self.fly_name, ...
+            self.fly_name_box = uicontrol(metadata_pan, 'Style', 'edit', 'String', self.model.fly_name, ...
                 'units', 'pixels', 'Position', [115, 150, 150, 18], 'Callback', @self.update_fly_name);
             fly_genotype_label = uicontrol(metadata_pan, 'Style', 'text', 'String', 'Fly Genotype', ...
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 125, 100, 15]);
-            fly_genotype_box = uicontrol(metadata_pan, 'Style', 'edit', 'units', 'pixels', ...
-                'Position', [115, 125, 150, 18]);
+            self.fly_genotype_box = uicontrol(metadata_pan, 'Style', 'edit', 'units', 'pixels', ...
+                'String', self.model.fly_genotype, 'Position', [115, 125, 150, 18], 'Callback', @self.update_genotype);
             date_and_time_label = uicontrol(metadata_pan, 'Style', 'text', 'String', 'Date and Time:', ...
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 100, 100, 15]);
-            date_and_time_box = uicontrol(metadata_pan, 'Style', 'edit', 'String', datestr(now, 'mm-dd-yyyy HH:MM:SS'), ...
+            self.date_and_time_box = uicontrol(metadata_pan, 'Style', 'edit', 'String', datestr(now, 'mm-dd-yyyy HH:MM:SS'), ...
                 'units', 'pixels', 'Position', [115, 100, 150, 18]);
             exp_type_label = uicontrol(settings_pan, 'Style', 'text', 'String', 'Experiment Type:', ...
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 150, 100, 15]);
-            exp_type = uicontrol(settings_pan, 'Style', 'popupmenu', 'String', {'Flight','Camera walk', 'Chip walk'}, ...
-                'units', 'pixels', 'Position', [115, 150, 150, 18]);
+            self.exp_type_menu = uicontrol(settings_pan, 'Style', 'popupmenu', 'String', {'Flight','Camera walk', 'Chip walk'}, ...
+                'units', 'pixels', 'Position', [115, 150, 150, 18], 'Callback', @self.update_experiment_type);
             test_button = uicontrol(settings_pan, 'Style', 'pushbutton', 'String', 'Run Test Protocol', ...
                 'units', 'pixels', 'Position', [210, 120, 150, 20], 'Callback', @self.run_test);
             plotting_checkbox_label = uicontrol(settings_pan, 'Style', 'text', 'String', 'Plotting?', ...
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 95, 65, 15]);
-            plotting_checkbox = uicontrol(settings_pan, 'Style', 'checkbox',  ...
-                'units', 'pixels', 'Position', [80, 95, 15, 15]);
+            self.plotting_checkbox = uicontrol(settings_pan, 'Style', 'checkbox', 'Value', self.model.do_plotting, ...
+                'units', 'pixels', 'Position', [80, 95, 15, 15], 'Callback', @self.update_do_plotting);
             plotting_filename_label = uicontrol(settings_pan, 'Style', 'text', 'String', 'Plotting Protocol:', ...
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [100, 95, 105, 15]);
-            plotting_textbox = uicontrol(settings_pan, 'Style', 'edit', 'units', 'pixels', ...
-                'Position', [210, 95, 150, 18]);
+            self.plotting_textbox = uicontrol(settings_pan, 'Style', 'edit', 'units', 'pixels', ...
+                'String', self.model.plotting_file, 'Position', [210, 95, 150, 18], 'Callback', @self.update_plotting_file);
             processing_checkbox_label = uicontrol(settings_pan, 'Style', 'text', 'String', 'Processing?', ...
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 70, 65, 15]);
-            processing_checkbox = uicontrol(settings_pan, 'Style', 'checkbox',  ...
-                'units', 'pixels', 'Position', [80, 70, 15, 15]);
+            self.processing_checkbox = uicontrol(settings_pan, 'Style', 'checkbox', 'Value', self.model.do_processing, ...
+                'units', 'pixels', 'Position', [80, 70, 15, 15], 'Callback', @self.update_do_processing);
             processing_filename_label = uicontrol(settings_pan, 'Style', 'text', 'String', 'Processing Protocol:', ...
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [100, 70, 105, 15]);
-            processing_textbox = uicontrol(settings_pan, 'Style', 'edit', 'units', 'pixels', ...
-                'Position', [210, 70, 150, 18]);
+            self.processing_textbox = uicontrol(settings_pan, 'Style', 'edit', 'units', 'pixels', ...
+                'String', self.model.processing_file, 'Position', [210, 70, 150, 18], 'Callback', @self.update_processing_file);
             
+            
+        end
+        
+        function update_run_gui(self)
+           
+            self.experimenter_box.String = self.model.experimenter;
+            self.exp_name_box.String = self.doc.experiment_name;
+            self.fly_name_box.String = self.model.fly_name;
+            self.fly_genotype_box.String = self.model.fly_genotype;
+            self.date_and_time_box.String = datestr(now, 'mm-dd-yyyy HH:MM:SS');
+            self.plotting_checkbox.Value = self.model.is_plotting;
+            self.plotting_textbox.String = self.model.plotting_file;
+            self.processing_checkbox.Value = self.model.is_processing;
+            self.processing_textbox.String = self.model.processing_file;
+            self.exp_type_menu.Value = self.model.experiment_type;
             
         end
         
         function update_fly_name(self, src, event)
             
-            self.set_fly_name(src.String);
+            self.model.fly_name = src.String;
             
         end
         
+        function update_experimenter(self, src, event)
+            
+            self.model.experimenter = src.String;
+            
+        end
+        
+        function update_experiment_name(self, src, event)
+            
+            errormsg = "The experiment has already been saved under this name. " ...
+                + "If you would like to change the experiment name, close this window " ...
+                + "and save it under the new name in the designer view.";
+            waitfor(errordlg(errormsg));
+            self.exp_name_box.String = self.doc.experiment_name;
+        end
+        
+        function update_genotype(self, src, event)
+            self.model.fly_genotype = src.String;
+        end
+        
+        function update_do_plotting(self, src, event)
+            self.model.do_plotting = src.Value;
+        end
+        
+        function update_do_processing(self, src, event)
+            self.model.do_processing = src.Value;
+        end
+        
+        function update_plotting_file(self, src, event)
+            self.model.plotting_file = src.String;
+        end
+        
+        function update_processing_file(self, src, event)
+            self.model.processing_file = src.String;
+        end
+        
+        function update_experiment_type(self, src, event)
+            self.model.experiment_type = src.Value;
+        end
+        
         function update_progress(self, rep, cond)
-            increment = 1/(self.model.repetitions_ * length(self.model.block_trials_(:,1)));
+            increment = 1/(self.doc.repetitions * length(self.doc.block_trials(:,1)));
 
-            distance = ((rep - 1)*length(self.model.block_trials_(:,1)) + cond)*increment;
-            self.progress_axes.Title.String = "Rep " + rep + " of " + self.model.repetitions_ + ", Trial " + cond + " of " + length(self.model.block_trials_(:,1));
+            distance = ((rep - 1)*length(self.doc.block_trials(:,1)) + cond)*increment;
+            self.progress_axes.Title.String = "Rep " + rep + " of " + self.doc.repetitions + ", Trial " + cond + " of " + length(self.doc.block_trials(:,1));
             self.progress_bar.YData = distance;
             
             drawnow;
@@ -149,8 +238,8 @@ classdef run_controller < handle
         
         function test_progress_bar(self, src, event)
         
-            reps = self.model.get_repetitions();
-            trials = length(self.model.block_trials_(:,1));
+            reps = self.doc.repetitions;
+            trials = length(self.doc.block_trials(:,1));
             for i = 1:reps
                 for j = 1:trials
                     
@@ -162,17 +251,85 @@ classdef run_controller < handle
         
         end
         
+        function open_g4p_file(self, src, event)
+           
+            [filename, top_folder_path] = uigetfile('*.g4p');
+            filepath = fullfile(top_folder_path, filename);
+       
+            if isequal (top_folder_path,0)
+            
+            %They hit cancel, do nothing
+            else
+                
+                self.doc.import_folder(top_folder_path);
+                [exp_path, exp_name, ext] = fileparts(filepath);
+              % [exp_path, exp_name] = fileparts(self.doc.top_folder_path_);
+                self.doc.experiment_name = exp_name;
+                
+                data = self.doc.open(filepath);
+                p = data.exp_parameters;
+                
+                self.doc.repetitions = p.repetitions;
+                self.doc.is_randomized = p.is_randomized;
+                self.doc.is_chan1 = p.is_chan1;
+                self.doc.is_chan2 = p.is_chan2;
+                self.doc.is_chan3 = p.is_chan3;
+                self.doc.is_chan4 = p.is_chan4;
+                self.doc.chan1_rate = p.chan1_rate;
+                self.doc.set_config_data(p.chan1_rate, 1);
+                self.doc.chan2_rate = p.chan2_rate;
+                self.doc.set_config_data(p.chan2_rate, 2);
+                self.doc.chan3_rate = p.chan3_rate;
+                self.doc.set_config_data(p.chan3_rate, 3);
+                self.doc.chan4_rate = p.chan4_rate;
+                self.doc.set_config_data(p.chan4_rate, 4);
+                self.doc.num_rows = p.num_rows;
+                self.doc.set_config_data(p.num_rows, 0);
+                
+                for k = 1:13
+
+                    self.doc.set_pretrial_property(k, p.pretrial{k});
+                    self.doc.set_intertrial_property(k, p.intertrial{k});
+                    self.doc.set_posttrial_property(k, p.posttrial{k});
+
+                end
+
+                for i = 2:length(self.doc.block_trials(:, 1))
+                    self.doc.block_trials((i-(i-2)),:) = [];
+                end
+                block_x = length(p.block_trials(:,1));
+                block_y = 1;
+
+                for j = 1:block_x
+                    if j > length(self.doc.block_trials(:,1))
+                        newrow = p.block_trials(j,1:end);
+                        self.doc.set_block_trial_property([j, block_y], newrow);
+                    else
+                        for n = 1:13
+                            self.doc.set_block_trial_property([j, n], p.block_trials{j,n});
+                        end
+                    end
+
+                end
+                
+                self.update_run_gui();
+                
+            end
+
+            
+        end
+        
         function run(self, src, event)
             %Get necessary data
             
-            experiment_name = self.model.get_experiment_name();
-            num_reps = self.model.get_repetitions();
-            randomize = self.model.get_is_randomized();
+            experiment_name = self.doc.experiment_name;
+            num_reps = self.doc.repetitions;
+            randomize = self.doc.is_randomized;
             
-            pretrial = self.model.get_pretrial();
-            block_trials = self.model.get_block_trials();
-            intertrial = self.model.get_intertrial();
-            posttrial = self.model.get_posttrial();
+            pretrial = self.doc.pretrial;
+            block_trials = self.doc.block_trials;
+            intertrial = self.doc.intertrial;
+            posttrial = self.doc.posttrial;
             
             trial_duration = block_trials{1,12};
             intertrial_duration = intertrial{12};
@@ -185,8 +342,8 @@ classdef run_controller < handle
             %AT ONCE.
             %pretrial
             pretrial_mode = pretrial{1};
-            pretrial_pat_id = self.model.get_pattern_index(pretrial{2});
-            pretrial_posfunc_id = self.model.get_posfunc_index(pretrial{3});
+            pretrial_pat_id = self.doc.get_pattern_index(pretrial{2});
+            pretrial_posfunc_id = self.doc.get_posfunc_index(pretrial{3});
             
             if ~isempty(pretrial{10})
                 pretrial_gain = pretrial{10};
@@ -203,8 +360,8 @@ classdef run_controller < handle
             
             %first run of block_trials
 %             trial_mode = block_trials{1,1};
-%             pat_index = self.model.get_pattern_index(block_trials{1,2});
-%             posfunc_index = self.model.get_posfunc_index(block_trials{1,3});
+%             pat_index = self.doc.get_pattern_index(block_trials{1,2});
+%             posfunc_index = self.doc.get_posfunc_index(block_trials{1,3});
             if ~isempty(block_trials{1,10})
                 LmR_gain = block_trials{1,10};
                 LmR_offset = block_trials{1,11};
@@ -217,8 +374,8 @@ classdef run_controller < handle
             
             %intertrial values
             intertrial_mode = intertrial{1};
-            intertrial_pat_id = self.model.get_pattern_index(intertrial{2});
-            intertrial_posfunc_id = self.model.get_posfunc_index(intertrial{3});
+            intertrial_pat_id = self.doc.get_pattern_index(intertrial{2});
+            intertrial_posfunc_id = self.doc.get_posfunc_index(intertrial{3});
             if ~isempty(intertrial{10})
                 intertrial_gain = intertrial{10};
                 intertrial_offset = intertrial{11};
@@ -230,8 +387,8 @@ classdef run_controller < handle
            
             %posttrial values
             posttrial_mode = posttrial{1};
-            posttrial_pat_id = self.model.get_pattern_index(posttrial{2});
-            posttrial_posfunc_id = self.model.get_posfunc_index(posttrial{3});
+            posttrial_pat_id = self.doc.get_pattern_index(posttrial{2});
+            posttrial_posfunc_id = self.doc.get_posfunc_index(posttrial{3});
             if ~isempty(posttrial{10})
                 posttrial_gain = posttrial{10};
                 posttrial_offset = posttrial{11};
@@ -277,7 +434,7 @@ classdef run_controller < handle
             
             %THIS METHOD will create an array like [0, 2, 3] if ao channels
             %1,3, and 4 are active. Is this correct??????????????
-            channels = [self.model.get_is_chan1(), self.model.get_is_chan2(), self.model.get_is_chan3(), self.model.get_is_chan4()];
+            channels = [self.doc.is_chan1, self.doc.is_chan2, self.doc.is_chan3, self.doc.is_chan4];
             channel_nums = [0,1,2,3];
             
             j = 1;
@@ -296,23 +453,23 @@ classdef run_controller < handle
             posttrial_ao_funcs = [];
             for i = 1:length(active_ao_channels)
                 channel_num = active_ao_channels(i);
-                pretrial_ao_indices(i) = self.model.get_ao_index(pretrial{channel_num + 4});
-                ao_indices(i) = self.model.get_ao_index(block_trials{1,channel_num + 4});
-                intertrial_ao_indices(i) = self.model.get_ao_index(intertrial{channel_num + 4});
-                posttrial_ao_indices(i) = self.model.get_ao_index(posttrial{channel_num + 4});
+                pretrial_ao_indices(i) = self.doc.get_ao_index(pretrial{channel_num + 4});
+                ao_indices(i) = self.doc.get_ao_index(block_trials{1,channel_num + 4});
+                intertrial_ao_indices(i) = self.doc.get_ao_index(intertrial{channel_num + 4});
+                posttrial_ao_indices(i) = self.doc.get_ao_index(posttrial{channel_num + 4});
             end
          
             
             
             %% PREPARE EXPERIMENT COFIGURATION
-            if strcmp(self.model.doc_.save_filename_,'') == 1
+            if strcmp(self.doc.save_filename_,'') == 1
                 waitfor(errordlg("You didn't save this experiment. Please go back and save then run the experiment again."));
                 return
             end
-            [experiment_path, g4p_filename, ext] = fileparts(self.model.doc_.save_filename_);
+            [experiment_path, g4p_filename, ext] = fileparts(self.doc.save_filename_);
             experiment_folder = experiment_path;
 
-            num_conditions = length(self.model.block_trials_(:,1));
+            num_conditions = length(self.doc.block_trials(:,1));
             if ~exist(fullfile(experiment_folder,'Log Files'),'dir')
                 mkdir(experiment_folder,'Log Files');
             end
@@ -401,11 +558,11 @@ classdef run_controller < handle
                         
                         self.update_progress(r, c);
                         cond = exp_order(r,c); % + exclude_stripe
-                        pat_id = self.model.get_pattern_index(block_trials{cond,2});
-                        pos_func_id = self.model.get_posfunc_index(block_trials{cond,3});
+                        pat_id = self.doc.get_pattern_index(block_trials{cond,2});
+                        pos_func_id = self.doc.get_posfunc_index(block_trials{cond,3});
                         trial_mode = block_trials{cond,1};
                         for i = 1:length(active_ao_channels)
-                            ao_func_indices(i) = self.model.get_ao_index(block_trials{cond, active_ao_channels(i)+ 4});
+                            ao_func_indices(i) = self.doc.get_ao_index(block_trials{cond, active_ao_channels(i)+ 4});
                         end
 
                         %intertrial portion
@@ -460,7 +617,7 @@ classdef run_controller < handle
                         if trial_mode == 3
                             Panel_com('set_position_x', block_trials{cond,8});
                         end
-    %                     counter = "Rep " + num2str(r) + " of " + num2str(num_reps) + ", cond " + num2str(c) + " of " + num2str(num_conditions) +": " + strjoin(self.model.doc_.currentExp_.currentExp.pattern.pattNames(pat_id));
+    %                     counter = "Rep " + num2str(r) + " of " + num2str(num_reps) + ", cond " + num2str(c) + " of " + num2str(num_conditions) +": " + strjoin(self.doc.currentExp_.currentExp.pattern.pattNames(pat_id));
     %                     disp(counter);
 
                         %%%%%%How does this work? what does the zero represent?
@@ -537,9 +694,9 @@ classdef run_controller < handle
             self.fig_ = value;
         end
         
-        function set.fly_name(self, value)
-            self.fly_name_ = value;
-        end
+%         function set.fly_name(self, value)
+%             self.fly_name_ = value;
+%         end
         
         function set.progress_axes(self, value)
             self.progress_axes_ = value;
@@ -548,12 +705,53 @@ classdef run_controller < handle
         function set.progress_bar(self, value)
             self.progress_bar_ = value;
         end
-
-%         function set_fly_name(self, new_value)
-%             self.fly_name_ = new_value;
-%         end
-%         
         
+        function set.doc(self, value)
+            self.doc_ = value;
+        end
+        
+        function set.experimenter_box(self, value)
+            self.experimenter_box_ = value;
+        end
+        
+        function set.exp_name_box(self, value)
+            self.exp_name_box_ = value;
+        end
+        
+        function set.fly_name_box(self, value)
+            self.fly_name_box_ = value;
+        end
+        
+        function set.fly_genotype_box(self, value)
+            self.fly_genotype_box_ = value;
+        end
+        
+        function set.date_and_time_box(self, value)
+            self.date_and_time_box_ = value;
+        end
+        
+        function set.exp_type_menu(self, value)
+            self.exp_type_menu_ = value;
+        end
+        
+        function set.plotting_checkbox(self, value)
+            self.plotting_checkbox_ = value;
+        end
+        
+        function set.plotting_textbox(self, value)
+            self.plotting_textbox_ = value;
+        end
+        
+        function set.processing_checkbox(self, value)
+            self.processing_checkbox_ = value;
+        end
+        
+        function set.processing_textbox(self, value)
+            self.processing_textbox_ = value;
+        end
+
+
+
         %GETTERS
         
         function value = get.model(self)
@@ -564,9 +762,9 @@ classdef run_controller < handle
             value = self.fig_;
         end
         
-        function value = get.fly_name(self)
-            value = self.fly_name_;
-        end
+%         function value = get.fly_name(self)
+%             value = self.fly_name_;
+%         end
         
         function value = get.progress_axes(self)
             value = self.progress_axes_;
@@ -574,6 +772,50 @@ classdef run_controller < handle
         
         function value = get.progress_bar(self)
             value = self.progress_bar_;
+        end
+        
+        function value = get.doc(self)
+            value = self.doc_;
+        end
+        
+        function value = get.experimenter_box(self)
+            value = self.experimenter_box_;
+        end
+        
+        function value = get.exp_name_box(self)
+            value = self.exp_name_box_;
+        end
+        
+        function value = get.fly_name_box(self)
+            value = self.fly_name_box_;
+        end
+        
+        function value = get.fly_genotype_box(self)
+            value = self.fly_genotype_box_;
+        end
+        
+        function value = get.date_and_time_box(self)
+            value = self.date_and_time_box_;
+        end
+        
+        function value = get.exp_type_menu(self)
+            value = self.exp_type_menu_;
+        end
+        
+        function value = get.plotting_checkbox(self)
+            value = self.plotting_checkbox_;
+        end
+        
+        function value = get.plotting_textbox(self)
+            value = self.plotting_textbox_;
+        end
+        
+        function value = get.processing_checkbox(self)
+            value = self.processing_checkbox_;
+        end
+        
+        function value = get.processing_textbox(self)
+            value = self.processing_textbox_;
         end
         
 %         function [output] = get_fly_name(self)

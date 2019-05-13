@@ -2,6 +2,7 @@ classdef preview_controller < handle
 
     properties
         model_;
+        doc_;
         data_;
         fig_;
         im_;
@@ -31,6 +32,7 @@ classdef preview_controller < handle
     
     properties (Dependent)
         model;
+        doc;
         data;
         fig;
         im;
@@ -60,10 +62,11 @@ classdef preview_controller < handle
     
     
     methods
-        function self = preview_controller(data, model)
+        function self = preview_controller(data, doc)
             
             self.data = data;
-            self.model = model;
+            self.doc = doc;
+            
             self.preview_index = 1;
             self.is_paused = false;
             self.fig = figure( 'Name', 'Trial Preview', 'NumberTitle', 'off','units', 'pixels'); 
@@ -73,9 +76,9 @@ classdef preview_controller < handle
             self.pattern_data = self.normalize_matrix();
             self.slow_frRate = 30;
             
-            if self.model.doc_.Patterns_.(pat).pattern.gs_val == 1
+            if self.doc.Patterns_.(pat).pattern.gs_val == 1
                 self.rt_frRate = 1000;
-            elseif self.model.doc_.Patterns_.(pat).pattern.gs_val == 4
+            elseif self.doc.Patterns_.(pat).pattern.gs_val == 4
                 self.rt_frRate = 500;
             else
                 waitfor(errordlg("Please make sure your pattern has a valid gs_val"));
@@ -83,27 +86,27 @@ classdef preview_controller < handle
             
             if strcmp(self.data(3),'') == 0
                 pos = string(self.data(3));
-                self.pos_data = self.model.doc_.Pos_funcs_.(pos).pfnparam.func;
+                self.pos_data = self.doc.Pos_funcs_.(pos).pfnparam.func;
             end
             
             if strcmp(self.data(4),'') == 0
                 ao1 = string(self.data(4));
-                self.ao1_data = self.model.doc_.Ao_funcs_.(ao1).afnparam.func;
+                self.ao1_data = self.doc.Ao_funcs_.(ao1).afnparam.func;
             end
             
             if strcmp(self.data(5),'') == 0
                 ao2 = string(self.data(5));
-                self.ao2_data = self.model.doc_.Ao_funcs_.(ao2).afnparam.func;
+                self.ao2_data = self.doc.Ao_funcs_.(ao2).afnparam.func;
             end
             
             if strcmp(self.data(6),'') == 0
                 ao3 = string(self.data(6));
-                self.ao3_data = self.model.doc_.Ao_funcs_.(ao3).afnparam.func;
+                self.ao3_data = self.doc.Ao_funcs_.(ao3).afnparam.func;
             end
             
             if strcmp(self.data(7),'') == 0
                 ao4 = string(self.data(7));
-                self.ao4_data = self.model.doc_.Ao_funcs_.(ao4).afnparam.func;
+                self.ao4_data = self.doc.Ao_funcs_.(ao4).afnparam.func;
             end
             
             self.dur = self.data{12};
@@ -916,7 +919,7 @@ classdef preview_controller < handle
         function [adjusted_data] = normalize_matrix(self)
             
             pat = string(self.data(2));
-            original_data = self.model.doc_.Patterns_.(pat).pattern.Pats;
+            original_data = self.doc.Patterns_.(pat).pattern.Pats;
             x = length(original_data(1,:,1));
             y = length(original_data(:,1,1));
             z = length(original_data(1,1,:));
@@ -1061,6 +1064,9 @@ classdef preview_controller < handle
         function value = get.ao4_data(self)
             value = self.ao4_data_;
         end
+        function value = get.doc(self)
+            value = self.doc_;
+        end
 
         %SETTERS
         
@@ -1140,6 +1146,9 @@ classdef preview_controller < handle
         end
         function set.ao4_data(self, value)
             self.ao4_data_ = value;
+        end
+        function set.doc(self, value)
+            self.doc_ = value;
         end
         
     

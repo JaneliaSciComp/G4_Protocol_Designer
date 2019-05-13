@@ -20,7 +20,7 @@ classdef model_trial
         duration_;
         is_checked_;
 
-        
+        trial_array_;
     end
     
          properties (Dependent)
@@ -37,6 +37,7 @@ classdef model_trial
         offset;
         duration;
         is_checked;
+        trial_array;
     end
     
     %set values given to a struct of protected variables to actually use in manipulation
@@ -58,6 +59,9 @@ classdef model_trial
             self.offset = [] ;
             self.duration = 5 ;
             self.is_checked = false ;
+            self.trial_array = {self.trial_mode, self.pattern_name, self.position_func, self.ao1, ...
+                self.ao2, self.ao3, self.ao4, self.frame_index, self.frame_rate, self.gain, self.offset, ...
+                self.duration, self.is_checked};
             
 
            
@@ -118,6 +122,9 @@ classdef model_trial
             output=self.is_checked_;
         end
         
+        function output=get.trial_array(self)
+            output=self.trial_array_;
+        end
         
   %SETTERS
         
@@ -175,6 +182,10 @@ classdef model_trial
         
         function self = set.is_checked(self, checked)
             self.is_checked_ = checked;
+        end
+        
+        function self = set.trial_array(self, checked)
+            self.trial_array_ = checked;
         end
   
         
