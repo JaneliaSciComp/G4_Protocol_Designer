@@ -1099,17 +1099,10 @@ classdef controller < handle %Made this handle class because was having trouble 
         if isequal(path, 0)
             %do nothing
         else
-%             if isempty(self.doc)
-%                 imported_data = document();
-%                 self.update_doc(imported_data);
-%             end
+
                 
             self.doc.import_folder(path);
-            
-            
-
             self.set_exp_name();
-
             set(self.num_rows_3, 'Enable', 'off');
             set(self.num_rows_4, 'Enable', 'off');
             
@@ -1127,13 +1120,9 @@ classdef controller < handle %Made this handle class because was having trouble 
         if isequal(imported_file,0)
             %do nothing
         else
-    
-%             if isempty(self.doc)
-%                 imported_data = document();
-%                 self.update_doc(imported_data);
-%             end
 
-            self.doc.import_file(imported_file, path);
+
+            self.doc.import_single_file(imported_file, path);
             waitbar(1, prog, 'Finishing');
             set(self.num_rows_3, 'Enable', 'off');
             set(self.num_rows_4, 'Enable', 'off');

@@ -8,6 +8,7 @@ classdef document < handle
         Patterns_
         Pos_funcs_
         Ao_funcs_
+        binary_files_
         save_filename_
         currentExp_
         experiment_name_
@@ -42,6 +43,7 @@ classdef document < handle
         Patterns
         Pos_funcs
         Ao_funcs
+        binary_files
         save_filename
         currentExp
         experiment_name
@@ -78,6 +80,9 @@ classdef document < handle
             self.Patterns = struct;
             self.Pos_funcs = struct;
             self.Ao_funcs = struct;
+            self.binary_files.pats = struct;
+            self.binary_files.funcs = struct;
+            self.binary_files.ao = struct;
             self.save_filename = '';
             self.currentExp = struct;
             self.experiment_name = '';
@@ -98,9 +103,7 @@ classdef document < handle
             path = settings_data{path_line}(path_index+6:end);
             self.configData = strtrim(regexp( fileread(path),'\n','split'));
             
-            %Find the appropriate lines in configData to edit
-            
-%Determine number of screen rows-------------------------------------------
+%Find line with number of rows and get value -------------------------------------------
             numRows_line = find(contains(self.configData,'Number of Rows'));
             self.num_rows = str2num(self.configData{numRows_line}(end));
             
@@ -825,7 +828,7 @@ classdef document < handle
         end
  
 %Import a file, called from controller when a file instead of folder is imported------------------------------------------------------
-        function import_file(self, file, path)
+        function import_single_file(self, file, path)
 
             file_full = fullfile(path, file);
             [filepath, name, ext] = fileparts(file_full);
@@ -833,255 +836,356 @@ classdef document < handle
             if strcmp(ext, '.mat') == 0
                 
                 waitfor(errordlg("Please make sure you are importing a .mat file"));
+                return;
+            end
             
-            elseif strncmp(file, 'Pattern', 7) == 1
+            fileData = load(file_full);
+            
+            if isempty(fieldnames(fileData))
+                waitfore(errordlg("I see no structure inside this .mat file. Please make sure it is formatted correctly."));
+                return;
+            end
+            type = fieldnames(fileData);
+            if strcmp(type{1},'pattern') == 1
                 
                 if isfield(self.Patterns, name) == 1
                     waitfor(errordlg("A pattern of that name has already been imported."));
                     return;
                 else
-                    self.Patterns.(name) = load(file_full);
-
+                    self.Patterns.(name) = fileData;
+                    success_message = "One Pattern file imported successfully.";
                     
+                    %If they are importing an individual file, we must try
+                    %to find the associated binary file in the same folder.
+                    %It will be named by the id field of the .mat file.
+                    %This will help us recreate the binary file name. 
+                    bin_ext = '.pat';
+                    id = fileData.pattern.param.ID;
+                    num_zeroes_to_add = 4 - max(ceil(log10(abs(id))),1);
+                    fileid = '';
+                    for i = 1:num_zeroes_to_add
+                        fileid = strcat(fileid,'0');
+                    end
+                    fileid = strcat(fileid, id);
                 end
                 %add to Patterns
                 
-            elseif strncmp(file, 'FunctionAO', 10) == 1
+            elseif strcmp(type{1},'pfnparam') == 1
                 
-                if isfield(self.Ao_funcs, name) == 1
-                    waitfor(errordlg("An Analog Output Function of that name has already been imported."));
+                if isfield(self.Pos_funcs, name) == 1
+                    waitfor(errordlg("A Position Function of that name has already been imported."));
+                    return;
                 else
-                    self.Ao_funcs.(name) = load(file_full);
+                    self.Pos_funcs.(name) = fileData;
+                    success_message = "One Position function imported successfully.";
+                    bin_ext = '.pfn';
+                    id = fileData.pfnparam.ID;
+                    num_zeroes_to_add = 4 - max(ceil(log10(abs(id))),1);
+                    fileid = '';
+                    for i = 1:num_zeroes_to_add
+                        fileid = strcat(fileid,'0');
+                    end
+                    fileid = strcat(fileid, id);
                 end
                 
                 %add to ao functions
                 
-            elseif strncmp(file, 'Function', 8) == 1
+            elseif strcmp(type{1},'afnparam') == 1
                 
-                if isfield(self.Pos_funcs, name) == 1
-                    waitfor(errordlg("A Position Function of that name has already been imported."));
+                if isfield(self.Ao_funcs, name) == 1
+                    waitfor(errordlg("An Analog Output Function of that name has already been imported."));
+                    return;
                 else
-                    self.Pos_funcs.(name) = load(file_full);
+                    self.Ao_funcs.(name) = fileData;
+                    success_message = "One AO Function imorted successfully.";
+                    bin_ext = '.afn';
+                    id = fileData.afnparam.ID;
+                    num_zeroes_to_add = 4 - max(ceil(log10(abs(id))),1);
+                    fileid = '';
+                    for i = 1:num_zeroes_to_add
+                        fileid = strcat(fileid,'0');
+                    end
+                    fileid = strcat(fileid, id);
                 end
                 %add to pos funcs
                 
+            elseif strcmp(type{1},'currentExp') == 1
+                
+                if ~isempty(fieldnames(self.currentExp))
+                    success_message = "One currentExp file imported, replacing the previous one.";
+                else
+                    success_message = "One currentExp file imported.";
+                end
+                self.currentExp = load(file_full);
+                bin_ext = '';
+                fileid = 0;
+                
             else
                 
-                waitfor(errordlg("Please make sure your file matches one of the following patterns: Pattern * .mat, FunctionAO * .mat, or Function * .mat"));
+                waitfor(errordlg("Please make sure your file is a pattern, position function, ao function, or currentExp file, and is formatted correctly."));
+                return;
             
             end
-        
+            if fileid == 0
+                waitfor(msgbox(success_message));
+                return;
+            end
+            bin_filename = strcat(fileid, bin_ext);
+            bin_filename2 = strcat(bin_ext(2:4), fileid, bin_ext);
+            binary_path = fullfile(path, bin_filename);
+            binary_path2 = fullfile(path, bin_filename2);
+            if ~isfile(binary_path) && ~isfile(binary_path2)
+                waitfor(errordlg("Your file was imported, but no associated binary file was found."));
+                return;
+            end
+            if isfile(binary_path) && isfile(binary_path2)
+                waitfor(errordlg("Your file was imported, but there two binary files in this location with this ID."));
+                return;
+            end
+            if isfile(binary_path)
+                bin = fopen(binary_path);
+                binData = fread(bin);
+                bin_file = bin_filename;
+            elseif isfile(binary_path2)
+                bin = fopen(binary_path2);
+                binData = fread(bin);
+                bin_file = bin_filename2;
+            end
+            if strcmp(bin_ext,'.pat')
+                if isfield(self.binary_files.pats, bin_file)
+                    waitfor(errordlg("Your file was imported, but the .pat file was not. A pattern with that ID has already been imported."));
+                    return;
+                end
+                self.binary_files.pats.(bin_file) = binData;
+            elseif strcmp(bin_ext,'.pfn')
+                if isfield(self.binary_files.funcs, bin_file)
+                    waitfor(errordlg("Your file was imported but the .pfn file was not. A function with that ID has already been imported."));
+                    return;
+                end
+                self.binary_files.funcs.(bin_file) = binData;
+
+            elseif strcmp(bin_ext,'.afn')
+                if isfield(self.binary_files.aos, bin_file)
+                    waitfor(errordlg("Your file was imported but the .afn file was not. An AO function with that ID has already been imported."));
+                    return;
+                end
+                self.binary_files.aos.(bin_file) = binData;
+
+
+            end
+
         end
+
         
-%Import an EXPERIMENT folder, called from import_folder after determining it's an experiment folder -----------------------------------------------------        
-        function [imported_message] = import_experiment_folder(self, path)
+        function [file_names, folder_names] = get_file_folder_names(self,path)
             
-            self.top_folder_path = path;
-            pat_folder = fullfile(self.top_folder_path, 'Patterns');
-            pos_folder = fullfile(self.top_folder_path, 'Functions');
-            ao_folder = fullfile(self.top_folder_path, 'Analog Output Functions');
-            currentExp_path = fullfile(self.top_folder_path, 'currentExp.mat');
-            
-            [partialpath, name] = fileparts(self.top_folder_path);
-            self.experiment_name = name;
-            
-            if ~isfolder(pat_folder)
-                waitfor(errordlg("Cannot find a Patterns folder. No patterns will be imported."));
-                pat_folder = 0;
-            end
-            if ~isfolder(pos_folder)
-                waitfor(errordlg("Cannot find a Functions folder. No position functions will be imported."));
-                pos_folder = 0;
-            end
-            if ~isfolder(ao_folder)
-                waitfor(errordlg("Cannot find an Analog Output Functions folder. No ao functions will be imported."));
-                ao_folder = 0;
-            end
-            
-            if isempty(fieldnames(self.currentExp))
-                currentExp_replaced = 0;
-                self.currentExp = load(currentExp_path);
-            else
-                currentExp_replaced = 1;
-                self.currentExp = load(currentExp_path);
-            end
-            %self.save_filename = '';
-            
-            if pat_folder == 0
-                %do nothing
-            else 
-                [pats_failed, pats_imported] = self.import_pattern_folder(pat_folder);
-            end
-            
-            if pos_folder == 0
-                %do nothing
-            else
-               [pos_failed, pos_imported] = self.import_function_folder(pos_folder);
-            end
-            
-            if ao_folder == 0
-                %do nothing
-            else
-               [ao_failed, ao_imported] = self.import_ao_folder(ao_folder);
-            end
-            
-            imported_message = pats_imported + " patterns imported, " + pos_imported + " functions imported, and " + ao_imported + " AO functions imported." ...
-                + newline + pats_failed + " patterns failed, " + pos_failed + " functions failed, and " + ao_failed + " AO functions failed.";
-            if currentExp_replaced == 1
-                imported_message = imported_message + newline + "1 currentExp file imported and replaced previous currentExp file.";
-            else
-                imported_message = imported_message + newline + "1 currentExp file imported.";
-            end
-            
-            
-        end
-            
-%Import a PATTERN folder, called from import_folder after determining the folder is a pattern folder, or from import_experiment_folder--------------
-            
-        function [pats_failed, pats_imported] = import_pattern_folder(self, pat_folder)
-            %pull all .mat filenames out of Patterns folder and make a
-            %list of them
-
-            %establishes what type of files I want to pull, *.mat
-            pats_failed = 0;
-            pats_imported= 0;
-            pat_file_pattern = sprintf('%s/*.mat', pat_folder);
-
-            %takes all contents from pat_folder that match
-            %pat_file_pattern and makes a list of them called
-            %all_pattern_files
-            all_pattern_files = dir(pat_file_pattern);
-
-            %gets a list of just the pattern file names
-            list_pat_names = {all_pattern_files.name};
-            num_of_patterns = length(list_pat_names);
-
-            %go through list and load each file
-            for k = 1:num_of_patterns
-                %check that a pattern of this name has not already been
-                %imported
-                filepath = fullfile(pat_folder, list_pat_names{k});
-                [path, name, ext] = fileparts(filepath);
-                if ~isfield(self.Patterns, name)
-                    %create path to kth .mat file in Patterns folder
-                    
-                    self.Patterns.(name) = load(filepath);
-                    pats_imported = pats_imported + 1;
+            all = dir(path);
+            isub = [all(:).isdir];
+            folder_names = {all(isub).name};
+            folder_names(ismember(folder_names,{'.','..'})) = [];
+            for i = 1:length(isub)
+                if isub(i) == 1
+                    isub(i) = 0;
                 else
-                    pats_failed = pats_failed + 1;
+                    isub(i) = 1;
                 end
             end
-           
-        end
-
-%Import a function folder, called from sampe places as import_pattern folder-----------------------------------
-        function [pos_failed, pos_imported] = import_function_folder(self, pos_folder)
-            
-            pos_imported = 0;
-            pos_failed = 0;
-            pos_file_pattern = sprintf('%s/*.mat', pos_folder);
-            all_position_files = dir(pos_file_pattern);
-            list_pos_names = {all_position_files.name};
-            num_of_positions = length(list_pos_names);
-
-            for m = 1:num_of_positions
-                filepath = fullfile(pos_folder, list_pos_names{m});
-                [path, name, ext] = fileparts(filepath);
-                if ~isfield(self.Pos_funcs, name)
-                    
-                    self.Pos_funcs.(name) = load(filepath);
-                    pos_imported = pos_imported + 1;
-                    
-                else
-                    pos_failed = pos_failed + 1;
-                end
-            end
+            file_names = {all(isub).name};
+            file_names(ismember(file_names,{'.','..'})) = [];
             
         end
         
-%Import an AO folder, called from same places as import_pattern_folder-----------------------------------------------------
-        function [ao_failed, ao_imported] = import_ao_folder(self, ao_folder)
+        function [imported_pat_binaries, imported_pfn_binaries, imported_afn_binaries, ...
+                        imported_patterns, imported_functions, imported_aos, ...
+                        skipped_pat_binaries, skipped_pfn_binaries, skipped_afn_binaries, currentExp_replaced, ...
+                        skipped_patterns, skipped_functions, skipped_aos, unrecognized_files] = ...
+                        import_files(self, path, file_names, imported_pat_binaries, imported_pfn_binaries, imported_afn_binaries, ...
+                        imported_patterns, imported_functions, imported_aos, ...
+                        skipped_pat_binaries, skipped_pfn_binaries, skipped_afn_binaries, ...
+                        currentExp_replaced, skipped_patterns, skipped_functions, skipped_aos, unrecognized_files)
+        
             
-            ao_failed = 0;
-            ao_imported = 0;
-            ao_file_pattern = sprintf('%s/*.mat', ao_folder);
-            all_ao_files = dir(ao_file_pattern);
-            list_ao_names = {all_ao_files.name};
-            num_of_ao = length(list_ao_names);
 
-            for j = 1:num_of_ao
-                
-                filepath = fullfile(ao_folder, list_ao_names{j});
-                [path, name, ext] = fileparts(filepath);
-                if ~isfield(self.Ao_funcs, name)
-                    
-                    self.Ao_funcs.(name) = load(filepath);
-                    ao_imported = ao_imported + 1;
-                else
-                    ao_failed = ao_failed + 1;
+                for i = 1:length(file_names)
+                    full_file_path = fullfile(path, file_names{i});
+                    [filepath, name, ext] = fileparts(full_file_path);
+                    if strcmp(ext, '.pat') == 1
+
+                        pat = fopen(full_file_path);
+                        patData = fread(pat);
+                        name = strcat('pat',name);
+                        if isfield(self.binary_files.pats, name) == 1
+                            skipped_pat_binaries = skipped_pat_binaries + 1;
+                        else
+                            self.binary_files.pats.(name) = patData;
+                            imported_pat_binaries = imported_pat_binaries + 1;
+                        end
+
+                    elseif strcmp(ext, '.pfn') == 1
+
+                        pfn = fopen(full_file_path);
+                        pfnData = fread(pfn);
+                        if isfield(self.binary_files.funcs, name) == 1
+                            skipped_pfn_binaries = skipped_pfn_binaries + 1;
+                        else
+                            self.binary_files.funcs.(name) = pfnData;
+                            imported_pfn_binaries = imported_pfn_binaries + 1;
+                        end
+
+                    elseif strcmp(ext, '.afn') == 1
+
+                        afn = fopen(full_file_path);
+                        afnData = fread(afn);
+                        if isfield(self.binary_files.ao, name) == 1
+                            skipped_afn_binaries = skipped_afn_binaries + 1;
+                        else
+                            self.binary_files.ao.(name) = afnData;
+                            imported_afn_binaries = imported_afn_binaries + 1;
+                        end
+
+                    elseif strcmp(ext, '.mat') == 1
+                        type = fieldnames(load(full_file_path));
+
+                        if strcmp(type{1},'pattern') == 1
+                            if isfield(self.Patterns, name) == 1
+                                skipped_patterns = skipped_patterns + 1;
+                            else
+                                self.Patterns.(name) = load(full_file_path);
+                                imported_patterns = imported_patterns + 1;
+                            end
+                        elseif strcmp(type{1},'pfnparam') == 1
+                            if isfield(self.Pos_funcs, name) == 1
+                                skipped_functions = skipped_functions + 1;
+                            else
+                                self.Pos_funcs.(name) = load(full_file_path);
+                                imported_functions = imported_functions + 1;
+                            end
+                        elseif strcmp(type{1},'afnparam') == 1
+                            if isfield(self.Ao_funcs, name) == 1
+                                skipped_aos = skipped_aos + 1;
+                            else
+                                self.Ao_funcs.(name) = load(full_file_path);
+                                imported_aos = imported_aos + 1;
+                            end
+
+                        elseif strcmp(type{1},'currentExp') == 1
+                            if isempty(fieldnames(self.currentExp)) == 0
+                                currentExp_replaced = 1;
+                            end
+                            self.currentExp = load(full_file_path);
+                            [folderpath, foldname] = fileparts(filepath);
+                            self.experiment_name = foldname;
+                        else
+                            unrecognized_files = unrecognized_files + 1;
+                        end
+                    else
+                        unrecognized_files = unrecognized_files + 1;
+                    end
                 end
-            end
             
             
         end
-        
 %Import a folder, called from the controller and calls more specific import functions for each type of folder ---------------------------------        
         function import_folder(self, path)
             
-            exp_file = fullfile(path, 'currentExp.mat');
+            prog = waitbar(0, 'Importing...', 'WindowStyle', 'modal'); %start waiting bar
             
-            pat_file_pattern = sprintf('%s/*.pat', path);
-            all_pat_files = dir(pat_file_pattern);
+            [file_names, folder_names] = self.get_file_folder_names(path);
+            no_more_subfolders = 0;
+            imported_patterns = 0;
+            imported_functions = 0;
+            imported_aos = 0;
+            imported_pat_binaries = 0;
+            imported_pfn_binaries = 0;
+            imported_afn_binaries = 0;
+            skipped_pat_binaries = 0;
+            skipped_pfn_binaries = 0;
+            skipped_afn_binaries = 0;
+            skipped_patterns = 0;
+            skipped_functions = 0;
+            skipped_aos = 0;
+            unrecognized_files = 0;
+            currentExp_replaced = 0;
             
-            func_file_pattern = sprintf('%s/*.pfn',path);
-            all_func_files = dir(func_file_pattern);
-            
-            ao_file_pattern = sprintf('%s/*.afn',path);
-            all_ao_files = dir(ao_file_pattern);
-            
-            
-            if isfile(exp_file)
+            while no_more_subfolders == 0
                 
-                prog = waitbar(0, 'Importing...', 'WindowStyle', 'modal'); %start waiting bar
-                imported_message = self.import_experiment_folder(path); %do the import
-                waitbar(1, prog, 'Finishing...');
-                close(prog); %finish and close the waiting bar
-                waitfor(msgbox(imported_message, 'Import Successful')); %display message with import numbers.
+                if ~isempty(file_names)
+                    waitbar(.25, prog);
+                    [imported_pat_binaries, imported_pfn_binaries, imported_afn_binaries, ...
+                        imported_patterns, imported_functions, imported_aos, ...
+                        skipped_pat_binaries, skipped_pfn_binaries, skipped_afn_binaries, currentExp_replaced, ...
+                        skipped_patterns, skipped_functions, skipped_aos, unrecognized_files] = ...
+                        self.import_files(path, file_names, imported_pat_binaries, imported_pfn_binaries, imported_afn_binaries, ...
+                        imported_patterns, imported_functions, imported_aos, ...
+                        skipped_pat_binaries, skipped_pfn_binaries, skipped_afn_binaries, ...
+                        currentExp_replaced, skipped_patterns, skipped_functions, skipped_aos, unrecognized_files);
                 
-            elseif ~isempty(all_pat_files)
-                
-                prog = waitbar(0, 'Importing...', 'WindowStyle', 'modal');
-                [pats_failed, pats_imported] = self.import_pattern_folder(path);
-                waitbar(1, prog, 'Finishing...');
+                end
+
+                if ~isempty(folder_names)
+                    next_folders_list = {};
+                    waitbar(.5, prog);
+                    for i = 1:length(folder_names)
+                        
+                        newpath = fullfile(path, folder_names{i});
+                        [filenames, folders] = self.get_file_folder_names(newpath);
+                        
+                        [imported_pat_binaries, imported_pfn_binaries, imported_afn_binaries, ...
+                        imported_patterns, imported_functions, imported_aos, ...
+                        skipped_pat_binaries, skipped_pfn_binaries, skipped_afn_binaries, currentExp_replaced, ...
+                        skipped_patterns, skipped_functions, skipped_aos, unrecognized_files] = ...
+                        self.import_files(newpath, filenames, imported_pat_binaries, imported_pfn_binaries, imported_afn_binaries, ...
+                        imported_patterns, imported_functions, imported_aos, ...
+                        skipped_pat_binaries, skipped_pfn_binaries, skipped_afn_binaries, ...
+                        currentExp_replaced, skipped_patterns, skipped_functions, skipped_aos, unrecognized_files);
+                    
+                        if ~isempty(folders)
+                            for j = 1:length(folders)
+                                next_folders_list{end+1} = folders{j};
+                            end
+                            
+                        end
+                    end
+                    
+                    if isempty(next_folders_list)
+                        no_more_subfolders = 1;
+                    end
+                    
+                else
+                    no_more_subfolders = 1;
+                end
+                waitbar(1,prog,'Finishing...');
                 close(prog);
-                imported_message = pats_imported + " patterns imported. " + newline + pats_failed + " patterns failed.";
-                waitfor(msgbox(imported_message, 'Import Successful'));
                 
-            elseif ~isempty(all_func_files)
-                prog = waitbar(0, 'Importing...', 'WindowStyle', 'modal');
-                [pos_failed, pos_imported] = self.import_function_folder(path);
-                waitbar(1, prog, 'Finishing...');
-                close(prog);
-                imported_message = pos_imported + " position functions imported. " + newline + pos_failed + " position functions failed.";
-                waitfor(msgbox(imported_message, 'Import Successful'));
-                
-            elseif ~isempty(all_ao_files)
-                
-                prog = waitbar(0, 'Importing...', 'WindowStyle', 'modal');
-                [ao_failed, ao_imported] = self.import_ao_folder(path);
-                waitbar(1, prog, 'Finishing...');
-                close(prog);
-                imported_message = ao_imported + " AO functions imported. " + newline + ao_failed + " AO functions failed.";
-                waitfor(msgbox(imported_message, 'Import Successful'));
-                
-            else
-                waitfor(errordlg(['I do not recognize this as a pattern, function, ao, or experiment folder. ', ...
-                'If it is an experiment folder, please make sure it has a currentExp.mat file. ', ...
-                'If it is a pattern, function, or ao folder, please make sure it has the corresponding .pat, .pfn, or .afn files. ']));
-                return;
+                success_statement = "Import Successful!" + newline;
+                if imported_patterns ~= 0
+                    patterns_imported_statement = imported_patterns + " patterns imported and " + skipped_patterns + " patterns skipped.";
+                    success_statement = success_statement + patterns_imported_statement + newline;
+                end
+                if imported_functions ~= 0
+                    functions_imported_statement = imported_functions + " position functions imported and " + skipped_functions + " functions skipped.";
+                    success_statement = success_statement + functions_imported_statement + newline;
+                end
+                if imported_aos ~= 0
+                    aos_imported_statement = imported_aos + " AO functions imported and " + skipped_aos + " AO functions skipped.";
+                    success_statement = success_statement + aos_imported_statement + newline;
+                end
+                if unrecognized_files ~= 0
+                    unrecognized_files_statement = unrecognized_files + " unrecognized files.";
+                    success_statement = success_statement + unrecognized_files_statement + newline;
+                end
+                if currentExp_replaced ~= 0
+                    currentExp_statement = "Previously loaded currentExp file was replaced.";
+                    success_statement = success_statement + currentExp_statement;
+                end
+ 
+                waitfor(msgbox(success_statement, 'Import Successful'));
             end
 
+                        
 
+
+% 
 
         end
     
@@ -1234,6 +1338,11 @@ classdef document < handle
         function set.configData(self, value)
             self.configData_ = value;
         end
+        
+        function set.binary_files(self, value)
+            self.binary_files_ = value;
+        end
+        
         %Getters
         
         
@@ -1332,6 +1441,11 @@ classdef document < handle
         function output = get.configData(self)
             output = self.configData_;
         end
+        
+        function output = get.binary_files(self)
+            output = self.binary_files_;
+        end
+        
 
     end
 
