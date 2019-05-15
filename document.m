@@ -1007,6 +1007,7 @@ classdef document < handle
             
 
                 for i = 1:length(file_names)
+
                     full_file_path = fullfile(path, file_names{i});
                     [filepath, name, ext] = fileparts(full_file_path);
                     if strcmp(ext, '.pat') == 1
@@ -1045,6 +1046,7 @@ classdef document < handle
 
                     elseif strcmp(ext, '.mat') == 1
                         type = fieldnames(load(full_file_path));
+                        
 
                         if strcmp(type{1},'pattern') == 1
                             if isfield(self.Patterns, name) == 1
@@ -1075,9 +1077,13 @@ classdef document < handle
                             self.currentExp = load(full_file_path);
                             [folderpath, foldname] = fileparts(filepath);
                             self.experiment_name = foldname;
+                        
                         else
                             unrecognized_files = unrecognized_files + 1;
                         end
+                        
+                    elseif strcmp(ext,'.g4p')
+                        %do nothing, this is the file you opened.
                     else
                         unrecognized_files = unrecognized_files + 1;
                     end

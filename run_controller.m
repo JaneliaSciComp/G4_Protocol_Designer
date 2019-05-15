@@ -172,9 +172,9 @@ classdef run_controller < handle
             self.fly_name_box.String = self.model.fly_name;
             self.fly_genotype_box.String = self.model.fly_genotype;
             self.date_and_time_box.String = datestr(now, 'mm-dd-yyyy HH:MM:SS');
-            self.plotting_checkbox.Value = self.model.is_plotting;
+            self.plotting_checkbox.Value = self.model.do_plotting;
             self.plotting_textbox.String = self.model.plotting_file;
-            self.processing_checkbox.Value = self.model.is_processing;
+            self.processing_checkbox.Value = self.model.do_processing;
             self.processing_textbox.String = self.model.processing_file;
             self.exp_type_menu.Value = self.model.experiment_type;
             
@@ -225,11 +225,12 @@ classdef run_controller < handle
             self.model.experiment_type = src.Value;
         end
         
-        function update_progress(self, rep, cond)
+        function update_progress(self, rep, trial, cond)
             increment = 1/(self.doc.repetitions * length(self.doc.block_trials(:,1)));
 
-            distance = ((rep - 1)*length(self.doc.block_trials(:,1)) + cond)*increment;
-            self.progress_axes.Title.String = "Rep " + rep + " of " + self.doc.repetitions + ", Trial " + cond + " of " + length(self.doc.block_trials(:,1));
+            distance = ((rep - 1)*length(self.doc.block_trials(:,1)) + trial)*increment;
+            self.progress_axes.Title.String = "Rep " + rep + " of " + self.doc.repetitions +...
+                ", Trial " + trial + " of " + length(self.doc.block_trials(:,1)) + ". Condition number: " + cond;
             self.progress_bar.YData = distance;
             
             drawnow;
@@ -556,8 +557,9 @@ classdef run_controller < handle
                 for r = 1:num_reps
                     for c = 1:num_conditions
                         
-                        self.update_progress(r, c);
                         cond = exp_order(r,c); % + exclude_stripe
+                        self.update_progress(r, c, cond);
+                        
                         pat_id = self.doc.get_pattern_index(block_trials{cond,2});
                         pos_func_id = self.doc.get_posfunc_index(block_trials{cond,3});
                         trial_mode = block_trials{cond,1};
@@ -565,40 +567,11 @@ classdef run_controller < handle
                             ao_func_indices(i) = self.doc.get_ao_index(block_trials{cond, active_ao_channels(i)+ 4});
                         end
 
-                        %intertrial portion
+                        
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%DOES THERE NEED TO BE A TYPE 2???why does type 2
                         %%%%%%%set an ao function id but not type 1? 
-                        if inter_type == 1
-                            Panel_com('set_control_mode', intertrial_mode);
-                            Panel_com('set_pattern_id', intertrial_pat_id );
-                            if intertrial_posfunc_id ~= 0
-                                Panel_com('set_pattern_func_id',intertrial_posfunc_id);
-                            end
-                            if intertrial_mode == 3
-                                Panel_com('set_position_x', intertrial{8});
-                            end
-                            for i = 1:length(intertrial_ao_funcs)
-                                Panel_com('set_ao_function_id',[active_ao_channels(i), intertrial_ao_indices(i)]);
-                            end
-                            if intertrial_mode == 2
-                                Panel_com('set_frame_rate', intertrial{9});
-                            end
-                            Panel_com('start_display', (intertrial_duration*10));
-                            pause(intertrial_duration);
-                        elseif inter_type == 2
-                            Panel_com('set_control_mode', 4);
-                            Panel_com('set_gain_bias', [LmR_gain, LmR_offset]);
-                            Panel_com('set_pattern_id', 1);
-                            for i = 1:length(intertrial_ao_funcs)
-                                Panel_com('set_ao_function_id',[active_ao_channels(i), intertrial_ao_indices(i)]);
-                            end
-                            pause(0.01)
-                            Panel_com('start_display', (intertrial_duration*10));
-                            pause(intertrial_duration+0.1);
-                        end
-                        %end of intertrial portion
-
+                        
                          %trial portion
                         %Panel_com('stop_display')
                         Panel_com('set_control_mode', trial_mode);
@@ -629,9 +602,45 @@ classdef run_controller < handle
                         end
                         pause(0.01)
                         Panel_com('start_display', (trial_duration*10)); %duration expected in 100ms units
-                        pause(trial_duration+0.1)
+                        pause(trial_duration)
                         %end of trial portion
+                        
+                        if r == num_reps && c == num_conditions
+                            continue
+                        end
+                        
+                        %intertrial portion
+                        if inter_type == 1
+                            Panel_com('set_control_mode', intertrial_mode);
+                            Panel_com('set_pattern_id', intertrial_pat_id );
+                            if intertrial_posfunc_id ~= 0
+                                Panel_com('set_pattern_func_id',intertrial_posfunc_id);
+                            end
+                            if intertrial_mode == 3
+                                Panel_com('set_position_x', intertrial{8});
+                            end
+                            for i = 1:length(intertrial_ao_funcs)
+                                Panel_com('set_ao_function_id',[active_ao_channels(i), intertrial_ao_indices(i)]);
+                            end
+                            if intertrial_mode == 2
+                                Panel_com('set_frame_rate', intertrial{9});
+                            end
+                            Panel_com('start_display', (intertrial_duration*10));
+                            pause(intertrial_duration);
+                        elseif inter_type == 2
+                            Panel_com('set_control_mode', 4);
+                            Panel_com('set_gain_bias', [LmR_gain, LmR_offset]);
+                            Panel_com('set_pattern_id', 1);
+                            for i = 1:length(intertrial_ao_funcs)
+                                Panel_com('set_ao_function_id',[active_ao_channels(i), intertrial_ao_indices(i)]);
+                            end
+                            pause(0.01)
+                            Panel_com('start_display', (intertrial_duration*10));
+                            pause(intertrial_duration+0.1);
+                        end
+                        %end of intertrial portion
 
+                        
 
                     end
                 end

@@ -231,6 +231,10 @@ classdef controller < handle %Made this handle class because was having trouble 
                 'pixels', 'Position', [positions.block(1) + positions.block(3), positions.block(2) + .35*positions.block(4), ...
                 75, 20], 'Callback', @self.move_trial_down);
             
+            clear_all_button = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Clear All','FontSize', 12, 'units', ...
+                'pixels', 'Position', [positions.block(1) + 1.05*positions.block(3), positions.pre(2), ...
+                85, positions.pre(4)], 'Callback', @self.clear_all);
+            
             autofill_button = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Auto-Fill', ...
                 'FontSize', 14, 'units', 'pixels', 'Position', [pos_panel_(1), pos_panel_(2) - 50, 100, 50], ...
                 'Callback', @self.autofill);
@@ -774,7 +778,13 @@ classdef controller < handle %Made this handle class because was having trouble 
             
         end
         
-     
+%CLEAR OUT ALL DATA TO START DESIGNING NEW EXPERIMENT----------------------
+
+        function clear_all(self, src, event)
+            
+            %keep instances of each class but clear all data
+            
+        end
         
 %ADD ROW AND UPDATE MODEL DATA---------------------------------------------
 
