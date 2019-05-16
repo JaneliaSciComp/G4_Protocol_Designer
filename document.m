@@ -451,9 +451,9 @@ classdef document < handle
 %Find and return three lists of all the pattern, function, and ao files used in the experiment being saved/exported        
         function [pat_list, func_list, ao_list] = get_file_list(self)
             
-           pat_list = { };
-           func_list = { };
-           ao_list = { };
+           pat_list = {''};
+           func_list = {''};
+           ao_list = {''};
 
            func_count = 1;
            ao_count = 1;
@@ -512,7 +512,7 @@ classdef document < handle
                end
            end
 
-           if exist('func_list') ~= 0
+           if ~strcmp(func_list{1},'')
 
                 func_list = unique(func_list);
                 empty_cells = cellfun(@isempty, func_list);
@@ -525,7 +525,7 @@ classdef document < handle
            else
                func_list = {''};
            end
-           if exist('ao_list') ~= 0
+           if ~strcmp(ao_list,'')
                ao_list = unique(ao_list);
                empty_aocells = cellfun(@isempty, ao_list);
                 for i = 1:length(empty_aocells)
@@ -567,27 +567,29 @@ classdef document < handle
                 
             end
             
-            for i = 1:length(func_list)
-            
-                id = num2str(self.Pos_funcs.(func_list{i}).pfnparam.ID);
-                add_zeros = 4 - numel(id);
-                for j = 1:add_zeros
-                    id = strcat("0",id);
+            if ~strcmp(func_list{1},'')
+                for i = 1:length(func_list)
+
+                    id = num2str(self.Pos_funcs.(func_list{i}).pfnparam.ID);
+                    add_zeros = 4 - numel(id);
+                    for j = 1:add_zeros
+                        id = strcat("0",id);
+                    end
+                    index = find(contains(all_func_bins, id));
+                    funcs{end+1} = all_func_bins{index};
+
                 end
-                index = find(contains(all_func_bins, id));
-                funcs{end+1} = all_func_bins{index};
-                
             end
-            
-            for i = 1:length(ao_list)
-                
-                id = num2str(self.Ao_funcs.(ao_list{i}).afnparam.ID);
-                add_zeros = 4 - numel(id);
-                for j = 1:add_zeros
-                    id = strcat("0",id);
+            if ~strcmp(ao_list{1},'')
+                for i = 1:length(ao_list)
+                    id = num2str(self.Ao_funcs.(ao_list{i}).afnparam.ID);
+                    add_zeros = 4 - numel(id);
+                    for j = 1:add_zeros
+                        id = strcat("0",id);
+                    end
+                    index = find(contains(all_ao_bins, id));
+                    aos{end+1} = all_ao_bins{index};
                 end
-                index = find(contains(all_ao_bins, id));
-                aos{end+1} = all_ao_bins{index};
             
             end
         
@@ -632,7 +634,6 @@ classdef document < handle
                 
                [pat_list, func_list, ao_list] = self.get_file_list();
                [pat_bin_list, func_bin_list, ao_bin_list] = self.get_bin_list(pat_list, func_list, ao_list);
-               
                if ~strcmp(func_list{1},'')
 
                     num_funcs = length(func_list);
@@ -800,6 +801,7 @@ classdef document < handle
             
   
             opened_data = load(filepath, '-mat');
+            self.save_filename = filepath;
    
         end
         
@@ -925,6 +927,8 @@ classdef document < handle
                         fileid = strcat(fileid,'0');
                     end
                     fileid = strcat(fileid, id);
+                    fileid1 = strcat('pat',fileid,bin_ext);%pat0001.pat
+                    fileid2 = strcat(fileid, bin_ext);%0001.pat
                     
                 end
                 %add to Patterns
@@ -945,6 +949,8 @@ classdef document < handle
                         fileid = strcat(fileid,'0');
                     end
                     fileid = strcat(fileid, id);
+                    fileid1 = strcat('fun',fileid,bin_ext); %fun0001.pfn
+                    fileid2 = strcat(fileid, bin_ext);%0001.pfn
                 end
                 
                 %add to ao functions
@@ -965,6 +971,8 @@ classdef document < handle
                         fileid = strcat(fileid,'0');
                     end
                     fileid = strcat(fileid, id);
+                    fileid1 = strcat('ao',fileid,bin_ext); %ao0001.afn
+                    fileid2 = strcat(fileid, bin_ext);%0001.afn
                 end
                 %add to pos funcs
                 
@@ -989,10 +997,9 @@ classdef document < handle
                 waitfor(msgbox(success_message));
                 return;
             end
-            bin_filename = strcat(fileid, bin_ext);
-            bin_filename2 = strcat(bin_ext(2:4), fileid, bin_ext);
-            binary_path = fullfile(path, bin_filename);
-            binary_path2 = fullfile(path, bin_filename2);
+            
+            binary_path = fullfile(path, fileid1);
+            binary_path2 = fullfile(path, fileid2);
             if ~isfile(binary_path) && ~isfile(binary_path2)
                 waitfor(errordlg("Your file was imported, but no associated binary file was found."));
                 return;
@@ -1005,32 +1012,36 @@ classdef document < handle
                 bin = fopen(binary_path);
                 binData = fread(bin);
                 fclose(bin);
-                bin_file = bin_filename;
+                bin_file = fileid1;
             elseif isfile(binary_path2)
                 bin = fopen(binary_path2);
                 binData = fread(bin);
                 fclose(bin);
-                bin_file = bin_filename2;
+                bin_file = fileid2;
             end
+          
             if strcmp(bin_ext,'.pat')
-                if isfield(self.binary_files.pats, bin_file)
+                field_name = strcat('pat', fileid);
+                if isfield(self.binary_files.pats, field_name)
                     waitfor(errordlg("Your file was imported, but the .pat file was not. A pattern with that ID has already been imported."));
                     return;
                 end
-                self.binary_files.pats.(bin_file) = binData;
+                self.binary_files.pats.(field_name) = binData;
             elseif strcmp(bin_ext,'.pfn')
-                if isfield(self.binary_files.funcs, bin_file)
+                field_name = strcat('fun',fileid);
+                if isfield(self.binary_files.funcs, field_name)
                     waitfor(errordlg("Your file was imported but the .pfn file was not. A function with that ID has already been imported."));
                     return;
                 end
-                self.binary_files.funcs.(bin_file) = binData;
+                self.binary_files.funcs.(field_name) = binData;
 
             elseif strcmp(bin_ext,'.afn')
-                if isfield(self.binary_files.ao, bin_file)
+                field_name = strcat('ao',fileid);
+                if isfield(self.binary_files.ao, field_name)
                     waitfor(errordlg("Your file was imported but the .afn file was not. An AO function with that ID has already been imported."));
                     return;
                 end
-                self.binary_files.ao.(bin_file) = binData;
+                self.binary_files.ao.(field_name) = binData;
 
 
             end
@@ -1044,6 +1055,7 @@ classdef document < handle
             isub = [all(:).isdir];
             folder_names = {all(isub).name};
             folder_names(ismember(folder_names,{'.','..'})) = [];
+            folder_names(ismember(folder_names,{'Results','Log Files'})) = [];
             for i = 1:length(isub)
                 if isub(i) == 1
                     isub(i) = 0;
@@ -1144,7 +1156,7 @@ classdef document < handle
                             self.currentExp = load(full_file_path);
                             [folderpath, foldname] = fileparts(filepath);
                             self.experiment_name = foldname;
-                        
+                            
                         else
                             disp("Unrecognized field")
                         disp(strcat(name,ext))
@@ -1165,8 +1177,8 @@ classdef document < handle
 %Import a folder, called from the controller and calls more specific import functions for each type of folder ---------------------------------        
         function import_folder(self, path)
             
-            prog = waitbar(0, 'Importing...', 'WindowStyle', 'modal'); %start waiting bar
-            
+           % prog = waitbar(0, 'Importing...', 'WindowStyle', 'modal'); %start waiting bar
+            self.top_folder_path = path;
             [file_names, folder_names] = self.get_file_folder_names(path);
             no_more_subfolders = 0;
             imported_patterns = 0;
@@ -1187,7 +1199,7 @@ classdef document < handle
             while no_more_subfolders == 0
                 
                 if ~isempty(file_names)
-                    waitbar(.25, prog);
+                    %waitbar(.25, prog);
                     [imported_pat_binaries, imported_pfn_binaries, imported_afn_binaries, ...
                         imported_patterns, imported_functions, imported_aos, ...
                         skipped_pat_binaries, skipped_pfn_binaries, skipped_afn_binaries, currentExp_replaced, ...
@@ -1201,7 +1213,7 @@ classdef document < handle
 
                 if ~isempty(folder_names)
                     next_folders_list = {};
-                    waitbar(.5, prog);
+                    %waitbar(.5, prog);
                     for i = 1:length(folder_names)
                         
                         newpath = fullfile(path, folder_names{i});
@@ -1231,9 +1243,9 @@ classdef document < handle
                 else
                     no_more_subfolders = 1;
                 end
-                waitbar(1,prog,'Finishing...');
-                close(prog);
-                
+                %waitbar(1,prog,'Finishing...');
+                %close(prog);
+                end
                 success_statement = "Import Successful!" + newline;
                 if imported_patterns ~= 0
                     patterns_imported_statement = imported_patterns + " patterns imported and " + skipped_patterns + " patterns skipped.";
@@ -1257,9 +1269,7 @@ classdef document < handle
                 end
  
                 waitfor(msgbox(success_statement, 'Import Successful'));
-            end
-
-                        
+            
 
 
 % 

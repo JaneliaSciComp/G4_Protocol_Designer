@@ -120,7 +120,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             screensize = get(0, 'screensize');
 
             self.f = figure('Name', 'Fly Experiment Designer', 'NumberTitle', 'off','units', 'pixels', 'MenuBar', 'none', ...
-                'ToolBar', 'none', 'Resize', 'off', 'outerposition', [screensize(3)*.1, screensize(4)*.1, 1600, 1000]);
+                'ToolBar', 'none', 'Resize', 'off', 'outerposition', [screensize(3)*.1, screensize(4)*.05, 1600, 1000]);
            %ALL REST OF PROPERTIES ARE DEFINED IN LAYOUT         
           self.pre_files = struct('pattern', self.doc.pretrial(2),...
                'position',self.doc.pretrial(3),'ao1',self.doc.pretrial(4),...
@@ -1227,7 +1227,6 @@ classdef controller < handle %Made this handle class because was having trouble 
         else
         
             if isempty(fieldnames(self.doc.currentExp))
-
                     self.doc.import_folder(top_folder_path);
                     [exp_path, exp_name, ext] = fileparts(filepath);
                    % [exp_path, exp_name] = fileparts(self.doc.top_folder_path_);
@@ -2024,10 +2023,7 @@ classdef controller < handle %Made this handle class because was having trouble 
 %RUN A SINGLE TRIAL ON THE LED SCREENS TO MAKE SURE ITS WORKING------------
 
         function dry_run(self, src, event)
-            
-            experiment_name = self.doc.experiment_name;
-            num_reps = 0;
-            randomize = 0;
+
             trial = self.check_one_selected;
             %block_trials = self.doc.block_trials();
             trial_mode = trial{1};
@@ -2045,14 +2041,20 @@ classdef controller < handle %Made this handle class because was having trouble 
                 LmR_offset = 0;
             end
             pre_start = 0;
-            if strcmp(self.doc.top_folder_path_,'') == 1
-                waitfor(errordlg("You must either import an Experiment Folder or save this experiment first"));
+            if strcmp(self.doc.top_folder_path,'') == 1
+                waitfor(errordlg("You must save the experiment before you can test it on the screens."));
                 return;
             end
-            experiment_folder = self.doc.top_folder_path_;
+            experiment_folder = self.doc.top_folder_path;
+            answer = questdlg("If you have imported from multiple locations, you must save your experiment" + ...
+                " before you can test it on the screens.", 'Confirm Save', 'Continue', 'Go back', 'Continue');
+            
+            if strcmp(answer, 'Go back')
+                return;
+            end
             
             connectHost;
-            Panel_com('change_root_directory', experiment_folder);
+            Panel_com('change_root_directory', experiment_folder)
             start = questdlg('Start Dry Run?','Confirm Start','Start','Cancel','Start');
             switch start
                 case 'Cancel'
@@ -2062,18 +2064,20 @@ classdef controller < handle %Made this handle class because was having trouble 
                 case 'Start'
             
                     pattern_index = self.doc.get_pattern_index(trial{2});
-                    if ~isempty(trial{3})
-                        position_index = self.doc.get_posfunc_index(trial{3});
-                    else
-                        position_index = 0;
-                    end
+                    func_index = self.doc.get_posfunc_index(trial{3});
+                    
                     %ao_index = self.doc.get_ao_index(trial{4});
+
                     Panel_com('set_control_mode', trial_mode);
                     Panel_com('set_pattern_id', pattern_index); 
                    % Panel_com('set_gain_bias', [LmR_gain LmR_offset])
-                    Panel_com('set_pattern_func_id', position_index);
+                   if func_index ~= 0
+                        Panel_com('set_pattern_func_id', func_index);
+                   end
                     %Panel_com('set_ao_function_id',[0, ao_index]);
-                    Panel_com('set_gain_bias',[LmR_gain LmR_offset]);
+                    if ~strcmp(trial{10},'')
+                        Panel_com('set_gain_bias',[LmR_gain LmR_offset]);
+                    end
                     if trial_mode == 2
                         Panel_com('set_frame_rate', trial_fr_rate);
                     end

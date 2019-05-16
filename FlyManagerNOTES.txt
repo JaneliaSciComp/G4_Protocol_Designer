@@ -5,26 +5,39 @@ START-UP
 
 Before running - Open the G4_Protocol_Designer_Settings.m file and check the path to your panel configuration file. If this path is incorrect, you'll get an error.
 
-To run, open the script.m file and run in matlab. This and the settings file should be the only ones you have to open. 
+To run the designer, open the "script.m" file and run in matlab. To run the conductor directly, run the file called "run_conductor.m".
 	- Note: If you get an error regarding "findjobj" when you run the script file, check to make sure findjobj, a folder 
 	inside the project folder with everything else, is on your matlab path. Let me know if this happens, because it shouldn't.
 
-ENTERING DATA AND CREATING AN EXPERIMENT:
+Please note when running the conductor there is no button to clear out your data - so you'll have to close and re-open between experiments. A clear button
+for the conductor is towards the top of my to do list. In the designer you can use the clear all button to clear out data between designing experiments. 
 
-Entering Data:
+The conductor has fields for a lot of metadata right now, but the only thing required is the fly name, so it can save the results.
+
+I have made it so you cannot edit the experiment name in the conductor, only in the designer. If you'd like me to change this, let me know.
+
+
+
+IMPORTING:
+- You can now import any combination of files and folders. A folder with just patterns, a folder with a Patterns and Functions folder, an experiment folder, 
+individual files, or any other combination. It attempts to find the associated .pat/pfn/afn file when you import a file, but if it can't find one, it will let you know. 
+
+- Autopopulate will not work until you have imported patterns, functions, and ao functions. I haven't tested it thoroughly with the new import functionality yet, that's
+on my to do.
+
+    - as a side note, .pat files are much easier to work with on this end when they follow the naming convention pat0001.pat. It can open either convention, but I have set 
+    it up to save them this way. 
 
 - Please make sure to select the appropriate screen size BEFORE importing. If you import a folder of
 pattern files which do not match the selected screen size, you will get an error. Once a folder has been
 imported, the screen size option will become uneditable, meaning if you need to change screen size, you will
 need to exit the application and restart it.
 
-- You can import an experiment folder with a currentExp.mat file, a folder of patterns, functions, or ao functions, or a single .mat file. 
-When importing a folder, the first thing it looks for is the currentExp.mat. If there isn't one, but there are subfolders, it will not work. 
-So you can't, say, import a folder which contains a patterns folder and a functions folder but nothing else. You can import those two folders separately.
-
 - Right now, if you have already opened another .g4p file or autopopulated an imported folder, you cannot open another .g4p file. You have to restart the 
 application to open a new experiment. You can import additional files then add them manually to the tables.  
  
+ENTERING DATA:
+
 - If you erase the "Mode" cell of a trial, it will clear the entire trial and treat it as though it 
 does not exist (if for example you don't have a pre or post trial in this particular experiment).
 
@@ -87,21 +100,9 @@ Panel com software as well as the GUI. If you don't, the Panel com might not rec
 start doing weird things. Still working to understand and fix this. If this happens though, you don't have to recreate the experiment, 
 you can just open the .g4p file from wherever you saved it.
 
-- Right now, the experiment runs in this order:
+-The intertrial should not play before the first block trial or after the last. 
 
-pre-trial
-inter-trial
-trial-1
-inter-trial
-trial-2
-inter-trial
-...
-trial-n
-post-trial
-
-I will be updating this so the inter-trial does not occur before the first block trial or after the last.
-
-Each should run for the duration specified in the trial. If something is not
+- Each should run for the duration specified in the trial. If something is not
 behaving as you would expect, please let me know so I can adjust this.  
 
 - Please note that the progress bar shows Rep # of Reps and Trial # of Trials. This includes the inter-trial, Ie 

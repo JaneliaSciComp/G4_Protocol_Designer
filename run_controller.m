@@ -266,6 +266,7 @@ classdef run_controller < handle
                 [exp_path, exp_name, ext] = fileparts(filepath);
               % [exp_path, exp_name] = fileparts(self.doc.top_folder_path_);
                 self.doc.experiment_name = exp_name;
+                self.doc.save_filename = top_folder_path;
                 
                 data = self.doc.open(filepath);
                 p = data.exp_parameters;
@@ -481,7 +482,7 @@ classdef run_controller < handle
                 waitfor(errordlg('unsorted files present in "Log Files" folder, remove before restarting experiment\n'));
                 return
             end
-            if exist([experiment_folder '\Results\' self.fly_name],'dir')
+            if exist([experiment_folder '\Results\' self.model.fly_name],'dir')
                 waitfor(errordlg('Results folder already exists with that fly name\n'));
                 return
             end
@@ -582,12 +583,14 @@ classdef run_controller < handle
                             Panel_com('set_gain_bias', [LmR_gain, LmR_offset]);
                         end
                         if pos_func_id ~= 0
+
                             Panel_com('set_pattern_func_id', pos_func_id);
                         end
                         if trial_mode == 2
                             Panel_com('set_frame_rate',block_trials{cond,9});
                         end
                         if trial_mode == 3
+
                             Panel_com('set_position_x', block_trials{cond,8});
                         end
     %                     counter = "Rep " + num2str(r) + " of " + num2str(num_reps) + ", cond " + num2str(c) + " of " + num2str(num_conditions) +": " + strjoin(self.doc.currentExp_.currentExp.pattern.pattNames(pat_id));
@@ -606,11 +609,13 @@ classdef run_controller < handle
                         %end of trial portion
                         
                         if r == num_reps && c == num_conditions
+   
                             continue
                         end
                         
                         %intertrial portion
                         if inter_type == 1
+ 
                             Panel_com('set_control_mode', intertrial_mode);
                             Panel_com('set_pattern_id', intertrial_pat_id );
                             if intertrial_posfunc_id ~= 0
@@ -646,6 +651,7 @@ classdef run_controller < handle
                 end
                 
                 if post_type == 1
+                    disp("This is the post-trial!");
                      Panel_com('set_control_mode', posttrial_mode);
                      Panel_com('set_pattern_id', posttrial_pat_id);
                      if ~isempty(posttrial{10})
@@ -669,7 +675,7 @@ classdef run_controller < handle
                 Panel_com('stop_log');
                 disconnectHost;
                 pause(1);
-                movefile([experiment_folder '\Log Files\*'],fullfile(experiment_folder,'Results',self.fly_name));
+                movefile([experiment_folder '\Log Files\*'],fullfile(experiment_folder,'Results',self.model.fly_name));
                 %save([experiment_folder '\Log Files\exp_order.mat'],'exp_order')
                 self.progress_axes.Title.String = "Experiment Completed.";
                 drawnow;
@@ -704,7 +710,7 @@ classdef run_controller < handle
         end
         
 %         function set.fly_name(self, value)
-%             self.fly_name_ = value;
+%             self.model.fly_name_ = value;
 %         end
         
         function set.progress_axes(self, value)
@@ -772,7 +778,7 @@ classdef run_controller < handle
         end
         
 %         function value = get.fly_name(self)
-%             value = self.fly_name_;
+%             value = self.model.fly_name_;
 %         end
         
         function value = get.progress_axes(self)
@@ -828,7 +834,7 @@ classdef run_controller < handle
         end
         
 %         function [output] = get_fly_name(self)
-%             output = self.fly_name_;
+%             output = self.model.fly_name_;
 %         end
         
         
