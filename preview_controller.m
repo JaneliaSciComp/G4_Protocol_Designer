@@ -120,7 +120,7 @@ classdef preview_controller < handle
         function layout(self)
 
 
-            pix = get(0, 'screensize'); %broaden this to whole software later.
+            pix = get(0, 'screensize'); 
             patternSize = size(self.pattern_data(:,:,1));
             pat_xlim = [0 length(self.pattern_data(1,:,1))];
             pat_ylim = [0 length(self.pattern_data(:,1,1))];

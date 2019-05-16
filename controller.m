@@ -782,7 +782,23 @@ classdef controller < handle %Made this handle class because was having trouble 
 
         function clear_all(self, src, event)
             
-            %keep instances of each class but clear all data
+            question = "Make sure you have saved your experiment, or it will be lost.";
+            answer = questdlg(question, 'Confirm Clear All', 'Continue', 'Cancel', 'Cancel');
+            switch answer
+                case 'Cancel'
+                    return;
+                case 'Continue'
+                    
+                     %keep instances of each class but clear all data
+                    clear self.model;
+                    delete(self.doc);
+                    self.doc = document();
+                    
+
+                    self.update_gui();
+                    
+                    
+            end
             
         end
         

@@ -203,16 +203,16 @@ classdef document < handle
 
 %If the user edited the pattern or position function, make sure the file dimensions match
 
-                if index(2) == 2 && strcmp(string(new_value),'') == 0
+                if index(2) == 2 && ~strcmp(string(new_value),'')
                     patfield = new_value;
                     patDim = length(self.Patterns.(patfield).pattern.Pats(1,1,:));
                     patRows = length(self.Patterns.(patfield).pattern.Pats(:,1,1))/16;
                     numrows = self.num_rows;
                 
-                    if strcmp(string(self.block_trials{index(1),3}),'') == 0
+                    if ~strcmp(string(self.block_trials{index(1),3}),'')
 
                         posfield = self.block_trials{index(1),3};
-                        funcDim = self.Pos_funcs.(posfield).pfnparam.frames;
+                        funcDim = max(self.Pos_funcs.(posfield).pfnparam.func);
 
                     else
 
@@ -221,12 +221,12 @@ classdef document < handle
 
                     end
 
-                elseif index(2) == 3 && strcmp(string(new_value),'') == 0 && strcmp(string(self.block_trials{index(1),2}),'') == 0
+                elseif index(2) == 3 && ~strcmp(string(new_value),'') && ~strcmp(string(self.block_trials{index(1),2}),'')
 
                     posfield = new_value;
                     patfield = self.block_trials{index(1),2};
                     patDim = length(self.Patterns.(patfield).pattern.Pats(1,1,:));
-                    funcDim = self.Pos_funcs.(posfield).pfnparam.frames;
+                    funcDim = max(self.Pos_funcs.(posfield).pfnparam.func);
                     patRows = 0;
                     numrows = 0;
                 else
@@ -266,7 +266,7 @@ classdef document < handle
                 if strcmp(string(self.pretrial{3}),'') == 0
                     
                     posfield = self.pretrial{3};
-                    funcDim = self.Pos_funcs.(posfield).pfnparam.frames;
+                    funcDim = max(self.Pos_funcs.(posfield).pfnparam.func);
                     
                 else
                     
@@ -280,7 +280,7 @@ classdef document < handle
                 posfield = new_value;
                 patfield = self.pretrial{2};
                 patDim = length(self.Patterns.(patfield).pattern.Pats(1,1,:));
-                funcDim = self.Pos_funcs.(posfield).pfnparam.frames;
+                funcDim = max(self.Pos_funcs.(posfield).pfnparam.func);
                 patRows = 0;
                 numrows = 0;
             else
@@ -315,7 +315,7 @@ classdef document < handle
                 if strcmp(string(self.intertrial{3}),'') == 0
                     
                     posfield = self.intertrial{3};
-                    funcDim = self.Pos_funcs.(posfield).pfnparam.frames;
+                    funcDim = max(self.Pos_funcs.(posfield).pfnparam.func);
                     
                 else
                     
@@ -329,7 +329,7 @@ classdef document < handle
                 posfield = new_value;
                 patfield = self.intertrial{2};
                 patDim = length(self.Patterns.(patfield).pattern.Pats(1,1,:));
-                funcDim = self.Pos_funcs.(posfield).pfnparam.frames;
+                funcDim = max(self.Pos_funcs.(posfield).pfnparam.func);
                 patRows = 0;
                 numrows = 0;
             else
@@ -364,7 +364,7 @@ classdef document < handle
                 if strcmp(string(self.posttrial{3}),'') == 0
                     
                     posfield = self.posttrial{3};
-                    funcDim = self.Pos_funcs.(posfield).pfnparam.frames;
+                    funcDim = max(self.Pos_funcs.(posfield).pfnparam.func);
                     
                 else
                     
@@ -378,7 +378,7 @@ classdef document < handle
                 posfield = new_value;
                 patfield = self.posttrial{2};
                 patDim = length(self.Patterns.(patfield).pattern.Pats(1,1,:));
-                funcDim = self.Pos_funcs.(posfield).pfnparam.frames;
+                funcDim = max(self.Pos_funcs.(posfield).pfnparam.func);
                 patRows = 0;
                 numrows = 0;
             else
@@ -448,148 +448,220 @@ classdef document < handle
         end
        
         
+%Find and return three lists of all the pattern, function, and ao files used in the experiment being saved/exported        
+        function [pat_list, func_list, ao_list] = get_file_list(self)
+            
+           pat_list = { };
+           func_list = { };
+           ao_list = { };
+
+           func_count = 1;
+           ao_count = 1;
+           for i = 1:length(self.block_trials(:,1))
+
+                pat_list{i} = self.block_trials{i,2};
+                if strcmp(self.block_trials{i,3},'') == 0
+                    func_list{func_count} = self.block_trials{i,3};
+                    func_count = func_count + 1;
+                end
+                if strcmp(self.block_trials{i,4},'') == 0
+                    ao_list{ao_count} = self.block_trials{i,4};
+                    ao_count = ao_count + 1;
+                end
+                if strcmp(self.block_trials{i,5},'') == 0
+                    ao_list{ao_count} = self.block_trials{i,5};
+                    ao_count = ao_count + 1;
+                end
+                if strcmp(self.block_trials{i, 6},'') == 0
+                    ao_list{ao_count} = self.block_trials{i,6};
+                    ao_count = ao_count + 1;
+                end
+                if strcmp(self.block_trials{i,7},'') == 0
+                    ao_list{ao_count} = self.block_trials{i,7};
+                    ao_count = ao_count + 1;
+                end
+           end
+
+           pat_list{end + 1} = self.pretrial{2};
+           pat_list{end + 1} = self.posttrial{2};
+           pat_list{end + 1} = self.intertrial{2};
+
+           if strcmp(self.pretrial{3},'') == 0
+               func_list{end+1} = self.pretrial{3};
+           end
+           if strcmp(self.posttrial{3},'') == 0
+               func_list{end+1} = self.posttrial{3};
+           end
+           if strcmp(self.intertrial{3},'') == 0
+               func_list{end+1} = self.intertrial{3};
+           end
+
+           for i = 4:7
+               if strcmp(self.pretrial{i},'') == 0
+                   ao_list{end+1} = self.pretrial{i};
+               end
+           end
+           for i = 4:7
+               if strcmp(self.posttrial{i},'') == 0
+                   ao_list{end+1} = self.posttrial{i};
+               end
+           end
+           for i = 4:7
+               if strcmp(self.intertrial{i},'') == 0
+                   ao_list{end+1} = self.intertrial{i};
+               end
+           end
+
+           if exist('func_list') ~= 0
+
+                func_list = unique(func_list);
+                empty_cells = cellfun(@isempty, func_list);
+                for i = 1:length(empty_cells)
+                    if empty_cells(i) == 1
+                        func_list(i) = [];
+                    end
+                end
+                
+           else
+               func_list = {''};
+           end
+           if exist('ao_list') ~= 0
+               ao_list = unique(ao_list);
+               empty_aocells = cellfun(@isempty, ao_list);
+                for i = 1:length(empty_aocells)
+                    if empty_aocells(i) == 1
+                        ao_list(i) = [];
+                    end
+                end
+           else
+               ao_list = {''};
+           end
+           pat_list = unique(pat_list);
+           empty_patcells = cellfun(@isempty, pat_list);
+            for i = 1:length(empty_patcells)
+                if empty_patcells(i) == 1
+                    pat_list(i) = [];
+                end
+            end
+        end
+        
+        function [pats, funcs, aos] = get_bin_list(self, pat_list, func_list, ao_list)
+            all_pat_bins = fieldnames(self.binary_files.pats);
+            all_func_bins = fieldnames(self.binary_files.funcs);
+            all_ao_bins = fieldnames(self.binary_files.ao);
+            pats = { };
+            funcs = { };
+            aos = { };
+            
+            
+            for i = 1:length(pat_list)
+
+                id = num2str(self.Patterns.(pat_list{i}).pattern.param.ID);
+                add_zeros = 4 - numel(id);
+                for j = 1:add_zeros
+                    id = strcat("0",id);
+                end
+
+                index = find(contains(all_pat_bins,id));
+                pats{end+1} = all_pat_bins{index};
+                
+            end
+            
+            for i = 1:length(func_list)
+            
+                id = num2str(self.Pos_funcs.(func_list{i}).pfnparam.ID);
+                add_zeros = 4 - numel(id);
+                for j = 1:add_zeros
+                    id = strcat("0",id);
+                end
+                index = find(contains(all_func_bins, id));
+                funcs{end+1} = all_func_bins{index};
+                
+            end
+            
+            for i = 1:length(ao_list)
+                
+                id = num2str(self.Ao_funcs.(ao_list{i}).afnparam.ID);
+                add_zeros = 4 - numel(id);
+                for j = 1:add_zeros
+                    id = strcat("0",id);
+                end
+                index = find(contains(all_ao_bins, id));
+                aos{end+1} = all_ao_bins{index};
+            
+            end
+        
+        end
 %EXPORT--------------------------------------------------------------------        
        function [export_successful] = export(self)
            
 
             Exppath = self.top_export_path;
-
-
             [Expstatus, Expmsg] = mkdir(Exppath);
+            
             patpath = fullfile(Exppath,'Patterns');
             [patstatus, patmsg] = mkdir(patpath);
+
             funcpath = fullfile(Exppath, 'Functions');
             [funcstatus, funcmsg] = mkdir(funcpath);
+            
             aopath = fullfile(Exppath, 'Analog Output Functions');
             [aostatus, aomsg] = mkdir(aopath);
             
             if Expstatus == 0
                 waitfor(errordlg(Expmsg));
                 export_successful = 0;
+                return;
             
             elseif patstatus == 0
                 waitfor(errordlg(patmsg));
                 export_successful = 0;
+                return;
             
             elseif funcstatus == 0
                 waitfor(errordlg(funcmsg));
                 export_successful = 0;
+                return; 
+                
             elseif aostatus == 0
                 waitfor(errordlg(aomsg));
                 export_successful = 0;
+                return; 
+                
             else
                 
-                %Get pattern names actually used in experiment
-                %%%%%%%%%%SEPARATE THIS INTO ITS OWN FUNCTION LATER
-               pat_list = { };
-               func_list = { };
-               ao_list = { };
+               [pat_list, func_list, ao_list] = self.get_file_list();
+               [pat_bin_list, func_bin_list, ao_bin_list] = self.get_bin_list(pat_list, func_list, ao_list);
                
-               func_count = 1;
-               ao_count = 1;
-               for i = 1:length(self.block_trials(:,1))
-                    
-                    pat_list{i} = self.block_trials{i,2};
-                    if strcmp(self.block_trials{i,3},'') == 0
-                        func_list{func_count} = self.block_trials{i,3};
-                        func_count = func_count + 1;
-                    end
-                    if strcmp(self.block_trials{i,4},'') == 0
-                        ao_list{ao_count} = self.block_trials{i,4};
-                        ao_count = ao_count + 1;
-                    end
-                    if strcmp(self.block_trials{i,5},'') == 0
-                        ao_list{ao_count} = self.block_trials{i,5};
-                        ao_count = ao_count + 1;
-                    end
-                    if strcmp(self.block_trials{i, 6},'') == 0
-                        ao_list{ao_count} = self.block_trials{i,6};
-                        ao_count = ao_count + 1;
-                    end
-                    if strcmp(self.block_trials{i,7},'') == 0
-                        ao_list{ao_count} = self.block_trials{i,7};
-                        ao_count = ao_count + 1;
-                    end
-               end
-
-               pat_list{end + 1} = self.pretrial{2};
-               pat_list{end + 1} = self.posttrial{2};
-               pat_list{end + 1} = self.intertrial{2};
-               
-               if strcmp(self.pretrial{3},'') == 0
-                   func_list{end+1} = self.pretrial{3};
-               end
-               if strcmp(self.posttrial{3},'') == 0
-                   func_list{end+1} = self.posttrial{3};
-               end
-               if strcmp(self.intertrial{3},'') == 0
-                   func_list{end+1} = self.intertrial{3};
-               end
-               
-               for i = 4:7
-                   if strcmp(self.pretrial{i},'') == 0
-                       ao_list{end+1} = self.pretrial{i};
-                   end
-               end
-               for i = 4:7
-                   if strcmp(self.posttrial{i},'') == 0
-                       ao_list{end+1} = self.posttrial{i};
-                   end
-               end
-               for i = 4:7
-                   if strcmp(self.intertrial{i},'') == 0
-                       ao_list{end+1} = self.intertrial{i};
-                   end
-               end
-
-               if exist('func_list') ~= 0
-
-                    func_list = unique(func_list);
-                    empty_cells = cellfun(@isempty, func_list);
-                    for i = 1:length(empty_cells)
-                        if empty_cells(i) == 1
-                            func_list(i) = [];
-                        end
-                    end
+               if ~strcmp(func_list{1},'')
 
                     num_funcs = length(func_list);
-                    pfnList = {};
                     for m = 1:num_funcs
                         field = func_list{m};
                         filename = strcat(field, '.mat');
                         filepath = fullfile(funcpath, filename);
                         pfnparam = self.Pos_funcs.(field).pfnparam;
                         save(filepath, 'pfnparam');
+                    end
+                    num_pfn = length(func_bin_list);
+                    
+                    for n = 1:num_pfn
                         
-                        num = regexp(filename,'\_','split');
-                        pfnName = strcat('fun',num{2},'.pfn');
-                        pfnList{m} = pfnName;
-                        func_folder = fullfile(self.top_folder_path, 'Functions');
-                        pfnFilePath = fullfile(func_folder,pfnName);
-                        if ~isfile(pfnFilePath)
-                            errordlg(pfnFilePath + " does not exist in your imported directory. If you imported this .mat file separately, please move its associated .pfn file manually to your exported folder.");
-                        else
-                            pfnNewFilePath = fullfile(funcpath, pfnName);
+                        pfnName = func_bin_list{n};
+                        filename = strcat(pfnName,'.pfn');
+                        filepath = fullfile(funcpath, filename);
+                        newpfn = fopen(filepath,'w');
+                        fwrite(newpfn,self.binary_files.funcs.(pfnName));
+                        fclose(newpfn);
 
-                            pfn = fopen(pfnFilePath);
-                            pfnData = fread(pfn);
-                            newpfn = fopen(pfnNewFilePath, 'w');
-                            fwrite(newpfn, pfnData);
-                            fclose(pfn);
-                            fclose(newpfn);
-                        end
+                    end
                 
-                    end
+               
                end
-               afnList = {};
-               if exist('ao_list') ~= 0
-                   ao_list = unique(ao_list);
-                   empty_aocells = cellfun(@isempty, ao_list);
-                    for i = 1:length(empty_aocells)
-                        if empty_aocells(i) == 1
-                            ao_list(i) = [];
-                        end
-                    end
+               
+               if ~strcmp(ao_list{1},'')
+
+                   
                    num_ao = length(ao_list);
                    for n = 1:num_ao
                     
@@ -598,132 +670,118 @@ classdef document < handle
                         filepath = fullfile(aopath, filename);
                         afnparam = self.Ao_funcs.(field).afnparam;
                         save(filepath, 'afnparam');
-                        
-                        num = regexp(filename,'\_','split');
-                        afnName = strcat('ao',num{2},'.afn');
-                        afnList{n} = afnName;
-                        ao_folder = fullfile(self.top_folder_path, 'Analog Output Functions');
-                        afnFilePath = fullfile(ao_folder,afnName);
-                        if ~isfile(afnFilePath)
-                            errordlg(afnFilePath + " does not exist in your imported directory. If you imported this .mat file separately, please move its associated .afn file to your exported folder manually.");
-                        else
-                            afnNewFilePath = fullfile(aopath, afnName);
-                            afn = fopen(afnFilePath);
-                            afnData = fread(afn);
-                            newafn = fopen(afnNewFilePath, 'w');
-                            fwrite(newafn, afnData);
-                            fclose(afn);
-                            fclose(newafn);
-                        end
-                
                    end
+                   num_afn = length(ao_bin_list);
+                   for i = 1:num_afn
+                       
+                       afnName = ao_bin_list{i};
+                       filename = strcat(afnName, '.afn');
+                       filepath = fullfile(aopath, filename);
+                       newafn = fopen(filepath, 'w');
+                       fwrite(newafn, self.binary_files.ao.(afnName));
+                       fclose(newafn);
+                   end
+                        
+                     
                end
-                              
-               pat_list = unique(pat_list);
-               empty_patcells = cellfun(@isempty, pat_list);
-                    for i = 1:length(empty_patcells)
-                        if empty_patcells(i) == 1
-                            pat_list(i) = [];
-                        end
-                    end
-               patternList = { };
-               pattNames = {};
+
                
                num_pats = length(pat_list);
                for k = 1:num_pats
                     
                     field = pat_list{k};
-                    pattNames{k} = field;
                     filename = strcat(field,'.mat');
+                    pattNames{k} = filename;
                     filepath = fullfile(patpath, filename);
                     pattern = self.Patterns.(field).pattern;
                     save(filepath, 'pattern');
                     
-                    num = regexp(filename,'\_','split');
-                    patname = strcat(num{2},'.pat'); 
-                    patternList{k} = patname;
-                    patfilepath = fullfile(patpath, patname);
-                    imported_patfilepath = fullfile(self.top_folder_path, 'Patterns', patname);
-                    if ~isfile(imported_patfilepath)
-                        errordlg(imported_patfilepath + " does not exist in your imported directory. If you imported this item separately, please move it to your exported folder manually.");
-                    else
-                        pat = fopen(imported_patfilepath);
-                        patData = fread(pat);
-                        fileID = fopen(patfilepath,'w');
-                        fwrite(fileID, patData);
-                        fclose(pat);
-                        fclose(fileID);
-                    end
-
                end
+               
+               num_bins = length(pat_bin_list);
+               for j = 1:num_bins
+                   
+                    patname = pat_bin_list{j}; 
+                    fullpatname = strcat(patname,'.pat');
+                    patternList{j} = fullpatname;
+                    patfilepath = fullfile(patpath, fullpatname);
+                    fileID = fopen(patfilepath,'w');
+                    fwrite(fileID, self.binary_files.pats.(patname))
+                    fclose(fileID);
+                    
+               end
+
 
 %                 
                 %Initialize entire currentExp structure so fields do not
                 %get out of order
                 
-               currentExp.pattern.pattNames = { };
-               currentExp.pattern.patternList = { };
-               currentExp.pattern.x_num = [];
-               currentExp.pattern.y_num = [];
-               currentExp.pattern.gs_val = [];
-               currentExp.pattern.arena_pitch = [];
-               currentExp.pattern.num_patterns = 0;
+               newcurrentExp.pattern.pattNames = { };
+               newcurrentExp.pattern.patternList = { };
+               newcurrentExp.pattern.x_num = [];
+               newcurrentExp.pattern.y_num = [];
+               newcurrentExp.pattern.gs_val = [];
+               newcurrentExp.pattern.arena_pitch = [];
+               newcurrentExp.pattern.num_patterns = 0;
                
-               currentExp.function.functionName = {};
-               currentExp.function.functionList = {};
-               currentExp.function.functionSize = [];
-               currentExp.function.numFunc = 0;
-               
-               
-               currentExp.aoFunction.aoFunctionName = {};
-               currentExp.aoFunction.aoFunctionList = {};
-               currentExp.aoFunction.aoFunctionSize = [];
-               currentExp.aoFunction.numaoFunc = 0;
+               newcurrentExp.function.functionName = {};
+               newcurrentExp.function.functionList = {};
+               newcurrentExp.function.functionSize = [];
+               newcurrentExp.function.numFunc = 0;
                
                
-               %Develop currentExp file from values in the used patterns,
+               newcurrentExp.aoFunction.aoFunctionName = {};
+               newcurrentExp.aoFunction.aoFunctionList = {};
+               newcurrentExp.aoFunction.aoFunctionSize = [];
+               newcurrentExp.aoFunction.numaoFunc = 0;
+               
+               
+               %Develop newcurrentExp file from values in the used patterns,
                %funcs, and aofuncs
                
-               %currentExp.pattern
+               %newcurrentExp.pattern
                 for j = 1:num_pats
                     field = pat_list{j};
-                    currentExp.pattern.x_num(j) = self.Patterns.(field).pattern.x_num;
-                    currentExp.pattern.y_num(j) = self.Patterns.(field).pattern.y_num;
-                    currentExp.pattern.gs_val(j) = self.Patterns.(field).pattern.gs_val;
-                    currentExp.pattern.arena_pitch(j) = self.Patterns.(field).pattern.param.arena_pitch;
+                    newcurrentExp.pattern.x_num(j) = self.Patterns.(field).pattern.x_num;
+                    newcurrentExp.pattern.y_num(j) = self.Patterns.(field).pattern.y_num;
+                    newcurrentExp.pattern.gs_val(j) = self.Patterns.(field).pattern.gs_val;
+                    newcurrentExp.pattern.arena_pitch(j) = self.Patterns.(field).pattern.param.arena_pitch;
                     pat_list{j} = strcat(field, '.mat');
                     
                 end
-                currentExp.pattern.pattNames = pattNames;
-                currentExp.pattern.patternList = patternList;%list of .pat files
-                currentExp.pattern.num_patterns = num_pats;
+                newcurrentExp.pattern.pattNames = pattNames;
+                newcurrentExp.pattern.patternList = patternList;%list of .pat files
+                newcurrentExp.pattern.num_patterns = num_pats;
                 
-                %currentExp.function
-                if exist('func_list')~= 0
+                %newcurrentExp.function
+                if ~strcmp(func_list{1},'')
                     for k = 1:num_funcs
                         field = func_list{k};
-                        currentExp.function.functionSize{k} = self.Pos_funcs.(field).pfnparam.size;
+                        newcurrentExp.function.functionSize{k} = self.Pos_funcs.(field).pfnparam.size;
                         func_list{k} = strcat(field, '.mat');
-                        currentExp.function.functionName{k} = func_list{k};
+                        newcurrentExp.function.functionName{k} = func_list{k};
+                        func_bin_list{k} = strcat(func_bin_list{k},'.pfn');
                     end
-                   % currentExp.function.functionName = num2cell(func_list);
-                    currentExp.function.functionList = pfnList;%.pfn files
-                    currentExp.function.numFunc = num_funcs;
+                   % newcurrentExp.function.functionName = num2cell(func_list);
+                    newcurrentExp.function.functionList = func_bin_list;%.pfn files
+                    newcurrentExp.function.numFunc = num_funcs;
                 end
                 
-                if exist('ao_list')~= 0
+                if ~strcmp(ao_list{1},'')
                     for p = 1:num_ao
                         field = ao_list{p};
-                        currentExp.aoFunction.aoFunctionSize{p} = self.Ao_funcs.(field).afnparam.size;  
+                        newcurrentExp.aoFunction.aoFunctionSize{p} = self.Ao_funcs.(field).afnparam.size;  
                         ao_list{p} = strcat(field, '.mat');
+                        ao_bin_list{p} = strcat(ao_bin_list{p},'.afn');
                     end
-                    currentExp.aoFunction.aoFunctionName = ao_list;
-                    currentExp.aoFunction.aoFunctionList = afnList;%.afn files
-                    currentExp.aoFunction.numaoFunc = num_ao;
+                    newcurrentExp.aoFunction.aoFunctionName = ao_list;
+                    newcurrentExp.aoFunction.aoFunctionList = ao_bin_list;%.afn files
+                    newcurrentExp.aoFunction.numaoFunc = num_ao;
                 end
                 
 
-                
+                self.currentExp = newcurrentExp;
+                currentExp = self.currentExp;
                 currentExpFile = 'currentExp.mat';
                 filepath = fullfile(Exppath, currentExpFile);
 
@@ -860,13 +918,14 @@ classdef document < handle
                     %It will be named by the id field of the .mat file.
                     %This will help us recreate the binary file name. 
                     bin_ext = '.pat';
-                    id = fileData.pattern.param.ID;
-                    num_zeroes_to_add = 4 - max(ceil(log10(abs(id))),1);
+                    id = num2str(fileData.pattern.param.ID);
+                    num_zeroes_to_add = 4 - numel(id);
                     fileid = '';
                     for i = 1:num_zeroes_to_add
                         fileid = strcat(fileid,'0');
                     end
                     fileid = strcat(fileid, id);
+                    
                 end
                 %add to Patterns
                 
@@ -879,8 +938,8 @@ classdef document < handle
                     self.Pos_funcs.(name) = fileData;
                     success_message = "One Position function imported successfully.";
                     bin_ext = '.pfn';
-                    id = fileData.pfnparam.ID;
-                    num_zeroes_to_add = 4 - max(ceil(log10(abs(id))),1);
+                    id = num2str(fileData.pfnparam.ID);
+                    num_zeroes_to_add = 4 - numel(id);
                     fileid = '';
                     for i = 1:num_zeroes_to_add
                         fileid = strcat(fileid,'0');
@@ -899,8 +958,8 @@ classdef document < handle
                     self.Ao_funcs.(name) = fileData;
                     success_message = "One AO Function imorted successfully.";
                     bin_ext = '.afn';
-                    id = fileData.afnparam.ID;
-                    num_zeroes_to_add = 4 - max(ceil(log10(abs(id))),1);
+                    id = num2str(fileData.afnparam.ID);
+                    num_zeroes_to_add = 4 - numel(id);
                     fileid = '';
                     for i = 1:num_zeroes_to_add
                         fileid = strcat(fileid,'0');
@@ -945,10 +1004,12 @@ classdef document < handle
             if isfile(binary_path)
                 bin = fopen(binary_path);
                 binData = fread(bin);
+                fclose(bin);
                 bin_file = bin_filename;
             elseif isfile(binary_path2)
                 bin = fopen(binary_path2);
                 binData = fread(bin);
+                fclose(bin);
                 bin_file = bin_filename2;
             end
             if strcmp(bin_ext,'.pat')
@@ -965,11 +1026,11 @@ classdef document < handle
                 self.binary_files.funcs.(bin_file) = binData;
 
             elseif strcmp(bin_ext,'.afn')
-                if isfield(self.binary_files.aos, bin_file)
+                if isfield(self.binary_files.ao, bin_file)
                     waitfor(errordlg("Your file was imported but the .afn file was not. An AO function with that ID has already been imported."));
                     return;
                 end
-                self.binary_files.aos.(bin_file) = binData;
+                self.binary_files.ao.(bin_file) = binData;
 
 
             end
@@ -1011,10 +1072,14 @@ classdef document < handle
                     full_file_path = fullfile(path, file_names{i});
                     [filepath, name, ext] = fileparts(full_file_path);
                     if strcmp(ext, '.pat') == 1
-
+                        fullname = strcat(name,ext);
                         pat = fopen(full_file_path);
                         patData = fread(pat);
-                        name = strcat('pat',name);
+                        fclose(pat);
+                        if length(name) < 5
+                            name = strcat('pat',name);
+                        end
+                        
                         if isfield(self.binary_files.pats, name) == 1
                             skipped_pat_binaries = skipped_pat_binaries + 1;
                         else
@@ -1023,9 +1088,10 @@ classdef document < handle
                         end
 
                     elseif strcmp(ext, '.pfn') == 1
-
+                        fullname = strcat(name,ext);
                         pfn = fopen(full_file_path);
                         pfnData = fread(pfn);
+                        fclose(pfn);
                         if isfield(self.binary_files.funcs, name) == 1
                             skipped_pfn_binaries = skipped_pfn_binaries + 1;
                         else
@@ -1034,9 +1100,10 @@ classdef document < handle
                         end
 
                     elseif strcmp(ext, '.afn') == 1
-
+                        fullname = strcat(name,ext);
                         afn = fopen(full_file_path);
                         afnData = fread(afn);
+                        fclose(afn);
                         if isfield(self.binary_files.ao, name) == 1
                             skipped_afn_binaries = skipped_afn_binaries + 1;
                         else
@@ -1079,12 +1146,16 @@ classdef document < handle
                             self.experiment_name = foldname;
                         
                         else
+                            disp("Unrecognized field")
+                        disp(strcat(name,ext))
                             unrecognized_files = unrecognized_files + 1;
                         end
                         
                     elseif strcmp(ext,'.g4p')
                         %do nothing, this is the file you opened.
                     else
+                        disp("Unrecognized ext")
+                        disp(strcat(name,ext))
                         unrecognized_files = unrecognized_files + 1;
                     end
                 end
