@@ -1,9 +1,8 @@
 classdef preview_controller < handle
 
     properties
-        model_;
-        doc_;
-        data_;
+         model_;
+
         fig_;
         im_;
         pat_axes_;
@@ -13,27 +12,12 @@ classdef preview_controller < handle
         ao3_line_;
         ao4_line_;
         dummy_line_;
-        dummy_data_;
-        preview_index_;
-        is_paused_;
-        is_realtime_;
-        slow_frRate_;
-        rt_frRate_;
-        pattern_data_;
-        mode_;
-        dur_;
-        pos_data_;
-        ao1_data_;
-        ao2_data_;
-        ao3_data_;
-        ao4_data_;
-        
+         
     end
     
     properties (Dependent)
-        model;
-        doc;
-        data;
+         model;
+
         fig;
         im;
         pat_axes;
@@ -43,73 +27,19 @@ classdef preview_controller < handle
         ao3_line;
         ao4_line;
         dummy_line;
-        dummy_data;
-        preview_index;
-        is_paused;
-        is_realtime;
-        slow_frRate;
-        rt_frRate;
-        pattern_data;
-        mode;
-        dur;
-        pos_data;
-        ao1_data;
-        ao2_data;
-        ao3_data;
-        ao4_data;
+
     end
     
     
     
     methods
+ %CONSTRUCTOR
         function self = preview_controller(data, doc)
+            self.model = preview_model(data, doc);
             
-            self.data = data;
-            self.doc = doc;
-            
-            self.preview_index = 1;
-            self.is_paused = false;
             self.fig = figure( 'Name', 'Trial Preview', 'NumberTitle', 'off','units', 'pixels'); 
-            self.is_realtime = 0;
-            self.mode = self.data{1};
-            pat = string(self.data(2));
-            self.pattern_data = self.normalize_matrix();
-            self.slow_frRate = 30;
-            
-            if self.doc.Patterns_.(pat).pattern.gs_val == 1
-                self.rt_frRate = 1000;
-            elseif self.doc.Patterns_.(pat).pattern.gs_val == 4
-                self.rt_frRate = 500;
-            else
-                waitfor(errordlg("Please make sure your pattern has a valid gs_val"));
-            end
-            
-            if strcmp(self.data(3),'') == 0
-                pos = string(self.data(3));
-                self.pos_data = self.doc.Pos_funcs_.(pos).pfnparam.func;
-            end
-            
-            if strcmp(self.data(4),'') == 0
-                ao1 = string(self.data(4));
-                self.ao1_data = self.doc.Ao_funcs_.(ao1).afnparam.func;
-            end
-            
-            if strcmp(self.data(5),'') == 0
-                ao2 = string(self.data(5));
-                self.ao2_data = self.doc.Ao_funcs_.(ao2).afnparam.func;
-            end
-            
-            if strcmp(self.data(6),'') == 0
-                ao3 = string(self.data(6));
-                self.ao3_data = self.doc.Ao_funcs_.(ao3).afnparam.func;
-            end
-            
-            if strcmp(self.data(7),'') == 0
-                ao4 = string(self.data(7));
-                self.ao4_data = self.doc.Ao_funcs_.(ao4).afnparam.func;
-            end
-            
-            self.dur = self.data{12};
+
+
             self.layout();
             self.update_layout();
             
@@ -121,9 +51,9 @@ classdef preview_controller < handle
 
 
             pix = get(0, 'screensize'); 
-            patternSize = size(self.pattern_data(:,:,1));
-            pat_xlim = [0 length(self.pattern_data(1,:,1))];
-            pat_ylim = [0 length(self.pattern_data(:,1,1))];
+            patternSize = size(self.model.pattern_data(:,:,1));
+            pat_xlim = [0 length(self.model.pattern_data(1,:,1))];
+            pat_ylim = [0 length(self.model.pattern_data(:,1,1))];
 
             %ratios of y direction to x direction in pattern/function
             %files so images don't get squished forced into axes that
@@ -132,11 +62,11 @@ classdef preview_controller < handle
             yTOx_pat_ratio = patternSize(2)/patternSize(1);
 
             
-            if self.mode ~= 6 %There only needs to be a spot for one position function
+            if self.model.mode ~= 6 %There only needs to be a spot for one position function
 
                 %figure
                 fig_height = pix(4)*.65;
-                fig_width = fig_height*2;
+                fig_width = pix(3)*.9;
                 fig_x = (pix(3) - fig_width)/2;
                 fig_y = (pix(4)-fig_height)/2;
                 fig_pos = [fig_x, fig_y, fig_width, fig_height];
@@ -181,7 +111,7 @@ classdef preview_controller < handle
                 
                 %figure
                 fig_height = pix(4)*.85;
-                fig_width = pix(3)*.95;
+                fig_width = pix(3)*.97;
                 fig_x = (pix(3) - fig_width)/2;
                 fig_y = (pix(4)-fig_height)/2;
                 fig_pos = [fig_x, fig_y, fig_width, fig_height];
@@ -226,7 +156,7 @@ classdef preview_controller < handle
                 
             end
 
-                    %pat_num_frames = length(self.pattern_data(1,1,:));
+                    %pat_num_frames = length(self.model.pattern_data(1,1,:));
             ao_xlabel = 'Time';
             ao_ylabel = 'Volts';
             
@@ -239,45 +169,45 @@ classdef preview_controller < handle
            
 
             %fr_rate = cell2mat(data(9));
-            self.im = imshow(self.pattern_data(:,:,first_frame), 'Colormap', gray);
+            self.im = imshow(self.model.pattern_data(:,:,first_frame), 'Colormap', gray);
             set(self.im, 'parent', self.pat_axes);
             title(self.pat_axes, 'Pattern Preview');
 
 
                %check for position and ao functions. if preset, set data,
                %if not, set to zero.
-           if self.mode == 1
-               if strcmp(self.data(3),'') == 1
+           if self.model.mode == 1
+               if strcmp(self.model.data(3),'') == 1
                    waitfor(errordlg("To preview in mode one please enter a position function"));
                    return;
                else
                    
-                   posSize = size(self.pos_data(:,:));
+                   posSize = size(self.model.pos_data(:,:));
     %                pos_position = [patpos_x, pos_y, pos_chart_width, chart_height];
                    pos_title = 'Position Function Preview';
                    pos_xlabel = 'Time';
                    pos_ylabel = 'Frame Index';
-                   self.pos_line = self.plot_function(self.fig, self.pos_data, pos_pos, pos_title, ...
+                   self.pos_line = self.plot_function(self.fig, self.model.pos_data, pos_pos, pos_title, ...
                            pos_xlabel, pos_ylabel);
                end
            end
                
-           if self.mode == 4 || self.mode == 5 || self.mode == 7
+           if self.model.mode == 4 || self.model.mode == 5 || self.model.mode == 7
                
                self.create_dummy_function();
-               if self.mode == 4 || self.mode == 7
+               if self.model.mode == 4 || self.model.mode == 7
                    pos_title = "Closed-loop displayed as 1 Hz sine wave";
                else
                    pos_title = "Closed-loop displayed as combination dummy function";
                end
                pos_xlabel = 'Time';
                pos_ylabel = 'Frame Index';
-               self.dummy_line = self.plot_function(self.fig, self.dummy_data, pos_pos, pos_title, ...
+               self.dummy_line = self.plot_function(self.fig, self.model.dummy_data, pos_pos, pos_title, ...
                     pos_xlabel, pos_ylabel);
                
            end
            
-           if self.mode == 6
+           if self.model.mode == 6
            
 
                 pos_title = 'Position Function Preview';
@@ -287,20 +217,20 @@ classdef preview_controller < handle
                 self.create_dummy_function();
                 dummy_title = "closed loop displayed as 1 Hz sine wave";
                 
-                self.dummy_line = self.plot_function(self.fig, self.dummy_data, dum_pos, ...
+                self.dummy_line = self.plot_function(self.fig, self.model.dummy_data, dum_pos, ...
                     dummy_title, pos_xlabel, pos_ylabel);
-                self.pos_line = self.plot_function(self.fig, self.pos_data, pos_pos, ...
+                self.pos_line = self.plot_function(self.fig, self.model.pos_data, pos_pos, ...
                     pos_title, pos_xlabel, pos_ylabel);
            
            
            end
 
-           if strcmp(self.data(4),'') == 0
+           if strcmp(self.model.data(4),'') == 0
 
-               ao1Size = size(self.ao1_data(:,:));
+               ao1Size = size(self.model.ao1_data(:,:));
 %                ao_position = [ao_x, ao1_y, ao1Chart_width, aoChart_height];
                ao1_title = 'Analog Output 1';
-               self.ao1_line = self.plot_function(self.fig, self.ao1_data, ao1_pos, ao1_title, ...
+               self.ao1_line = self.plot_function(self.fig, self.model.ao1_data, ao1_pos, ao1_title, ...
                         ao_xlabel, ao_ylabel);
 
            else
@@ -310,12 +240,12 @@ classdef preview_controller < handle
 
            end
 
-           if strcmp(self.data(5),'') == 0
+           if strcmp(self.model.data(5),'') == 0
 
-               ao2Size = size(self.ao2_data(:,:));
+               ao2Size = size(self.model.ao2_data(:,:));
                %ao_position = [ao_x, ao2_y, ao2Chart_width, aoChart_height];
                ao2_title = 'Analog Output 2';
-               self.ao2_line = self.plot_function(self.fig, self.ao2_data, ao2_pos, ao2_title, ...
+               self.ao2_line = self.plot_function(self.fig, self.model.ao2_data, ao2_pos, ao2_title, ...
                ao_xlabel, ao_ylabel);
 
            else
@@ -325,12 +255,12 @@ classdef preview_controller < handle
 
            end
 
-           if strcmp(self.data(6),'') == 0
+           if strcmp(self.model.data(6),'') == 0
 
-               ao3Size = size(self.ao3_data(:,:));
+               ao3Size = size(self.model.ao3_data(:,:));
                %ao_position = [ao_x, ao3_y, ao3Chart_width, aoChart_height];
                ao3_title = 'Analog Output 3';
-               self.ao3_line = self.plot_function(self.fig, self.ao3_data, ao3_pos, ao3_title, ...
+               self.ao3_line = self.plot_function(self.fig, self.model.ao3_data, ao3_pos, ao3_title, ...
                ao_xlabel, ao_ylabel);
 
            else
@@ -340,12 +270,12 @@ classdef preview_controller < handle
 
            end
 
-           if strcmp(self.data(7),'') == 0
+           if strcmp(self.model.data(7),'') == 0
 
-               ao4Size = size(self.ao4_data(:,:));
+               ao4Size = size(self.model.ao4_data(:,:));
               % ao_position = [ao_x, ao4_y, ao4Chart_width, aoChart_height];
                ao4_title = 'Analog Output 4';
-               self.ao4_line = self.plot_function(self.fig, self.ao4_data, ao4_pos, ao4_title, ...
+               self.ao4_line = self.plot_function(self.fig, self.model.ao4_data, ao4_pos, ao4_title, ...
                ao_xlabel, ao_ylabel);
 
            else
@@ -364,7 +294,7 @@ classdef preview_controller < handle
            pauseButton = uicontrol(self.fig, 'Style', 'pushbutton', 'String', 'Pause', 'FontSize', ...
                 14, 'units', 'pixels', 'Position', [ (pat_pos(1) + pat_pos(3))/2 + 100, 75, 90, 25], 'Callback', @self.pause);
            realtime = uicontrol(self.fig, 'Style', 'checkbox', 'String', 'Real-time speed', 'Value', ...
-               self.is_realtime, 'FontSize', 14, 'Position', [ ((pat_pos(1) + pat_pos(3))/2 +215), 75, 200, 25],...
+               self.model.is_realtime, 'FontSize', 14, 'Position', [ ((pat_pos(1) + pat_pos(3))/2 +215), 75, 200, 25],...
                'Callback', @self.set_realtime); 
 
            
@@ -376,7 +306,7 @@ classdef preview_controller < handle
         function update_layout(self)
             first_frame = self.get_first_frame();
 
-            set(self.im,'cdata',self.pattern_data(:,:,first_frame))
+            set(self.im,'cdata',self.model.pattern_data(:,:,first_frame))
             
             xdata = [1,1];
             if self.pos_line ~= 0
@@ -408,17 +338,17 @@ classdef preview_controller < handle
         function preview_Mode1(self)
             
 
-        self.is_paused = false;
+        self.model.is_paused = false;
             
-            if self.is_realtime == 1
-                fr_rate = self.rt_frRate;
+            if self.model.is_realtime == 1
+                fr_rate = self.model.rt_frRate;
                 aofr_rate = 1000;
                 fr_increment = 1;
                 ao_increment = 1;
                 
             else
-                fr_rate = self.slow_frRate;
-                aofr_rate = (1000/self.rt_frRate)*fr_rate;
+                fr_rate = self.model.slow_frRate;
+                aofr_rate = (1000/self.model.rt_frRate)*fr_rate;
                 fr_increment = 1;
                 ao_increment = 1;
             end
@@ -427,29 +357,29 @@ classdef preview_controller < handle
                 waitfor(errordlg("Please make sure you've entered a position function and try again."));
             else
                 
-                time = self.dur*1000;
+                time = self.model.dur*1000;
 %                aofr_rate = 1000;
                 ratio = aofr_rate/fr_rate;
                 count = 1;
-                j = self.preview_index;
+                j = self.model.preview_index;
                 numIt = 1;
                 if self.ao1_line ~= 0
-                    lineDist1 = length(self.ao1_data);
+                    lineDist1 = length(self.model.ao1_data);
                 end
                 if self.ao2_line ~= 0
-                    lineDist2 = length(self.ao2_data);
+                    lineDist2 = length(self.model.ao2_data);
                 end
                 if self.ao3_line ~= 0
-                    lineDist3 = length(self.ao3_data);
+                    lineDist3 = length(self.model.ao3_data);
     
                 end
                 if self.ao4_line ~= 0
-                    lineDist4 = length(self.ao4_data);
+                    lineDist4 = length(self.model.ao4_data);
                 end
 
-                for i = self.preview_index:time
+                for i = self.model.preview_index:time
                     inside = tic;
-                    if self.is_paused == false
+                    if self.model.is_paused == false
                     %move ao lines
                     
                         if self.ao1_line ~= 0
@@ -484,25 +414,28 @@ classdef preview_controller < handle
                                 self.ao4_line.XData = [self.ao4_line.XData(1) + ao_increment, self.ao4_line.XData(2) + ao_increment];
                             end
                         end
-
-                        if count >= ratio
-
-                            frame = self.pos_data(j);
-                            j = j + fr_increment;
-                            if j > length(self.pos_data)
+                        
+                        
+                        j = j + fr_increment; %%%THIS was below frame inside the count/ratio if statement - see if moving it out fixes the problem
+                            if j > length(self.model.pos_data)
                                 j = 1;
                             end
 
-                            set(self.im,'cdata',self.pattern_data(:,:,frame));
+                        if count >= ratio
+
+                            frame = self.model.pos_data(j);
+                            
+
+                            set(self.im,'cdata',self.model.pattern_data(:,:,frame));
                             if self.pos_line ~= 0
-                                if self.pos_line.XData(1) >= length(self.pos_data)
+                                if self.pos_line.XData(1) >= length(self.model.pos_data)
                                     self.pos_line.XData = [1,1];
                                 else
-                                    self.pos_line.XData = [self.pos_line.XData(1) + fr_increment, self.pos_line.XData(2) + fr_increment];
+                                    self.pos_line.XData = [j,j];%[self.pos_line.XData(1) + fr_increment, self.pos_line.XData(2) + fr_increment];
                                 end
                             end
 
-                            self.preview_index = self.preview_index + 1;
+                            self.model.preview_index = self.model.preview_index + 1;
                             %move pos line if it exists
                             %put up next frame
                             count = 1;
@@ -516,7 +449,7 @@ classdef preview_controller < handle
                         drawnow limitrate %nocallbacks
                         timeElapsed = toc(inside);
 
-                        if self.is_realtime == 1
+                        if self.model.is_realtime == 1
                             time_to_pause = ao_increment - (timeElapsed*1000);%if realtime, ao line moves once every millsecond no matter what.
                             if time_to_pause < 0
                                 time_to_pause = 0;
@@ -550,36 +483,36 @@ classdef preview_controller < handle
         
         function preview_Mode2(self)
 
-            if self.is_realtime == 1
-                fr_rate = self.data{9};
+            if self.model.is_realtime == 1
+                fr_rate = self.model.data{9};
             else
-                fr_rate = self.slow_frRate;
+                fr_rate = self.model.slow_frRate;
             end
 
-            self.is_paused = false;
-            pat_num_frames = length(self.pattern_data(1,1,:));
-            framesTot = self.dur * fr_rate;%%DO THEY WANT TO GO THROUGH WHOLE LIBRARY NO MATTER WHAT OR ONLY AS MANY FRAMES AS ALLOWED BY FRAME RATE/DURATION???
+            self.model.is_paused = false;
+            pat_num_frames = length(self.model.pattern_data(1,1,:));
+            framesTot = self.model.dur * fr_rate;%%DO THEY WANT TO GO THROUGH WHOLE LIBRARY NO MATTER WHAT OR ONLY AS MANY FRAMES AS ALLOWED BY FRAME RATE/DURATION???
             
             if self.ao1_line ~= 0
  
-                lineDist1 = length(self.ao1_data);
+                lineDist1 = length(self.model.ao1_data);
             end
             if self.ao2_line ~= 0
-                lineDist2 = length(self.ao2_data);
+                lineDist2 = length(self.model.ao2_data);
             end
             if self.ao3_line ~= 0
-                lineDist3 = length(self.ao3_data);
+                lineDist3 = length(self.model.ao3_data);
             end
             if self.ao4_line ~= 0
-                lineDist4 = length(self.ao4_data);
+                lineDist4 = length(self.model.ao4_data);
             end
 
           
             for t = 1:framesTot
 %                 tic
-                if self.is_paused == false
+                if self.model.is_paused == false
 
-                    set(self.im,'cdata',self.pattern_data(:,:,self.preview_index));
+                    set(self.im,'cdata',self.model.pattern_data(:,:,self.model.preview_index));
 
                         %this equals how far on the xaxis the bar should travel in the span of one frame
                     for s = 1:round(1/(fr_rate/1000), 0)
@@ -641,10 +574,10 @@ classdef preview_controller < handle
 %                         java.lang.Thread.sleep(time_to_pause*1000);
 %                     end
                     
-                    if self.preview_index == pat_num_frames
-                        self.preview_index = 1;
+                    if self.model.preview_index == pat_num_frames
+                        self.model.preview_index = 1;
                     else
-                        self.preview_index = self.preview_index + 1;
+                        self.model.preview_index = self.model.preview_index + 1;
                     end
                     
                 else
@@ -666,12 +599,13 @@ classdef preview_controller < handle
         
         function preview_Mode4(self)
             
-            self.is_paused = false;
+            self.model.is_paused = false;
+            time = self.model.dur*1000;
 
-            if self.is_realtime == 1
-                fr_rate = self.rt_frRate;
+            if self.model.is_realtime == 1
+                fr_rate = self.model.rt_frRate;
             else 
-                fr_rate = self.slow_frRate;
+                fr_rate = self.model.slow_frRate;
             end
             
 
@@ -679,14 +613,17 @@ classdef preview_controller < handle
                 waitfor(errordlg("Please make sure you have entered a position function and try again."));
             else
 
-
-                for i = self.preview_index:length(self.dummy_data)
+                index = self.model.preview_index
+                for j = self.model.preview_index:time
                     tic
-                    if self.is_paused == false
+                    
+                    if self.model.is_paused == false
+                        if index > length(self.model.dummy_data)
+                            index = 1;
+                        end
+                        frame = self.model.dummy_data(index);
 
-                        frame = self.dummy_data(i);
-
-                        set(self.im,'cdata',self.pattern_data(:,:,frame));
+                        set(self.im,'cdata',self.model.pattern_data(:,:,frame));
                         if self.dummy_line ~= 0
                             self.dummy_line.XData = [self.dummy_line.XData(1) + 1, self.dummy_line.XData(2) + 1];
                         end
@@ -713,7 +650,8 @@ classdef preview_controller < handle
                         end
 
                         java.lang.Thread.sleep(time_to_pause);                        
-                        self.preview_index = self.preview_index + 1;
+                        self.model.preview_index = self.model.preview_index + 1;
+                        index = index + 1;
                         
                         
                     end
@@ -733,13 +671,13 @@ classdef preview_controller < handle
             
              
             
-             self.is_paused = false;
+             self.model.is_paused = false;
 
 
-            if self.is_realtime == 1
-                fr_rate = self.rt_frRate;
+            if self.model.is_realtime == 1
+                fr_rate = self.model.rt_frRate;
             else 
-                fr_rate = self.slow_frRate;
+                fr_rate = self.model.slow_frRate;
             end
 
            
@@ -749,18 +687,18 @@ classdef preview_controller < handle
             else
                 
                 
-                if length(self.dummy_data) ~= length(self.pos_data)
+                if length(self.model.dummy_data) ~= length(self.model.pos_data)
                     waitfor(errordlg("Please make sure your position function is the same length as your duration"));
                 else
                 
-                    for i = self.preview_index:length(self.pos_data)
+                    for i = self.model.preview_index:length(self.model.pos_data)
                         tic
-                        if self.is_paused == false
+                        if self.model.is_paused == false
                             
-                            frame1 = self.dummy_data(i);
-                            frame2 = self.pos_data(i);
+                            frame1 = self.model.dummy_data(i);
+                            frame2 = self.model.pos_data(i);
 
-                            set(self.im,'cdata',self.pattern_data(:,:,frame1, frame2));
+                            set(self.im,'cdata',self.model.pattern_data(:,:,frame1, frame2));
                             if self.pos_line ~= 0
                                 self.pos_line.XData = [self.pos_line.XData(1) + 1, self.pos_line.XData(2) + 1];
                             end
@@ -790,7 +728,7 @@ classdef preview_controller < handle
                             end
 
                             java.lang.Thread.sleep(time_to_pause);       
-                            self.preview_index = self.preview_index + 1;
+                            self.model.preview_index = self.model.preview_index + 1;
 
 
                         end
@@ -819,7 +757,7 @@ classdef preview_controller < handle
     %         ylabel(func_axes, y_label);
             p = plot(func);
             set(p, 'parent', func_axes);
-            func_line = line('XData',[self.preview_index, self.preview_index],'YData',[ylim(1), ylim(2)]);
+            func_line = line('XData',[self.model.preview_index, self.model.preview_index],'YData',[ylim(1), ylim(2)]);
             title(graph_title);
             xlabel(x_label);
             ylabel(y_label);
@@ -830,18 +768,18 @@ classdef preview_controller < handle
         function [first_frame] = get_first_frame(self)
 
 
-            if self.mode == 1
-                first_frame = self.pos_data(1);
-            elseif self.mode == 2
+            if self.model.mode == 1
+                first_frame = self.model.pos_data(1);
+            elseif self.model.mode == 2
                 first_frame = 1;
-            elseif self.mode == 3
-                first_frame = self.data{8};
-            elseif self.mode == 4 || self.mode == 7
+            elseif self.model.mode == 3
+                first_frame = self.model.data{8};
+            elseif self.model.mode == 4 || self.model.mode == 7
                 first_frame = 1;
-            elseif self.mode == 5
+            elseif self.model.mode == 5
                 first_frame = 1; %Where the dummy_pos is the result of combining the original dummy (1 hz sine wave) and the pos function
-            elseif self.mode == 6
-                first_frame = [1, self.pos_data(1)];
+            elseif self.model.mode == 6
+                first_frame = [1, self.model.pos_data(1)];
             end
 
         
@@ -852,21 +790,21 @@ classdef preview_controller < handle
 
 
             
-            ybound = length(self.pattern_data(1,1,:));
+            ybound = length(self.model.pattern_data(1,1,:));
 
-            %self.dummy_data = zeros(1,(dur*1000));
+            %self.model.dummy_data = zeros(1,(dur*1000));
             
-            if self.mode == 4 || self.mode == 7 || self.mode == 6
+            if self.model.mode == 4 || self.model.mode == 7 || self.model.mode == 6
 %                 frame = 1;
 %                 direction = 'up';
 %                for t = 1:(dur*1000)
 %                    if strcmp(direction,'up') == 1
 %                        
-%                         self.dummy_data(t) = frame;
+%                         self.model.dummy_data(t) = frame;
 %                         frame = frame + 1;
 %                    elseif strcmp(direction,'down') == 1
 %                        
-%                        self.dummy_data(t) = frame;
+%                        self.model.dummy_data(t) = frame;
 %                        frame = frame - 1;
 %                    end
 %                    if frame >= ybound
@@ -876,18 +814,18 @@ classdef preview_controller < handle
 %                    end
 %                    
 % 
-%                 %self.dummy_data(t) = ybound*sin(2*pi*(t/1000)+(pi/2)) + ybound;
+%                 %self.model.dummy_data(t) = ybound*sin(2*pi*(t/1000)+(pi/2)) + ybound;
 %                end
-                time = self.dur*1000;
+                time = self.model.dur*1000;
                 sample_rate = 1;
                 frequency = .001;
                 step_size = 1/sample_rate;
                 t = 0:step_size:(time - step_size);
-                self.dummy_data = round((ybound/2 - 1)*sin(2*pi*frequency*t)+((ybound/2)+1),0);
+                self.model.dummy_data = round((ybound/2 - 1)*sin(2*pi*frequency*t)+((ybound/2)+1),0);
             
-            elseif self.mode == 5
+            elseif self.model.mode == 5
 
-                xlim = self.dur*1000;
+                xlim = length(self.model.pos_data);
                 dummy = zeros(1,xlim);
                 ybnd = ybound/2;
                 
@@ -901,12 +839,12 @@ classdef preview_controller < handle
                 
                 
                 for m = 1:xlim
-                    self.dummy_data(m) = self.pos_data(m) + dummy(m);
-                    if self.dummy_data(m) > ybound
-                        factor = floor(self.dummy_data(m)/ybound);
-                        self.dummy_data(m) = self.dummy_data(m) - (factor*ybound);
-                        if self.dummy_data(m) == 0
-                            self.dummy_data(m) = self.dummy_data(m) + 1;
+                    self.model.dummy_data(m) = self.model.pos_data(m) + dummy(m);
+                    if self.model.dummy_data(m) > ybound
+                        factor = floor(self.model.dummy_data(m)/ybound);
+                        self.model.dummy_data(m) = self.model.dummy_data(m) - (factor*ybound);
+                        if self.model.dummy_data(m) == 0
+                            self.model.dummy_data(m) = self.model.dummy_data(m) + 1;
                         end
                     end
                 end
@@ -916,48 +854,28 @@ classdef preview_controller < handle
                 
         end
          
-        function [adjusted_data] = normalize_matrix(self)
-            
-            pat = string(self.data(2));
-            original_data = self.doc.Patterns_.(pat).pattern.Pats;
-            x = length(original_data(1,:,1));
-            y = length(original_data(:,1,1));
-            z = length(original_data(1,1,:));
-            adjusted_data = zeros(y,x,z);
-            max_num = max(original_data,[],[1 2]);
-            for i = 1:z
-                
-                adjusted_matrix(:,:,1) = original_data(:,:,i) ./ max_num(i);
-                adjusted_data(:,:,i) = adjusted_matrix(:,:,1);
-            
-            end
-            
-            adjusted_data(:,:,1)
-        
-        
-        
-        end
+
 
         
         function pause(self, src, event)
         
-            self.is_paused = true;
+            self.model.is_paused = true;
         
         end
         
         function play(self, src, event)
 
-            if self.mode == 1
+            if self.model.mode == 1
                self.preview_Mode1();
-            elseif self.mode == 2
+            elseif self.model.mode == 2
                 self.preview_Mode2();
-            elseif self.mode == 3
+            elseif self.model.mode == 3
                 self.preview_Mode3();
-            elseif self.mode == 4 
+            elseif self.model.mode == 4 
                 self.preview_Mode4();
-            elseif self.mode == 5
+            elseif self.model.mode == 5
                 self.preview_Mode4();
-            elseif self.mode == 6
+            elseif self.model.mode == 6
                 self.preview_Mode6();
             else
                 self.preview_Mode4();
@@ -967,8 +885,8 @@ classdef preview_controller < handle
         function stop(self, src, event)
         
             
-            self.is_paused = true;
-            self.preview_index = 1;
+            self.model.is_paused = true;
+            self.model.preview_index = 1;
             self.update_layout();
             
 
@@ -976,10 +894,10 @@ classdef preview_controller < handle
         end
         
         function set_realtime(self, src, event)
-            if self.is_realtime == 0
-                self.is_realtime = 1;
+            if self.model.is_realtime == 0
+                self.model.is_realtime = 1;
             else
-                self.is_realtime = 0;
+                self.model.is_realtime = 0;
             end
         end
         
@@ -990,9 +908,7 @@ classdef preview_controller < handle
         function value = get.model(self)
             value = self.model_;
         end
-        function value = get.data(self)
-            value = self.data_;
-        end
+        
         
         function value = get.fig(self)
             value = self.fig_;
@@ -1022,60 +938,13 @@ classdef preview_controller < handle
         function value = get.dummy_line(self)
             value = self.dummy_line_;
         end
-        function value = get.dummy_data(self)
-            value = self.dummy_data_;
-        end
-        function value = get.preview_index(self)
-            value = self.preview_index_;
-        end
-        function value = get.is_paused(self)
-            value = self.is_paused_;
-        end
-        function value = get.is_realtime(self)
-            value = self.is_realtime_;
-        end
-        function value = get.slow_frRate(self)
-            value = self.slow_frRate_;
-        end
-        function value = get.rt_frRate(self)
-            value = self.rt_frRate_;
-        end
-        function value = get.pattern_data(self)
-            value = self.pattern_data_;
-        end
-        function value = get.mode(self)
-            value = self.mode_;
-        end
-        function value = get.dur(self)
-            value = self.dur_;
-        end
-        function value = get.pos_data(self)
-            value = self.pos_data_;
-        end
-        function value = get.ao1_data(self)
-            value = self.ao1_data_;
-        end
-        function value = get.ao2_data(self)
-            value = self.ao2_data_;
-        end
-        function value = get.ao3_data(self)
-            value = self.ao3_data_;
-        end
-        function value = get.ao4_data(self)
-            value = self.ao4_data_;
-        end
-        function value = get.doc(self)
-            value = self.doc_;
-        end
-
+        
         %SETTERS
         
         function set.model(self, value)
             self.model_ = value;
         end
-        function set.data(self, value)
-            self.data_ = value;
-        end
+
         
         function set.fig(self, value)
             self.fig_ = value;
@@ -1105,51 +974,7 @@ classdef preview_controller < handle
         function set.dummy_line(self, value)
             self.dummy_line_ = value;
         end
-        function set.dummy_data(self, value)
-            self.dummy_data_ = value;
-        end
-        function set.preview_index(self, value)
-            self.preview_index_ = value;
-        end
-        function set.is_paused(self, value)
-            self.is_paused_ = value;
-        end
-        function set.is_realtime(self, value)
-            self.is_realtime_ = value;
-        end
-        function set.slow_frRate(self, value)
-            self.slow_frRate_ = value;
-        end
-        function set.rt_frRate(self, value)
-            self.rt_frRate_ = value;
-        end
-        function set.pattern_data(self, value)
-            self.pattern_data_ = value;
-        end
-        function set.mode(self, value)
-            self.mode_ = value;
-        end
-        function set.dur(self, value)
-            self.dur_ = value;
-        end
-        function set.pos_data(self, value)
-            self.pos_data_ = value;
-        end
-        function set.ao1_data(self, value)
-            self.ao1_data_ = value;
-        end
-        function set.ao2_data(self, value)
-            self.ao2_data_ = value;
-        end
-        function set.ao3_data(self, value)
-            self.ao3_data_ = value;
-        end
-        function set.ao4_data(self, value)
-            self.ao4_data_ = value;
-        end
-        function set.doc(self, value)
-            self.doc_ = value;
-        end
+        
         
     
     

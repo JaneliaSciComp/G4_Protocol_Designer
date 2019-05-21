@@ -1267,6 +1267,18 @@ classdef document < handle
                     currentExp_statement = "Previously loaded currentExp file was replaced.";
                     success_statement = success_statement + currentExp_statement;
                 end
+                if imported_patterns == 0 && skipped_patterns ~= 0
+                    patterns_imported_statement = skipped_patterns + " patterns skipped.";
+                    success_statement = success_statement + patterns_imported_statement + newline;
+                end
+                if imported_functions == 0 && skipped_functions ~= 0
+                    functions_imported_statement = skipped_functions + " functions skipped.";
+                    success_statement = success_statement + functions_imported_statement + newline;
+                end
+                if imported_aos == 0 && skipped_aos ~= 0
+                    aos_imported_statement = skipped_aos + " AO functions skipped.";
+                    success_statement = success_statement + aos_imported_statement + newline;
+                end
  
                 waitfor(msgbox(success_statement, 'Import Successful'));
             

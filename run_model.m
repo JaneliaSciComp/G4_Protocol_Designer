@@ -35,7 +35,7 @@ classdef run_model
             
             self.fly_name = '';
             self.fly_genotype = '';
-            self.experimenter = '';
+            self.experimenter = getenv('USERNAME');
             self.experiment_type = 1;
             self.do_plotting = 1;
             self.do_processing = 1;
