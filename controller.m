@@ -326,44 +326,44 @@ classdef controller < handle %Made this handle class because was having trouble 
 
        %Channels to acquire
 
-            chan_pan = uipanel(self.f, 'Title', 'Acquire Channels:', 'FontSize', font_size_, 'units', 'pixels', ...
+            chan_pan = uipanel(self.f, 'Title', 'Analog Input Channels', 'FontSize', font_size_, 'units', 'pixels', ...
                 'Position', [15, positions.block(2) + positions.block(4) - 240, 250, 120]);
 
-            self.chan1 = uicontrol(self.f, 'Style', 'checkbox', 'String', 'Channel 1', 'Value', self.doc.is_chan1, 'FontSize', font_size_, ...
-                'units', 'pixels', 'Position', [20, positions.block(2) + positions.block(4) - 160, 80, 20], 'Callback', @self.update_chan1);
+            %self.chan1 = uicontrol(self.f, 'Style', 'checkbox', 'String', 'Channel 1', 'Value', self.doc.is_chan1, 'FontSize', font_size_, ...
+             %   'units', 'pixels', 'Position', [20, positions.block(2) + positions.block(4) - 160, 80, 20], 'Callback', @self.update_chan1);
 
-            self.chan1_rate_box = uicontrol(self.f, 'Style', 'edit', 'String', num2str(self.doc.chan1_rate), 'units', 'pixels', 'Position', ...
-                [105, positions.block(2) + positions.block(4) - 160, 40, 20], 'Callback', @self.update_chan1_rate);
+            self.chan1_rate_box = uicontrol(chan_pan, 'Style', 'edit', 'String', num2str(self.doc.chan1_rate), 'units', 'pixels', 'Position', ...
+                [170, 74, 40, 20],'Callback', @self.update_chan1_rate);
 
-            chan1_rate_label = uicontrol(self.f, 'Style', 'text', 'String', 'Sample Rate', 'FontSize', font_size_, ...
-                'units', 'pixels', 'Position', [155, positions.block(2) + positions.block(4) - 160, 85, 20]);
+            chan1_rate_label = uicontrol(chan_pan, 'Style', 'text', 'String', 'Channel 1 Sample Rate', 'FontSize', font_size_, ...
+                'units', 'pixels', 'HorizontalAlignment', 'left', 'Position', [15, 74, 150, 20]);
 
-            self.chan2 = uicontrol(self.f, 'Style', 'checkbox', 'String', 'Channel 2', 'Value', self.doc.is_chan2, 'FontSize', font_size_, ...
-                'units', 'pixels', 'Position', [20, positions.block(2) + positions.block(4) - 180, 80, 20], 'Callback', @self.update_chan2);
+            %self.chan2 = uicontrol(self.f, 'Style', 'checkbox', 'String', 'Channel 2', 'Value', self.doc.is_chan2, 'FontSize', font_size_, ...
+            %    'units', 'pixels', 'Position', [20, positions.block(2) + positions.block(4) - 180, 80, 20], 'Callback', @self.update_chan2);
 
-            self.chan2_rate_box = uicontrol(self.f, 'Style', 'edit', 'String', num2str(self.doc.chan2_rate), 'units', 'pixels', 'Position', ...
-                [105, positions.block(2) + positions.block(4) - 180, 40, 20], 'Callback', @self.update_chan2_rate);
+            self.chan2_rate_box = uicontrol(chan_pan, 'Style', 'edit', 'String', num2str(self.doc.chan2_rate), 'units', 'pixels', 'Position', ...
+                [170, 51, 40, 20], 'Callback', @self.update_chan2_rate);
 
-            chan2_rate_label = uicontrol(self.f, 'Style', 'text', 'String', 'Sample Rate', 'FontSize', font_size_, ...
-                'units', 'pixels', 'Position', [155, positions.block(2) + positions.block(4) - 180, 85, 20]);
+            chan2_rate_label = uicontrol(chan_pan, 'Style', 'text', 'String', 'Channel 2 Sample Rate', 'FontSize', font_size_, ...
+                'units', 'pixels', 'HorizontalAlignment', 'left', 'Position', [15, 51, 150, 20]);
 
-            self.chan3 = uicontrol(self.f, 'Style', 'checkbox', 'String', 'Channel 3', 'Value', self.doc.is_chan3, 'FontSize', font_size_, ...
-                'units', 'pixels', 'Position', [20, positions.block(2) + positions.block(4) - 200, 80, 20], 'Callback', @self.update_chan3);
+            %self.chan3 = uicontrol(self.f, 'Style', 'checkbox', 'String', 'Channel 3', 'Value', self.doc.is_chan3, 'FontSize', font_size_, ...
+             %   'units', 'pixels', 'Position', [20, positions.block(2) + positions.block(4) - 200, 80, 20], 'Callback', @self.update_chan3);
 
-            self.chan3_rate_box = uicontrol(self.f, 'Style', 'edit', 'String', num2str(self.doc.chan3_rate), 'units', 'pixels', 'Position', ...
-                [105, positions.block(2) + positions.block(4) - 200, 40, 20], 'Callback', @self.update_chan3_rate);
+            self.chan3_rate_box = uicontrol(chan_pan, 'Style', 'edit', 'String', num2str(self.doc.chan3_rate), 'units', 'pixels', 'Position', ...
+                [170, 28, 40, 20], 'Callback', @self.update_chan3_rate);
 
-            chan3_rate_label = uicontrol(self.f, 'Style', 'text', 'String', 'Sample Rate', 'FontSize', font_size_, ...
-                'units', 'pixels', 'Position', [155, positions.block(2) + positions.block(4) - 200, 85, 20]);
+            chan3_rate_label = uicontrol(chan_pan, 'Style', 'text', 'String', 'Channel 3 Sample Rate', 'FontSize', font_size_, ...
+                'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [15, 28, 150, 20]);
 
-            self.chan4 = uicontrol(self.f, 'Style', 'checkbox', 'String', 'Channel 4', 'Value', self.doc.is_chan4, 'FontSize', font_size_, ...
-                'units', 'pixels', 'Position', [20, positions.block(2) + positions.block(4) - 220, 80, 20], 'Callback', @self.update_chan4);
+            %self.chan4 = uicontrol(self.f, 'Style', 'checkbox', 'String', 'Channel 4', 'Value', self.doc.is_chan4, 'FontSize', font_size_, ...
+             %   'units', 'pixels', 'Position', [20, positions.block(2) + positions.block(4) - 220, 80, 20], 'Callback', @self.update_chan4);
 
-            self.chan4_rate_box = uicontrol(self.f, 'Style', 'edit', 'String', num2str(self.doc.chan4_rate), 'units', 'pixels', 'Position', ...
-                [105, positions.block(2) + positions.block(4) - 220, 40, 20], 'Callback', @self.update_chan4_rate);
+            self.chan4_rate_box = uicontrol(chan_pan, 'Style', 'edit', 'String', num2str(self.doc.chan4_rate), 'units', 'pixels', 'Position', ...
+                [170, 5, 40, 20], 'Callback', @self.update_chan4_rate);
 
-            chan4_rate_label = uicontrol(self.f, 'Style', 'text', 'String', 'Sample Rate', 'FontSize', font_size_, ...
-                'units', 'pixels', 'Position', [155, positions.block(2) + positions.block(4) - 220, 85, 20]);
+            chan4_rate_label = uicontrol(chan_pan, 'Style', 'text', 'String', 'Channel 4 Sample Rate', 'FontSize', font_size_, ...
+                'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [15, 5, 150, 20]);
 
             self.bg2 = uibuttongroup(self.f, 'units', 'pixels', 'Position', [15, positions.block(2) + positions.block(4) - 270, 250, 25], 'SelectionChangedFcn', @self.update_rowNum);
        
@@ -377,26 +377,32 @@ classdef controller < handle %Made this handle class because was having trouble 
             key_pan = uipanel(self.f, 'Title', 'Mode Key:', 'BackgroundColor', [.75, .75, .75], 'BorderType', 'none', ...
                 'FontSize', 13, 'units', 'pixels', 'Position', [15, positions.block(2) + positions.block(4) - 720, 280, 420]);
             
-            mode_1_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 1:', 'BackgroundColor', [.75,.75,.75], ...
-                'FontSize', 11, 'units', 'pixels', 'Position', [25, positions.block(2) + positions.block(4) - 360, 65, 18]);
+            mode_1_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 1: Position Function', 'BackgroundColor', [.75,.75,.75], ...
+                'HorizontalAlignment', 'left', 'FontSize', 11, 'units', 'pixels', 'Position', [25, positions.block(2) + positions.block(4) - 360, 250, 18]);
             
-            mode_2_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 2:', 'BackgroundColor', [.75,.75,.75], ...
-                'FontSize', 11, 'units', 'pixels', 'Position', [25, mode_1_label.Position(2) - 50, 65, 18]);
+            mode_2_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 2: Constant Rate', 'BackgroundColor', [.75,.75,.75], ...
+                'HorizontalAlignment', 'left','FontSize', 11, 'units', 'pixels', 'Position', [25, mode_1_label.Position(2) - 50, 250, 18]);
             
-            mode_3_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 3:', 'BackgroundColor', [.75,.75,.75], ...
-                'FontSize', 11, 'units', 'pixels', 'Position', [25, mode_2_label.Position(2) - 50, 65, 18]);
+            mode_3_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 3: Constant Index', 'BackgroundColor', [.75,.75,.75], ...
+                'HorizontalAlignment', 'left','FontSize', 11, 'units', 'pixels', 'Position', [25, mode_2_label.Position(2) - 50, 250, 18]);
             
-            mode_4_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 4:', 'BackgroundColor', [.75,.75,.75], ...
-                'FontSize', 11, 'units', 'pixels', 'Position', [25, mode_3_label.Position(2) - 50, 65, 18]);
+            mode_4_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 4: Closed-loop sets frame rate', 'BackgroundColor', [.75,.75,.75], ...
+                'HorizontalAlignment', 'left','FontSize', 11, 'units', 'pixels', 'Position', [25, mode_3_label.Position(2) - 50, 250, 18]);
             
-            mode_5_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 5:', 'BackgroundColor', [.75,.75,.75], ...
-                'FontSize', 11, 'units', 'pixels', 'Position', [25, mode_4_label.Position(2) - 50, 65, 18]);
+            mode_5_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 5: Closed-loop rate + offset', 'BackgroundColor', [.75,.75,.75], ...
+                'HorizontalAlignment', 'left','FontSize', 11, 'units', 'pixels', 'Position', [25, mode_4_label.Position(2) - 50, 250, 18]);
             
-            mode_6_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 6:', 'BackgroundColor', [.75,.75,.75], ...
-                'FontSize', 11, 'units', 'pixels', 'Position', [25, mode_5_label.Position(2) - 50, 65, 18]);
+            mode_5_label_cont = uicontrol(self.f, 'Style', 'text', 'String', 'position function', 'BackgroundColor', [.75,.75,.75], 'HorizontalAlignment', ...
+                'left', 'FontSize', 11, 'units', 'pixels', 'Position', [25, mode_5_label.Position(2) - 20, 200, 18]);
             
-            mode_7_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 7:', 'BackgroundColor', [.75,.75,.75], ...
-                'FontSize', 11, 'units', 'pixels', 'Position', [25, mode_6_label.Position(2) - 50, 65, 18]);
+            mode_6_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 6: Closed-loop rate X + position', 'BackgroundColor', [.75,.75,.75], ...
+                'HorizontalAlignment', 'left','FontSize', 11, 'units', 'pixels', 'Position', [25, mode_5_label_cont.Position(2) - 50, 250, 18]);
+            
+            mode_6_label_cont = uicontrol(self.f, 'Style', 'text', 'String', 'function Y', 'BackgroundColor', [.75,.75,.75], 'HorizontalAlignment', ...
+                'left', 'FontSize', 11, 'units', 'pixels', 'Position', [25, mode_6_label.Position(2) - 20, 200, 18]);
+            
+            mode_7_label = uicontrol(self.f, 'Style', 'text', 'String', 'Mode 7: Closed-loop sets frame index', 'BackgroundColor', [.75,.75,.75], ...
+                'HorizontalAlignment', 'left','FontSize', 11, 'units', 'pixels', 'Position', [25, mode_6_label_cont.Position(2) - 50, 250, 18]);
 
         end
         
@@ -629,53 +635,58 @@ classdef controller < handle %Made this handle class because was having trouble 
         
 %Update channels being acquired (each separately)
         
-        function update_chan1(self, src, event)
-            
-            new = src.Value;
-            self.doc.is_chan1 = new;
-            self.update_gui();
-            %self.doc.is_chan1
-        
-        end
-        
-        function update_chan2(self, src, event)
-
-            new = src.Value;
-            self.doc.is_chan2 = new;
-            self.update_gui();
-            %self.doc.is_chan2
-
-        end
-        
-        function update_chan3(self, src, event)
-
-            new = src.Value;
-            self.doc.is_chan3 = new;
-            self.update_gui();
-            %self.doc.is_chan3
-
-        end
-        
-        function update_chan4(self, src, event)
-
-            new = src.Value;
-            self.doc.is_chan4 = new;
-            self.update_gui();
-            %self.model.is_chan4
-        
-        end
+%         function update_chan1(self, src, event)
+%             
+%             new = src.Value;
+%             self.doc.is_chan1 = new;
+%             self.update_gui();
+%             %self.doc.is_chan1
+%         
+%         end
+%         
+%         function update_chan2(self, src, event)
+% 
+%             new = src.Value;
+%             self.doc.is_chan2 = new;
+%             self.update_gui();
+%             %self.doc.is_chan2
+% 
+%         end
+%         
+%         function update_chan3(self, src, event)
+% 
+%             new = src.Value;
+%             self.doc.is_chan3 = new;
+%             self.update_gui();
+%             %self.doc.is_chan3
+% 
+%         end
+%         
+%         function update_chan4(self, src, event)
+% 
+%             new = src.Value;
+%             self.doc.is_chan4 = new;
+%             self.update_gui();
+%             %self.model.is_chan4
+%         
+%         end
  
 %Update the frame rates of channels being collected        
         
         function update_chan1_rate(self, src, event)
             
             new = str2num(src.String);
-            if rem(new,1000) ~= 0
+            if rem(new,1000) ~= 0 && new ~= 0
                 waitfor(errordlg("The value you've entered is not a multiple of 1000. Please double check your entry."));
             end
             self.doc.chan1_rate = new;
+            if new == 0
+                self.doc.is_chan1 = 0;
+            else
+                self.doc.is_chan1 = 1;
+            end
             self.doc.set_config_data(new, 1);
-            self.update_config_file();
+            self.doc.update_config_file();
             self.update_gui();
             %self.doc.chan1_rate
             
@@ -689,7 +700,12 @@ classdef controller < handle %Made this handle class because was having trouble 
             end
             self.doc.set_config_data(new,2);
             self.doc.chan2_rate = new;
-            self.update_config_file();
+            if new == 0
+                self.doc.is_chan2 = 0;
+            else
+                self.doc.is_chan2 = 1;
+            end
+            self.doc.update_config_file();
             self.update_gui();
             %self.doc.chan2_rate
             
@@ -702,8 +718,13 @@ classdef controller < handle %Made this handle class because was having trouble 
                 waitfor(errordlg("The value you've entered is not a multiple of 1000. Please double check your entry."));
             end
             self.doc.chan3_rate = new;
+            if new == 0
+                self.doc.is_chan3 = 0;
+            else
+                self.doc.is_chan3 = 1;
+            end
             self.doc.set_config_data(new, 3);
-            self.update_config_file();
+            self.doc.update_config_file();
             self.update_gui();
             %self.doc.chan3_rate
             
@@ -716,8 +737,13 @@ classdef controller < handle %Made this handle class because was having trouble 
                 waitfor(errordlg("The value you've entered is not a multiple of 1000. Please double check your entry."));
             end
             self.doc.chan4_rate = new;
+            if new == 0
+                self.doc.is_chan4 = 0;
+            else
+                self.doc.is_chan4 = 1;
+            end
             self.doc.set_config_data(new, 4);
-            self.update_config_file();
+            self.doc.update_config_file();
             self.update_gui();
             %self.doc.chan4_rate
             
@@ -744,7 +770,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                 
             self.doc.num_rows = new_val;%do this for other config updating
             self.doc.set_config_data(new_val, 0);
-            self.update_config_file();
+            self.doc.update_config_file();
             self.set_bg2_selection();
 
 %            self.update_gui();
@@ -757,26 +783,30 @@ classdef controller < handle %Made this handle class because was having trouble 
             self.doc.experiment_name = new_val;
             self.set_exp_name();
             self.update_gui();
+            if ~isempty(self.run_con)
+                self.run_con.update_run_gui();
+            end
+            
         end
        
         
-        function update_config_file(self)
-            %open config file
-            %change appropriate rate
-            %save and close config file
-            configData = self.doc.configData;
-
-            settings_data = strtrim(regexp( fileread('G4_Protocol_Designer_Settings.m'),'\n','split'));
-            filepath_line = find(contains(settings_data,'Configuration File Path:'));
-            exp = 'Path:';
-            startIndex = regexp(settings_data{filepath_line},exp);
-            start_filepath_index = startIndex + 6;
-            config_filepath = settings_data{filepath_line}(start_filepath_index:end);
-            fid = fopen(config_filepath,'w');
-            fprintf(fid, '%s\n', configData{:});
-            fclose(fid);
-            
-        end
+%         function update_config_file(self)
+%             %open config file
+%             %change appropriate rate
+%             %save and close config file
+%             configData = self.doc.configData;
+% 
+%             settings_data = strtrim(regexp( fileread('G4_Protocol_Designer_Settings.m'),'\n','split'));
+%             filepath_line = find(contains(settings_data,'Configuration File Path:'));
+%             exp = 'Path:';
+%             startIndex = regexp(settings_data{filepath_line},exp);
+%             start_filepath_index = startIndex + 6;
+%             config_filepath = settings_data{filepath_line}(start_filepath_index:end);
+%             fid = fopen(config_filepath,'w');
+%             fprintf(fid, '%s\n', configData{:});
+%             fclose(fid);
+%             
+%         end
         
 %CLEAR OUT ALL DATA TO START DESIGNING NEW EXPERIMENT----------------------
 
@@ -1190,6 +1220,9 @@ classdef controller < handle %Made this handle class because was having trouble 
         waitbar(.33,prog,'Saving...');
         
         self.doc.saveas(full_path, prog);
+        if ~isempty(self.run_con)
+            self.run_con.update_run_gui();
+        end
         
         
 
@@ -1260,7 +1293,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             m.set_config_data(d.chan4_rate, 4);
             m.num_rows = d.num_rows;
             m.set_config_data(d.num_rows, 0);
-            self.update_config_file();
+            self.doc.update_config_file();
 
             
             for k = 1:13
@@ -1293,6 +1326,9 @@ classdef controller < handle %Made this handle class because was having trouble 
 
             
             self.update_gui();
+            if ~isempty(self.run_con)
+                self.run_con.update_run_gui();
+            end
             set(self.num_rows_3, 'Enable', 'off');
             set(self.num_rows_4, 'Enable', 'off');
         end
@@ -2433,10 +2469,10 @@ end
 %     
 %     if event.NewValue.Position(2) == .7
 %         
-%         self.update_config_file(self.doc.chan1_rate, 1);
-%         self.update_config_file(self.doc.chan2_rate, 2);
-%         self.update_config_file(self.doc.chan3_rate, 3);
-%         self.update_config_file(self.doc.chan4_rate, 4);
+%         self.doc.update_config_file(self.doc.chan1_rate, 1);
+%         self.doc.update_config_file(self.doc.chan2_rate, 2);
+%         self.doc.update_config_file(self.doc.chan3_rate, 3);
+%         self.doc.update_config_file(self.doc.chan4_rate, 4);
 %         
 %     elseif event.NewValue.Position(2) == .4
 %         

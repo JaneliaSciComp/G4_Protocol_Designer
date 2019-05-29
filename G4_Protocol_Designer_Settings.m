@@ -1,4 +1,4 @@
 %G4 Protocol Designer Settings
 %--------------------------------------------------------------------------
 
-%Configuration File Path: C:\Users\taylorl\Desktop\Reiser_project\HHMI Panels Configuration.ini
+%Configuration File Path: C:\Program Files (x86)\HHMI G4\Support Files\HHMI Panels Configuration.ini

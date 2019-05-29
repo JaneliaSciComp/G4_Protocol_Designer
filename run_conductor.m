@@ -1,1 +1,1 @@
-run_controller();
+runcon = run_controller();

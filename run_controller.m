@@ -287,6 +287,7 @@ classdef run_controller < handle
                 self.doc.set_config_data(p.chan4_rate, 4);
                 self.doc.num_rows = p.num_rows;
                 self.doc.set_config_data(p.num_rows, 0);
+                self.doc.update_config_file();
                 
                 for k = 1:13
 
@@ -315,6 +316,7 @@ classdef run_controller < handle
                 end
                 
                 self.update_run_gui();
+                
                 
             end
 
@@ -436,7 +438,67 @@ classdef run_controller < handle
             
             %THIS METHOD will create an array like [0, 2, 3] if ao channels
             %1,3, and 4 are active. Is this correct??????????????
-            channels = [self.doc.is_chan1, self.doc.is_chan2, self.doc.is_chan3, self.doc.is_chan4];
+            ao1_funcs = {};
+            ao1_funcs{1} = pretrial{4};
+            for c = 1:length(block_trials(:,1))
+                ao1_funcs{c+1} = block_trials{c,4};
+            end
+            ao1_funcs{end + 1} =  intertrial{4};
+            ao1_funcs{end + 1} = posttrial{4};
+            
+            ao2_funcs = {};
+            ao2_funcs{1} = pretrial{5};
+            for c = 1:length(block_trials(:,1))
+                ao2_funcs{c+1} = block_trials{c,5};
+            end
+            ao2_funcs{end + 1} =  intertrial{5};
+            ao2_funcs{end + 1} = posttrial{5};
+            
+            ao3_funcs = {};
+            ao3_funcs{1} = pretrial{6};
+            for c = 1:length(block_trials(:,1))
+                ao3_funcs{c+1} = block_trials{c,6};
+            end
+            ao3_funcs{end + 1} =  intertrial{6};
+            ao3_funcs{end + 1} = posttrial{6};
+            
+            
+            ao4_funcs = {};
+            ao4_funcs{1} = pretrial{7};
+            for c = 1:length(block_trials(:,1))
+                ao4_funcs{c+1} = block_trials{c,7};
+            end
+            ao4_funcs{end + 1} =  intertrial{7};
+            ao4_funcs{end + 1} = posttrial{7};
+            
+            ao1_active = 0;
+            for i = 1:length(ao1_funcs)
+                if ~strcmp(ao1_funcs{i},'')
+                    ao1_active = 1;
+                end
+            end
+            
+            ao2_active = 0;
+            for i = 1:length(ao2_funcs)
+                if ~strcmp(ao2_funcs{i},'')
+                    ao2_active = 1;
+                end
+            end
+            
+            ao3_active = 0;
+            for i = 1:length(ao3_funcs)
+                if ~strcmp(ao3_funcs{i},'')
+                    ao3_active = 1;
+                end
+            end
+            
+            ao4_active = 0;
+            for i = 1:length(ao4_funcs)
+                if ~strcmp(ao4_funcs{i},'')
+                    ao4_active = 1;
+                end
+            end
+            channels = [ao1_active, ao2_active, ao3_active, ao4_active];
             channel_nums = [0,1,2,3];
             
             j = 1;
@@ -500,6 +562,8 @@ classdef run_controller < handle
                 Panel_com('set_active_ao_channels', dec2bin(aobits,4));
             end
             start = questdlg('Start Experiment?','Confirm Start','Start','Cancel','Start');
+            Panel_com('start_log');
+            pause(1);
             if pre_start==1 %start with 10 seconds of closed loop stripe fixation
                 Panel_com('set_control_mode',pretrial_mode);
                 if pretrial_posfunc_id ~= 0
@@ -554,7 +618,7 @@ classdef run_controller < handle
 
                 %start experiment log and trial loop
                 Panel_com('stop_display');
-                Panel_com('start_log');
+                
                 for r = 1:num_reps
                     for c = 1:num_conditions
                         

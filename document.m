@@ -405,41 +405,41 @@ classdef document < handle
         function set_config_data(self, new_value, channel)
             
              if channel == 1
-                newline = strcat("ADC0 Rate (Hz) = ", num2str(new_value));
+                new = "ADC0 Rate (Hz) = " + num2str(new_value);
                 rate1_line = find(contains(self.configData,'ADC0'));
-                self.configData{rate1_line} = newline;
+                self.configData{rate1_line} = new;
                 self.configData{rate1_line} = convertStringsToChars(self.configData{rate1_line});
                 
             end
             
             if channel == 2
-                newline = strcat("ADC1 Rate (Hz) = ", num2str(new_value));
+                new = "ADC1 Rate (Hz) = " + num2str(new_value);
                 rate2_line = find(contains(self.configData,'ADC1'));
-                self.configData{rate2_line} = newline;
+                self.configData{rate2_line} = new;
                 self.configData{rate2_line} = convertStringsToChars(self.configData{rate2_line});
 
             end
             
             if channel == 3
-                newline = strcat("ADC2 Rate (Hz) = ", num2str(new_value));
+                new = "ADC2 Rate (Hz) = " + num2str(new_value);
                 rate3_line = find(contains(self.configData,'ADC2'));
-                self.configData{rate3_line} = newline;
+                self.configData{rate3_line} = new;
                 self.configData{rate3_line} = convertStringsToChars(self.configData{rate3_line});
             end
             
             if channel == 4
-                newline = strcat("ADC3 Rate (Hz) = ", num2str(new_value));
+                new = "ADC3 Rate (Hz) = " + num2str(new_value);
                 rate4_line = find(contains(self.configData,'ADC3'));
-                self.configData{rate4_line} = newline;               
+                self.configData{rate4_line} = new;               
                 self.configData{rate4_line} = convertStringsToChars(self.configData{rate4_line});
 
             end
             
             if channel == 0
 
-                newline = strcat("Number of Rows = ", num2str(new_value));
+                new = "Number of Rows = " + num2str(new_value);
                 numRows_line = find(contains(self.configData,'Number of Rows'));
-                self.configData{numRows_line} = newline; 
+                self.configData{numRows_line} = new; 
                 self.configData{numRows_line} = convertStringsToChars(self.configData{numRows_line});
 
             end
@@ -593,6 +593,26 @@ classdef document < handle
             
             end
         
+        end
+        
+%UPDATE THE CONFIG FILE----------------------------------------------------
+
+        function update_config_file(self)
+            %open config file
+            %change appropriate rate
+            %save and close config file
+            config = self.configData;
+
+            settings_data = strtrim(regexp( fileread('G4_Protocol_Designer_Settings.m'),'\n','split'));
+            filepath_line = find(contains(settings_data,'Configuration File Path:'));
+            exp = 'Path:';
+            startIndex = regexp(settings_data{filepath_line},exp);
+            start_filepath_index = startIndex + 6;
+            config_filepath = settings_data{filepath_line}(start_filepath_index:end);
+            fid = fopen(config_filepath,'w');
+            fprintf(fid, '%s\n', config{:});
+            fclose(fid);
+            
         end
 %EXPORT--------------------------------------------------------------------        
        function [export_successful] = export(self)
@@ -1245,7 +1265,7 @@ classdef document < handle
                 end
                 %waitbar(1,prog,'Finishing...');
                 %close(prog);
-                end
+            end
                 success_statement = "Import Successful!" + newline;
                 if imported_patterns ~= 0
                     patterns_imported_statement = imported_patterns + " patterns imported and " + skipped_patterns + " patterns skipped.";
