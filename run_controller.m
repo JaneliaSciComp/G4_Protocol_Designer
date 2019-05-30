@@ -90,6 +90,7 @@ classdef run_controller < handle
            
            menu = uimenu(self.fig, 'Text', 'File');
            menu_open = uimenu(menu, 'Text', 'Open', 'Callback', @self.open_g4p_file);
+         %  menu_clear = uimenu(menu, 'Text', 'Clear', 'Callback', @self.clear_data);
            
             start_button = uicontrol(self.fig,'Style','pushbutton', 'String', 'Run', ...
                 'units', 'pixels', 'Position', [15, fig_size(4)- 305, 115, 85],'Callback', @self.run);
@@ -252,6 +253,7 @@ classdef run_controller < handle
         
         end
         
+     
         function open_g4p_file(self, src, event)
            
             [filename, top_folder_path] = uigetfile('*.g4p');

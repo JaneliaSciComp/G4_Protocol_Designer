@@ -1259,16 +1259,16 @@ classdef controller < handle %Made this handle class because was having trouble 
             %do nothing
         else
         
-            if isempty(fieldnames(self.doc.currentExp))
+%             if isempty(fieldnames(self.doc.currentExp))
                     self.doc.import_folder(top_folder_path);
                     [exp_path, exp_name, ext] = fileparts(filepath);
                    % [exp_path, exp_name] = fileparts(self.doc.top_folder_path_);
                     self.doc.experiment_name = exp_name;
                     self.set_exp_name();
                     %self.update_doc();
-                    self.update_gui();
+%                     self.update_gui();
                     
-             end
+%              end
             
 
             data = self.doc.open(filepath);
@@ -2228,7 +2228,7 @@ classdef controller < handle %Made this handle class because was having trouble 
         
         function open_run_gui(self, src, event)
             
-            self.run_con = run_controller(self.doc)
+            self.run_con = run_controller(self.doc);
             
         end
 
