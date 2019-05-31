@@ -189,6 +189,7 @@ classdef preview_controller < handle
                    pos_ylabel = 'Frame Index';
                    self.pos_line = self.plot_function(self.fig, self.model.pos_data, pos_pos, pos_title, ...
                            pos_xlabel, pos_ylabel);
+                   pos_dur_line = self.place_red_dur_line(self.model.pos_data);
                end
            end
                
@@ -204,6 +205,7 @@ classdef preview_controller < handle
                pos_ylabel = 'Frame Index';
                self.dummy_line = self.plot_function(self.fig, self.model.dummy_data, pos_pos, pos_title, ...
                     pos_xlabel, pos_ylabel);
+                dummy_dur_line = self.place_red_dur_line(self.model.dummy_data);
                
            end
            
@@ -221,6 +223,8 @@ classdef preview_controller < handle
                     dummy_title, pos_xlabel, pos_ylabel);
                 self.pos_line = self.plot_function(self.fig, self.model.pos_data, pos_pos, ...
                     pos_title, pos_xlabel, pos_ylabel);
+                dummy6_dur_line = self.place_red_dur_line(self.model.pos_data);
+                pos6_dur_line = self.place_red_dur_line(self.model.dummy_data);
            
            
            end
@@ -232,6 +236,7 @@ classdef preview_controller < handle
                ao1_title = 'Analog Output 1';
                self.ao1_line = self.plot_function(self.fig, self.model.ao1_data, ao1_pos, ao1_title, ...
                         ao_xlabel, ao_ylabel);
+               ao1_duration_line = self.place_red_dur_line(self.model.ao1_data);
 
            else
 
@@ -247,6 +252,7 @@ classdef preview_controller < handle
                ao2_title = 'Analog Output 2';
                self.ao2_line = self.plot_function(self.fig, self.model.ao2_data, ao2_pos, ao2_title, ...
                ao_xlabel, ao_ylabel);
+               ao2_dur_line = self.place_red_dur_line(self.model.ao2_data);
 
            else
 
@@ -262,6 +268,7 @@ classdef preview_controller < handle
                ao3_title = 'Analog Output 3';
                self.ao3_line = self.plot_function(self.fig, self.model.ao3_data, ao3_pos, ao3_title, ...
                ao_xlabel, ao_ylabel);
+               ao3_dur_line = self.place_red_dur_line(self.model.ao3_data);
 
            else
 
@@ -277,6 +284,7 @@ classdef preview_controller < handle
                ao4_title = 'Analog Output 4';
                self.ao4_line = self.plot_function(self.fig, self.model.ao4_data, ao4_pos, ao4_title, ...
                ao_xlabel, ao_ylabel);
+               ao4_dur_line = self.place_red_dur_line(self.model.ao4_data);
 
            else
 
@@ -334,6 +342,8 @@ classdef preview_controller < handle
             end
             
         end
+        
+
         
         function preview_Mode1(self)
             
@@ -416,7 +426,7 @@ classdef preview_controller < handle
                         end
                         
                         
-                        j = j + fr_increment; %%%THIS was below frame inside the count/ratio if statement - see if moving it out fixes the problem
+                        j = j + fr_increment;
                             if j > length(self.model.pos_data)
                                 j = 1;
                             end
@@ -455,7 +465,6 @@ classdef preview_controller < handle
                                 time_to_pause = 0;
                             end
                             java.lang.Thread.sleep(time_to_pause);
-                            disp(timeElapsed*1000 + time_to_pause);
                             numIt = numIt + 1;
                         else
 
@@ -482,19 +491,27 @@ classdef preview_controller < handle
 
         
         function preview_Mode2(self)
-
+            self.model.is_paused = false;
+            numIt = 1;
+            
+            
             if self.model.is_realtime == 1
-                fr_rate = self.model.data{9};
+                fr_rate = self.model.rt_frRate;
+                aofr_rate = 1000;
+                fr_increment = 1;
+                ao_increment = aofr_rate/fr_rate;
+                
             else
                 fr_rate = self.model.slow_frRate;
+                aofr_rate = (1000/self.model.rt_frRate)*fr_rate;
+                fr_increment = 1;
+                ao_increment = aofr_rate/fr_rate;
             end
-
-            self.model.is_paused = false;
-            pat_num_frames = length(self.model.pattern_data(1,1,:));
-            framesTot = self.model.dur * fr_rate;%%DO THEY WANT TO GO THROUGH WHOLE LIBRARY NO MATTER WHAT OR ONLY AS MANY FRAMES AS ALLOWED BY FRAME RATE/DURATION???
+            
+            num_frames = self.model.rt_frRate * self.model.dur;
+            ratio = aofr_rate/fr_rate;
             
             if self.ao1_line ~= 0
- 
                 lineDist1 = length(self.model.ao1_data);
             end
             if self.ao2_line ~= 0
@@ -502,93 +519,135 @@ classdef preview_controller < handle
             end
             if self.ao3_line ~= 0
                 lineDist3 = length(self.model.ao3_data);
+
             end
             if self.ao4_line ~= 0
                 lineDist4 = length(self.model.ao4_data);
             end
 
-          
-            for t = 1:framesTot
-%                 tic
+            for i = self.model.preview_index:num_frames
+                inside = tic;
                 if self.model.is_paused == false
-
-                    set(self.im,'cdata',self.model.pattern_data(:,:,self.model.preview_index));
-
-                        %this equals how far on the xaxis the bar should travel in the span of one frame
-                    for s = 1:round(1/(fr_rate/1000), 0)
-                        tic%disp(pos_line.XData(1));
-                        if self.ao1_line ~= 0
-
-                            if self.ao1_line.XData(1) == lineDist1
-                                self.ao1_line.XData = [1,1];
-                            else
-                                self.ao1_line.XData = [self.ao1_line.XData(1) + 1, self.ao1_line.XData(2) + 1];
-                            end
-
-
-                        end
-
-                        if self.ao2_line ~= 0
-
-                            if self.ao2_line.XData(1) == lineDist2
-                                self.ao2_line.XData = [1,1];
-                            else
-                                self.ao2_line.XData = [self.ao2_line.XData(1) + 1, self.ao2_line.XData(2) + 1];
-                            end
-                        end
-                        if self.ao3_line ~= 0
-                            if self.ao3_line.XData(1) == lineDist3
-                                self.ao3_line.XData = [1,1];
-                            else
-                                self.ao3_line.XData = [self.ao3_line.XData(1) + 1, self.ao3_line.XData(2) + 1];
-                            end
-                        end
-                        if self.ao4_line ~= 0
-                            if self.ao4_line.XData(1) == lineDist4
-                               self.ao4_line.XData = [1,1];
-                            else
-                               self.ao4_line.XData = [self.ao4_line.XData(1) + 1, self.ao4_line.XData(2) + 1];
-                            end
-                        end
-
-                        drawnow limitrate %nocallbacks
-                        
-                        time = toc;
-                        pauseTime = (1 - (time*1000/4));
-                        if pauseTime < 0 
-                            pauseTime = 0;
-                        end
-
-                        java.lang.Thread.sleep(pauseTime);
-                        
+                    if self.model.is_realtime == true
+                        fr_rate = self.model.rt_frRate;
+                    elseif self.model.is_realtime == false
+                        fr_rate = self.model.slow_frRate;
                     end
+                %move ao lines
+
+                    if self.ao1_line ~= 0
+
+                        if self.ao1_line.XData(1) >= lineDist1 %if line reaches end of graph and duration hasn't been reached, it starts at beginning again.
+                            self.ao1_line.XData = [1,1];
+                        elseif numIt ~= num_frames
+                            self.ao1_line.XData = [self.ao1_line.XData(1) + ao_increment, self.ao1_line.XData(2) + ao_increment];
+                        else
+                            if self.model.dur*1000/lineDist1 > 1
+                                final_xval = fix(self.model.dur*1000/lineDist1)*lineDist1 + rem(self.model.dur*1000,lineDist1);
+                                self.ao1_line.XData = [final_xval, final_xval];
+                            else
+                                self.ao1_line.XData = [self.model.dur*1000, self.model.dur*1000];
+                            end
+                        end
+                    end
+                    if self.ao2_line ~= 0
+
+                        if self.ao2_line.XData(1) >= lineDist2
+                            self.ao2_line.XData = [1,1];
+                        elseif numIt ~= num_frames
+                            self.ao2_line.XData = [self.ao2_line.XData(1) + ao_increment, self.ao2_line.XData(2) + ao_increment];
+                        else
+                            if self.model.dur*1000/lineDist2 > 1
+                                final_xval = fix(self.model.dur*1000/lineDist2)*lineDist2 + rem(self.model.dur*1000,lineDist2);
+                                self.ao2_line.XData = [final_xval, final_xval];
+                            else
+                                self.ao2_line.XData = [self.model.dur*1000, self.model.dur*1000];
+                            end
+                        end
+                    end
+                    if self.ao3_line ~= 0
+
+                        if self.ao3_line.XData(1) >= lineDist3
+                            self.ao3_line.XData = [1,1];
+                        elseif numIt ~= num_frames
+                            self.ao3_line.XData = [self.ao3_line.XData(1) + ao_increment, self.ao3_line.XData(2) + ao_increment];
+                        else
+                            if self.model.dur*1000/lineDist3 > 1
+                                final_xval = fix(self.model.dur*1000/lineDist3)*lineDist3 + rem(self.model.dur*1000,lineDist3);
+                                self.ao3_line.XData = [final_xval, final_xval];
+                            else
+                                self.ao3_line.XData = [self.model.dur*1000, self.model.dur*1000];
+                            end
+                        end
+                    end
+                    if self.ao4_line ~= 0
+
+                        if self.ao4_line.XData(1) >= lineDist4
+                            self.ao4_line.XData = [1,1];
+                        elseif numIt ~= num_frames
+                            self.ao4_line.XData = [self.ao4_line.XData(1) + ao_increment, self.ao4_line.XData(2) + ao_increment];
+                        else
+                            if self.model.dur*1000/lineDist4 > 1
+                                final_xval = fix(self.model.dur*1000/lineDist4)*lineDist4 + rem(self.model.dur*1000,lineDist4);
+                                self.ao4_line.XData = [final_xval, final_xval];
+                            else
+                                self.ao4_line.XData = [self.model.dur*1000, self.model.dur*1000];
+                            end
+                        end
+                    end
+                    
+                    frame = rem(self.model.preview_index,length(self.model.pattern_data(1,1,:)));
+                    if frame == 0
+                        frame = 1;
+                    end
+                    set(self.im,'cdata',self.model.pattern_data(:,:,frame));
+
                    
-              
-%                     time_taken = toc;
-%                     time_to_pause = (1/fr_rate)-time_taken;
-%                     if time_to_pause < 0
-%                         time_to_pause = 0;
-% 
-%                     end
-% 
-%                         java.lang.Thread.sleep(time_to_pause*1000);
-%                     end
                     
-                    if self.model.preview_index == pat_num_frames
-                        self.model.preview_index = 1;
-                    else
-                        self.model.preview_index = self.model.preview_index + 1;
+                    
+                    
+                    numIt = numIt + 1;
+                    self.model.preview_index
+
+
+
+                    drawnow limitrate %nocallbacks
+                    timeElapsed = toc(inside);
+
+
+%                     if self.model.is_realtime == 1
+                    time_to_pause = (1/fr_rate - timeElapsed)*1000;%pause minus time taken running code sets the frame rate
+                    if time_to_pause < 0
+                        time_to_pause = 0;
                     end
-                    
+                    java.lang.Thread.sleep(time_to_pause);
+
+                    self.model.preview_index = self.model.preview_index + 1;
+
+%                     else
+% 
+%                         time_to_pause = (((1/fr_rate)/ratio)*1000) - (timeElapsed*1000);%if slow, ao line still moves same number of times but at ratio of whatever the pattern frame rate is.
+%                         if time_to_pause < 0
+%                             time_to_pause = 0;
+%                         end 
+%                         java.lang.Thread.sleep(time_to_pause);
+
+%                     end
+
+
                 else
-                    
+
                     return;
-                    
+
                 end
+                
+
 
             end
 
         end
+        
+                 
         
         function preview_Mode3(self)
             
@@ -613,7 +672,7 @@ classdef preview_controller < handle
                 waitfor(errordlg("Please make sure you have entered a position function and try again."));
             else
 
-                index = self.model.preview_index
+                index = self.model.preview_index;
                 for j = self.model.preview_index:time
                     tic
                     
@@ -785,6 +844,17 @@ classdef preview_controller < handle
         
         end
         
+        function [dur_line] = place_red_dur_line(self, data)
+            dur = self.model.dur*1000;
+            len = length(data(1,:));
+            yax = [min(data) max(data)];
+            if dur <= len
+                 dur_line = line('XData', [dur, dur], 'YData', yax, 'Color', [1 0 0], 'LineWidth', 2);
+            end
+
+        
+        end
+        
         function create_dummy_function(self)
         
 
@@ -860,6 +930,7 @@ classdef preview_controller < handle
         function pause(self, src, event)
         
             self.model.is_paused = true;
+            self.model.preview_index = self.model.preview_index + 1;
         
         end
         

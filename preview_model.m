@@ -59,12 +59,16 @@ classdef preview_model
             self.pattern_data = self.normalize_matrix();
             pat = self.data{2};
             
-            if self.doc.Patterns_.(pat).pattern.gs_val == 1
-                self.rt_frRate = 1000;
-            elseif self.doc.Patterns_.(pat).pattern.gs_val == 4
-                self.rt_frRate = 500;
+            if self.mode == 2
+                self.rt_frRate = self.data{9};
             else
-                waitfor(errordlg("Please make sure your pattern has a valid gs_val"));
+                if self.doc.Patterns_.(pat).pattern.gs_val == 1
+                    self.rt_frRate = 1000;
+                elseif self.doc.Patterns_.(pat).pattern.gs_val == 4
+                    self.rt_frRate = 500;
+                else
+                    waitfor(errordlg("Please make sure your pattern has a valid gs_val"));
+                end
             end
             
             if strcmp(self.data{3},'') == 0
