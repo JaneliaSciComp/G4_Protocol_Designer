@@ -1172,18 +1172,18 @@ classdef controller < handle %Made this handle class because was having trouble 
     function import_file(self)
         
         [imported_file, path] = uigetfile;
-        prog = waitbar(0, 'Importing...', 'WindowStyle', 'modal');
+        
         if isequal(imported_file,0)
             %do nothing
         else
 
 
             self.doc.import_single_file(imported_file, path);
-            waitbar(1, prog, 'Finishing');
+
             set(self.num_rows_3, 'Enable', 'off');
             set(self.num_rows_4, 'Enable', 'off');
             self.update_gui();
-            close(prog);
+
         end
      end
         

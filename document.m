@@ -609,8 +609,11 @@ classdef document < handle
             startIndex = regexp(settings_data{filepath_line},exp);
             start_filepath_index = startIndex + 6;
             config_filepath = settings_data{filepath_line}(start_filepath_index:end);
-            fid = fopen(config_filepath,'w');
-            fprintf(fid, '%s\n', config{:});
+            fid = fopen(config_filepath,'wt');
+            %for i = 1:length(config(:))
+                fprintf(fid, '%s\n', config{:});
+                %fprintf(fid, '\n');
+           % end
             fclose(fid);
             
         end
@@ -927,7 +930,12 @@ classdef document < handle
             end
             type = fieldnames(fileData);
             if strcmp(type{1},'pattern') == 1
-                
+
+                patRows = length(fileData.pattern.Pats(:,1,1))/16;
+                if patRows ~= self.num_rows
+                    waitfor(errordlg("Please make sure the patterns you import match the number of rows you have selected."));
+                    return;
+                end
                 if isfield(self.Patterns, name) == 1
                     waitfor(errordlg("A pattern of that name has already been imported."));
                     return;
@@ -1065,6 +1073,8 @@ classdef document < handle
 
 
             end
+            
+            waitfor(msgbox(success_message));
 
         end
 
@@ -1148,6 +1158,12 @@ classdef document < handle
                         
 
                         if strcmp(type{1},'pattern') == 1
+                            patData = load(full_file_path);
+                            patRows = length(patData.pattern.Pats(:,1,1))/16;
+                            if patRows ~= self.num_rows
+                                waitfor(errordlg("Please make sure the patterns you import match the number of rows you have selected."));
+                                return;
+                            end
                             if isfield(self.Patterns, name) == 1
                                 skipped_patterns = skipped_patterns + 1;
                             else
@@ -1200,6 +1216,7 @@ classdef document < handle
            % prog = waitbar(0, 'Importing...', 'WindowStyle', 'modal'); %start waiting bar
             self.top_folder_path = path;
             [file_names, folder_names] = self.get_file_folder_names(path);
+            
             no_more_subfolders = 0;
             imported_patterns = 0;
             imported_functions = 0;
