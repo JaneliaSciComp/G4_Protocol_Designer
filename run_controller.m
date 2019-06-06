@@ -363,6 +363,15 @@ classdef run_controller < handle
                 
             end
             
+            if isempty(pretrial{8})
+                pretrial_frame_index = 1;
+            elseif strcmp(pretrial{8}, 'r')
+                pretrial_frame_index = 0; %use this option later to randomize the frame index
+            else
+                pretrial_frame_index = str2num(pretrial{8});
+            end
+                
+            
             
             %first run of block_trials
 %             trial_mode = block_trials{1,1};
@@ -378,6 +387,14 @@ classdef run_controller < handle
                 
             end
             
+            if isempty(block_trials{1,8})
+                frame_index = 1;
+            elseif strcmp(block_trials{1,8},'r')
+                frame_index = 0;
+            else
+                frame_index = str2num(block_trials{1,8});
+            end
+            
             %intertrial values
             intertrial_mode = intertrial{1};
             intertrial_pat_id = self.doc.get_pattern_index(intertrial{2});
@@ -389,6 +406,14 @@ classdef run_controller < handle
                 intertrial_gain = 0;
                 intertrial_offset = 0;
                 
+            end
+            
+            if isempty(intertrial{8})
+                intertrial_frame_index = 1;
+            elseif strcmp(intertrial{8},'r')
+                intertrial_frame_index = 0;
+            else
+                intertrial_frame_index = str2num(intertrial{8});
             end
            
             %posttrial values
@@ -403,6 +428,14 @@ classdef run_controller < handle
                 posttrial_gain = 0;
                 posttrial_offset = 0;
                 
+            end
+            
+            if isempty(posttrial{8})
+                posttrial_frame_index = 1;
+            elseif strcmp(posttrial{8},'r')
+                posttrial_frame_index = 0;
+            else
+                posttrial_frame_index = str2num(posttrial{8});
             end
             
             
@@ -584,12 +617,22 @@ classdef run_controller < handle
                     Panel_com('set_frame_rate', pretrial{9});
                 end
                 
-                if pretrial_mode == 3
-                    Panel_com('set_position_x', pretrial{8});
+                if pretrial_frame_index == 0
+                    num_frames = length(self.doc.Patterns.(pretrial{2}).pattern.Pats(1,1,:));
+                    random_frame_index = randperm(num_frames,1);
+                    Panel_com('set_position_x', random_frame_index);
+                else
+                    Panel_com('set_position_x',pretrial_frame_index);
                 end
                 
                 pause(0.01)
-                Panel_com('start_display', (pretrial_duration*10))
+                %%%%%%%%%%%%%%%%%THIS IS UNTESTED
+                if pretrial_duration == 0
+                    Panel_com('start_display');
+                    w = waitforbuttonpress;
+                else
+                    Panel_com('start_display', (pretrial_duration*10))
+                end
                 pause(pretrial_duration);
             end
             
@@ -629,6 +672,17 @@ classdef run_controller < handle
                         
                         pat_id = self.doc.get_pattern_index(block_trials{cond,2});
                         pos_func_id = self.doc.get_posfunc_index(block_trials{cond,3});
+                        if isempty(block_trials{cond,8})
+                            frame_index = 1;
+                        elseif strcmp(block_trials{cond,8},'r')
+                            num_frames = length(self.doc.Patterns.(block_trials{cond,2}).pattern.Pats(1,1,:);
+                            frame_index = randperm(num_frames,1);
+                        else
+                            frame_index = str2num(block_trials{cond,8});
+                        end
+                        
+                        
+                            
                         trial_mode = block_trials{cond,1};
                         for i = 1:length(active_ao_channels)
                             ao_func_indices(i) = self.doc.get_ao_index(block_trials{cond, active_ao_channels(i)+ 4});
@@ -655,10 +709,9 @@ classdef run_controller < handle
                         if trial_mode == 2
                             Panel_com('set_frame_rate',block_trials{cond,9});
                         end
-                        if trial_mode == 3
 
-                            Panel_com('set_position_x', block_trials{cond,8});
-                        end
+                        Panel_com('set_position_x', frame_index);
+                        
     %                     counter = "Rep " + num2str(r) + " of " + num2str(num_reps) + ", cond " + num2str(c) + " of " + num2str(num_conditions) +": " + strjoin(self.doc.currentExp_.currentExp.pattern.pattNames(pat_id));
     %                     disp(counter);
 
@@ -687,9 +740,8 @@ classdef run_controller < handle
                             if intertrial_posfunc_id ~= 0
                                 Panel_com('set_pattern_func_id',intertrial_posfunc_id);
                             end
-                            if intertrial_mode == 3
-                                Panel_com('set_position_x', intertrial{8});
-                            end
+                            Panel_com('set_position_x', intertrial_frame_index);
+
                             for i = 1:length(intertrial_ao_funcs)
                                 Panel_com('set_ao_function_id',[active_ao_channels(i), intertrial_ao_indices(i)]);
                             end
@@ -717,7 +769,7 @@ classdef run_controller < handle
                 end
                 
                 if post_type == 1
-                    disp("This is the post-trial!");
+
                      Panel_com('set_control_mode', posttrial_mode);
                      Panel_com('set_pattern_id', posttrial_pat_id);
                      if ~isempty(posttrial{10})
@@ -729,9 +781,9 @@ classdef run_controller < handle
                      if posttrial_mode == 2
                          Panel_com('set_frame_rate', posttrial{9});
                      end
-                     if posttrial_mode == 3
-                         Panel_com('set_position_x',posttrial{8});
-                     end
+                     
+                     Panel_com('set_position_x',posttrial_frame_index);
+                     
                      Panel_com('start_display',posttrial_duration*10);
                      pause(posttrial_duration);
                 end

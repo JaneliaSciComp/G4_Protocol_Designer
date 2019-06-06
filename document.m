@@ -202,9 +202,22 @@ classdef document < handle
             else
 
 %If the user edited the pattern or position function, make sure the file dimensions match
-
+                if index(2) == 1 && ~strcmp(num2str(new_value),'')
+                    if ~isnumeric(new_value)
+                        new_value = str2num(new_value);
+                    end
+                    if new_value < 1 || new_value > 7
+                        waitfor(errordlg("Mode must be 1-7 or left empty."));
+                        return;
+                    end
+                end
+                
                 if index(2) == 2 && ~strcmp(string(new_value),'')
                     patfield = new_value;
+                    if ~isfield(self.Patterns, patfield)
+                        waitfor(errordlg("That filename does not match any imported files."));
+                        return;
+                    end
                     patDim = length(self.Patterns.(patfield).pattern.Pats(1,1,:));
                     patRows = length(self.Patterns.(patfield).pattern.Pats(:,1,1))/16;
                     numrows = self.num_rows;
@@ -224,6 +237,10 @@ classdef document < handle
                 elseif index(2) == 3 && ~strcmp(string(new_value),'') && ~strcmp(string(self.block_trials{index(1),2}),'')
 
                     posfield = new_value;
+                    if ~isfield(self.Pos_funcs, posfield)
+                        waitfor(errordlg("That filename does not match any imported files."));
+                        return;
+                    end
                     patfield = self.block_trials{index(1),2};
                     patDim = length(self.Patterns.(patfield).pattern.Pats(1,1,:));
                     funcDim = max(self.Pos_funcs.(posfield).pfnparam.func);
@@ -235,17 +252,88 @@ classdef document < handle
                     patRows = 0;
                     numrows = 0;
                 end
+                
+                if index(2) > 3 && index(2) < 8 && ~strcmp(string(new_value),'')
+                    if ~isfield(self.Ao_funcs, new_value)
+                        waitfor(errordlg("That filename does not match any imported files."));
+                        return;
+                    end
+                end
+                
+                if index(2) == 8 && ~strcmp(num2str(new_value),'')
+                   if isnumeric(new_value)
+                       new_value = num2str(new_value);
+                   end
+                   nums = isstrprop(new_value,'digit');
+                   chars = 0;
+                   for i = 1:length(nums)
+                       if nums(i) == 0 
+                           chars = 1;
+                       end
+                   end
 
-                if patRows ~= numrows
-                    waitfor(errordlg("Watch out! This pattern will not run on the size screen you have selected."));
+                    associated_pattern = self.block_trials{index(1),2};
+                    if ~isempty(associated_pattern)
+                        num_pat_frames = length(self.Patterns.(associated_pattern).pattern.Pats(1,1,:));
+                        if chars == 0
+                            if str2num(new_value) > num_pat_frames
+                                waitfor(errordlg("Please make sure your frame index is within the bounds of your pattern."));
+                                return
+                            end
+                        end
+                    end
+                    if  chars == 1 && ~strcmp(new_value,'r')
+                        waitfor(errordlg("Invalid frame index. Please enter a number or 'r'"));
+                        return;
+                    end
                 end
-                if patDim ~= funcDim
-                     waitfor(errordlg("Please make sure the dimension of your pattern and position functions match"));
-                else
+                
+            
+            %Make sure frame rate is > 0
+            
+            if index(2) == 9 && ~strcmp(num2str(new_value),'')
+               if ~isnumeric(new_value)
+                   new_value = str2num(new_value);
+               end
+                if new_value <= 0 
+                    waitfor(errordlg("Your frame rate must be above 0"));
+                    return;
+                end
+               
+            end
                     
-%Set value
-                     self.block_trials{index(1), index(2)} = new_value;
+            %Make sure gain/offset are numerical
+            
+            if index(2) == 10 || index(2) == 11 && ~strcmp(num2str(new_value),'')
+               
+                if ~isnumeric(new_value)
+                    new_value = str2num(new_value);
                 end
+                
+            end
+            
+            if index(2) == 12 && ~strcmp(num2str(new_value),'')
+               
+                if ~isnumeric(new_value)
+                    new_value = str2num(new_value);
+                end
+                if new_value < 0
+                    waitfor(errordlg("You duration must be zero or greater"));
+                    return;
+                end
+                
+            end
+
+            if patRows ~= numrows
+                waitfor(errordlg("Watch out! This pattern will not run on the size screen you have selected."));
+            end
+            if patDim ~= funcDim
+                 waitfor(errordlg("Please make sure the dimension of your pattern and position functions match"));
+            else
+
+%Set value
+                 self.block_trials{index(1), index(2)} = new_value;
+            end
             end
         end
         
@@ -258,8 +346,23 @@ classdef document < handle
             %If the user edited the pattern or position function, make sure
             %the file dimensions match
             
+            if index == 1 && ~strcmp(num2str(new_value),'')
+                if ~isnumeric(new_value)
+                    new_value = str2num(new_value);
+                end
+                if new_value < 1 || new_value > 7
+                    waitfor(errordlg("Mode must be 1-7 or left empty."));
+                    return;
+                end
+            end
+            
+            
             if index == 2 && strcmp(string(new_value),'') == 0
                 patfield = new_value;
+                if ~isfield(self.Patterns, patfield)
+                    waitfor(errordlg("That filename does not match any imported files."));
+                    return;
+                end
                 patDim = length(self.Patterns.(patfield).pattern.Pats(1,1,:));
                 patRows = length(self.Patterns.(patfield).pattern.Pats(:,1,1))/16;
                 numrows = self.num_rows;
@@ -278,6 +381,10 @@ classdef document < handle
             elseif index == 3 && strcmp(string(new_value),'') == 0 && strcmp(string(self.pretrial{2}),'') == 0
 
                 posfield = new_value;
+                if ~isfield(self.Pos_funcs, posfield)
+                    waitfor(errordlg("That filename does not match any imported files."));
+                    return;
+                end
                 patfield = self.pretrial{2};
                 patDim = length(self.Patterns.(patfield).pattern.Pats(1,1,:));
                 funcDim = max(self.Pos_funcs.(posfield).pfnparam.func);
@@ -290,6 +397,72 @@ classdef document < handle
                 numrows = 0;
             end
             
+            if index > 3 && index < 8 && ~strcmp(string(new_value),'')
+                if ~isfield(self.Ao_funcs, new_value)
+                    waitfor(errordlg("That filename does not match any imported files."));
+                    return;
+                end
+            end
+            
+            %%add error checking here for rest of parameters.
+            
+            %Make sure frame index isn't out of bounds
+            if index == 8 && ~strcmp(num2str(new_value),'')
+               if isnumeric(new_value)
+                  new_value = num2str(new_value);
+               end
+               nums = isstrprop(new_value,'digit');
+               chars = 0;
+               for i = 1:length(nums)
+                   if nums(i) == 0 
+                       chars = 1;
+                   end
+               end
+                associated_pattern = self.pretrial{2};
+                if ~isempty(associated_pattern)
+                    num_pat_frames = length(self.Patterns.(associated_pattern).pattern.Pats(1,1,:));
+                    if chars == 0
+                        if str2num(new_value) > num_pat_frames
+                            waitfor(errordlg("Please make sure your frame index is within the bounds of your pattern."));
+                            return
+                        end
+                    end
+                end
+                if  chars == 1 && ~strcmp(new_value,'r')
+                    waitfor(errordlg("Invalid frame index. Please enter a number or 'r'"));
+                    return;
+                end
+            end
+            
+            %Make sure frame rate is > 0
+            
+            if index == 9 && ~strcmp(num2str(new_value),'')
+               
+                if new_value <= 0 
+                    waitfor(errordlg("Your frame rate must be above 0"));
+                    return;
+                end
+            end
+                    
+            %Make sure gain/offset are numerical
+            
+            if index == 10 || index == 11 && ~strcmp(num2str(new_value),'')
+               
+                if ~isnumeric(new_value)
+                    waitfor(errordlg("Your gain and offset must be numeric."));
+                    return;
+                end
+                
+            end
+            
+            if index == 12 && ~strcmp(num2str(new_value),'')
+               
+                if new_value < 0
+                    waitfor(errordlg("You duration must be zero or greater"));
+                    return;
+                end
+            end
+               
             if patRows ~= numrows
                 waitfor(errordlg("Watch out! This pattern will not run on the size screen you have selected."));
             end
@@ -307,8 +480,23 @@ classdef document < handle
         function set_intertrial_property(self, index, new_value)
 %             %If the user edited the pattern or position function, make sure
             %the file dimensions match
+            
+            if index == 1 && ~strcmp(num2str(new_value),'')
+                if ~isnumeric(new_value)
+                    new_value = str2num(new_value);
+                end
+                if new_value < 1 || new_value > 7
+                    waitfor(errordlg("Mode must be 1-7 or left empty."));
+                    return;
+                end
+            end
+            
            if index == 2 && strcmp(string(new_value),'') == 0
                 patfield = new_value;
+                if ~isfield(self.Patterns, patfield)
+                    waitfor(errordlg("That filename does not match any imported files."));
+                    return;
+                end
                 patDim = length(self.Patterns.(patfield).pattern.Pats(1,1,:));
                 patRows = length(self.Patterns.(patfield).pattern.Pats(:,1,1))/16;
                 numrows = self.num_rows;
@@ -327,6 +515,10 @@ classdef document < handle
             elseif index == 3 && strcmp(string(new_value),'') == 0 && strcmp(string(self.intertrial{2}),'') == 0
 
                 posfield = new_value;
+                if ~isfield(self.Pos_funcs, posfield)
+                    waitfor(errordlg("That filename does not match any imported files."));
+                    return;
+                end
                 patfield = self.intertrial{2};
                 patDim = length(self.Patterns.(patfield).pattern.Pats(1,1,:));
                 funcDim = max(self.Pos_funcs.(posfield).pfnparam.func);
@@ -337,8 +529,72 @@ classdef document < handle
                 funcDim = 0;
                 patRows = 0;
                 numrows = 0;
+           end
+            
+           if index > 3 && index < 8 && ~strcmp(string(new_value),'')
+                if ~isfield(self.Ao_funcs, new_value)
+                    waitfor(errordlg("That filename does not match any imported files."));
+                    return;
+                end
+           end
+            
+           if index == 8 && ~strcmp(num2str(new_value),'')
+               if isnumeric(new_value)
+                   new_value = num2str(new_value);
+               end
+               nums = isstrprop(new_value,'digit');
+               chars = 0;
+               for i = 1:length(nums)
+                   if nums(i) == 0 
+                       chars = 1;
+                   end
+               end
+                associated_pattern = self.intertrial{2};
+                if ~isempty(associated_pattern)
+                    num_pat_frames = length(self.Patterns.(associated_pattern).pattern.Pats(1,1,:));
+                    if chars == 0
+                        if str2num(new_value) > num_pat_frames
+                            waitfor(errordlg("Please make sure your frame index is within the bounds of your pattern."));
+                            return
+                        end
+                    end
+                end
+                if  chars == 1 && ~strcmp(new_value,'r')
+                    waitfor(errordlg("Invalid frame index. Please enter a number or 'r'"));
+                    return;
+                end
             end
             
+            
+            %Make sure frame rate is > 0
+            
+            if index == 9 && ~strcmp(num2str(new_value),'')
+               
+                if new_value <= 0 
+                    waitfor(errordlg("Your frame rate must be above 0"));
+                    return;
+                end
+            end
+                    
+            %Make sure gain/offset are numerical
+            
+            if index == 10 || index == 11 && ~strcmp(num2str(new_value),'')
+               
+                if ~isnumeric(new_value)
+                    waitfor(errordlg("Your gain and offset must be numeric."));
+                    return;
+                end
+                
+            end
+            
+            if index == 12 && ~strcmp(num2str(new_value),'')
+               
+                if new_value < 0
+                    waitfor(errordlg("You duration must be zero or greater"));
+                    return;
+                end
+            end 
+           
             if patRows ~= numrows
                 waitfor(errordlg("Watch out! This pattern will not run on the size screen you have selected."));
             end
@@ -353,11 +609,25 @@ classdef document < handle
         end
         
         function set_posttrial_property(self, index, new_value)
+            
+            if index == 1 && ~strcmp(num2str(new_value),'')
+                if ~isnumeric(new_value)
+                    new_value = str2num(new_value);
+                end
+                if new_value < 1 || new_value > 7
+                    waitfor(errordlg("Mode must be 1-7 or left empty."));
+                    return;
+                end
+            end
 
             %If the user edited the pattern or position function, make sure
             %the file dimensions match
             if index == 2 && strcmp(string(new_value),'') == 0
                 patfield = new_value;
+                if ~isfield(self.Patterns, patfield)
+                    waitfor(errordlg("That filename does not match any imported files."));
+                    return;
+                end
                 patDim = length(self.Patterns.(patfield).pattern.Pats(1,1,:));
                 patRows = length(self.Patterns.(patfield).pattern.Pats(:,1,1))/16;
                 numrows = self.num_rows;
@@ -376,6 +646,10 @@ classdef document < handle
             elseif index == 3 && strcmp(string(new_value),'') == 0 && strcmp(string(self.posttrial{2}),'') == 0
 
                 posfield = new_value;
+                if ~isfield(self.Pos_funcs, posfield)
+                    waitfor(errordlg("That filename does not match any imported files."));
+                    return;
+                end
                 patfield = self.posttrial{2};
                 patDim = length(self.Patterns.(patfield).pattern.Pats(1,1,:));
                 funcDim = max(self.Pos_funcs.(posfield).pfnparam.func);
@@ -386,6 +660,69 @@ classdef document < handle
                 funcDim = 0;
                 patRows = 0;
                 numrows = 0;
+            end
+            
+            if index > 3 && index < 8 && ~strcmp(string(new_value),'')
+                if ~isfield(self.Ao_funcs, new_value)
+                    waitfor(errordlg("That filename does not match any imported files."));
+                    return;
+                end
+            end
+            
+            if index == 8 && ~strcmp(num2str(new_value),'')
+               if isnumeric(new_value)
+                   new_value = num2str(new_value);
+               end
+               nums = isstrprop(new_value,'digit');
+               chars = 0;
+               for i = 1:length(nums)
+                   if nums(i) == 0 
+                       chars = 1;
+                   end
+               end
+                associated_pattern = self.posttrial{2};
+                if ~isempty(associated_pattern)
+                    num_pat_frames = length(self.Patterns.(associated_pattern).pattern.Pats(1,1,:));
+                    if chars == 0
+                        if str2num(new_value) > num_pat_frames
+                            waitfor(errordlg("Please make sure your frame index is within the bounds of your pattern."));
+                            return
+                        end
+                    end
+                end
+                if  chars == 1 && ~strcmp(new_value,'r')
+                    waitfor(errordlg("Invalid frame index. Please enter a number or 'r'"));
+                    return;
+                end
+            end
+            
+            %Make sure frame rate is > 0
+            
+            if index == 9 && ~strcmp(num2str(new_value),'')
+               
+                if new_value <= 0 
+                    waitfor(errordlg("Your frame rate must be above 0"));
+                    return;
+                end
+            end
+                    
+            %Make sure gain/offset are numerical
+            
+            if index == 10 || index == 11 && ~strcmp(num2str(new_value),'')
+               
+                if ~isnumeric(new_value)
+                    waitfor(errordlg("Your gain and offset must be numeric."));
+                    return;
+                end
+                
+            end
+            
+            if index == 12 && ~strcmp(num2str(new_value),'')
+               
+                if new_value < 0
+                    waitfor(errordlg("You duration must be zero or greater"));
+                    return;
+                end
             end
             
             if patRows ~= numrows

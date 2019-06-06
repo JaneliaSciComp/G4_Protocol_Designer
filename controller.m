@@ -38,9 +38,12 @@ classdef controller < handle %Made this handle class because was having trouble 
         f_
         preview_panel_
         hAxes_
+        second_axes_
         num_rows_3_
         num_rows_4_
         exp_name_box_
+        pageUp_button_
+        pageDown_button_
 
         %is_ao_visible_
     end
@@ -94,7 +97,10 @@ classdef controller < handle %Made this handle class because was having trouble 
         f
         preview_panel
         hAxes
+        second_axes
         exp_name_box
+        pageUp_button
+        pageDown_button
 
         
 %         isRandomized_box
@@ -159,7 +165,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                 'Select'};
             columns_editable_ = true;
             column_format_ = {'numeric', 'char', 'char', 'char', 'char','char', ...
-                'char', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'logical'};
+                'char', 'char', 'numeric', 'numeric', 'numeric', 'numeric', 'logical'};
             font_size_ = 10;
             positions.pre = [350, 870, 1035, 50];
             %pos_pre_ = [350, 870, 1035, 50];
@@ -274,8 +280,23 @@ classdef controller < handle %Made this handle class because was having trouble 
             frameForward_button = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Forward Frame', ...
                 'FontSize', font_size_, 'units', 'pixels', 'Position', [pos_panel_(1) + .5*pos_panel_(3) ...
                 + 135, pos_panel_(2) - 35, 90, 20], 'Callback', @self.frame_forward);
+            
+            self.pageUp_button = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Page Up', ...
+                'FontSize', font_size_, 'units', 'pixels', 'Position', [pos_panel_(1) + .5*pos_panel_(3) + 235, ...
+                pos_panel_(2) - 35, 90, 20], 'Enable', 'off', 'Callback', @self.page_up_4d);
+            
+            self.pageDown_button = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Page Down', ...
+                'FontSize', font_size_, 'units', 'pixels', 'Position', [pos_panel_(1) + .5*pos_panel_(3) - 305, ...
+                pos_panel_(2) - 35, 90, 20], 'Enable', 'off', 'Callback', @self.page_down_4d);
 
-            self.hAxes = axes(self.f, 'units', 'pixels', 'OuterPosition', [200, 125, 1280 ,427], 'XLim', [0 200], 'YLim', [0 65]);
+           % self.hAxes = axes(self.f, 'units', 'pixels', 'OuterPosition', [245, 135, 1190 ,397], 'TickLength', [0,0],'XLim', [0 200], 'YLim', [0 65]);
+            
+
+%             self.second_axes = axes(self.f, 'units', 'pixels', 'OuterPosition', self.hAxes.OuterPosition, ...
+%                 'XAxisLocation','top','YAxisLocation', 'right', 'TickLength',[0,0], 'XLim',[0 200], 'YLim', [0 65]);
+
+            
+            %linkaxes([self.hAxes, self.second_axes]);
             
             self.exp_name_box = uicontrol(self.f, 'Style', 'edit', ...
                 'FontSize', 14, 'units', 'pixels', 'Position', ...
@@ -427,7 +448,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             self.set_chan3_rate_box_val();
             self.set_chan4_rate_box_val();
             self.set_bg2_selection();
-            %self.set_exp_name();
+            self.set_exp_name();
             
 
 
@@ -460,7 +481,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                     self.doc.set_pretrial_property(y,new);
                 elseif y ~= 13
 
-                    self.doc.set_pretrial_property(y, str2num(new));
+                    self.doc.set_pretrial_property(y, new);
 
                 else
                     self.doc.set_pretrial_property(y,new);
@@ -498,7 +519,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             new = event.EditData;
             x = event.Indices(1);
             y = event.Indices(2);
-            mode = cell2mat(self.doc.block_trials(x, 1));
+            mode = self.doc.block_trials{x, 1};
             allow = self.check_editable(mode, y);
             
             
@@ -508,8 +529,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                     self.set_blocktrial_files_(x, y, new);
                     self.doc.set_block_trial_property([x,y], new);
                     %src.Data{x,y} = new;
-                elseif y ~= 13
-                    self.doc.set_block_trial_property([x,y], str2num(new));
+                
                 else
                     self.doc.set_block_trial_property([x,y], new);
                 end
@@ -539,7 +559,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             new = event.EditData;
             x = event.Indices(1);
             y = event.Indices(2);
-            mode = cell2mat(self.doc.intertrial(x, 1));
+            mode = self.doc.intertrial{1};
             allow = self.check_editable(mode, y);
             
             if allow == 1
@@ -549,7 +569,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                     self.set_intertrial_files_(y,new);
                     self.doc.set_intertrial_property(y, new);
                 elseif y~=13
-                    self.doc.set_intertrial_property(y, str2num(new));
+                    self.doc.set_intertrial_property(y, new);
                 %self.doc.intertrial;
                 else
                     self.doc.set_intertrial_property(y, new);
@@ -575,7 +595,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             new = event.EditData;
             x = event.Indices(1);
             y = event.Indices(2);
-            mode = cell2mat(self.doc.posttrial(x, 1));
+            mode = self.doc.posttrial{x, 1};
             allow = self.check_editable(mode, y);
             
             if allow == 1
@@ -585,7 +605,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                     self.set_posttrial_files_(y,new);
                     self.doc.set_posttrial_property(y, new);
                 elseif y~=13
-                    self.doc.set_posttrial_property(y, str2num(new));
+                    self.doc.set_posttrial_property(y, new);
                 %self.doc.intertrial;
                 else
                     self.doc.set_posttrial_property(y, new);
@@ -823,6 +843,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                     clear self.model;
                     delete(self.doc);
                     self.doc = document();
+                    self.doc.experiment_name
                     
 
                     self.update_gui();
@@ -1001,8 +1022,18 @@ classdef controller < handle %Made this handle class because was having trouble 
         
         doc = self.doc;
         pat_names = fieldnames(doc.Patterns_);
-        pos_names = fieldnames(doc.Pos_funcs_);
-        ao_names = fieldnames(doc.Ao_funcs_);
+        if ~isempty(fieldnames(doc.Pos_funcs))
+            
+            pos_names = fieldnames(doc.Pos_funcs);
+        else
+            pos_names = [];
+        end
+        if ~isempty(fieldnames(doc.Ao_funcs))
+            
+            ao_names = fieldnames(doc.Ao_funcs);
+        else
+            ao_names = [];
+        end
         
         num_pats = length(pat_names);
         num_pos = length(pos_names);
@@ -1010,15 +1041,15 @@ classdef controller < handle %Made this handle class because was having trouble 
 
         pat1 = pat_names{pat_index};
         
-        if length(doc.Patterns_.(pat1).pattern.Pats(:,1,1))/16 ~= self.doc.num_rows
-            while length(doc.Patterns_.(pat1).pattern.Pats(:,1,1)) ~= self.doc.num_rows && pat_index < length(pat_names)
+        if length(doc.Patterns.(pat1).pattern.Pats(:,1,1))/16 ~= self.doc.num_rows
+            while length(doc.Patterns.(pat1).pattern.Pats(:,1,1)) ~= self.doc.num_rows && pat_index < length(pat_names)
                 pat_index = pat_index + 1;
-                pat1 = cell2mat(pat_names(pat_index));
+                pat1 = pat_names{pat_index};
             end
             
         end
         
-        if pat_index == length(pat_names) && length(doc.Patterns_.(pat1).pattern.Pats(:,1,1))/16 ~= self.doc.num_rows
+        if pat_index == length(pat_names) && length(doc.Patterns.(pat1).pattern.Pats(:,1,1))/16 ~= self.doc.num_rows
             waitfor(errordlg("None of the patterns imported match the screen size selected. Please import a different folder or select a new screen size"));
             return;
         end
@@ -1035,15 +1066,24 @@ classdef controller < handle %Made this handle class because was having trouble 
             ao_index = 1;
         end
         
-        pos1 = cell2mat(pos_names(pos_index)); %Set initial position and ao functions to correspond to initial pattern.
-        ao1 = cell2mat(ao_names(ao_index));
-        
-        
-        
-        if length(doc.Patterns_.(pat1).pattern.Pats(1,1,:)) ~= ...
-                doc.Pos_funcs_.(pos1).pfnparam.frames
+        if num_pos ~= 0
+            pos1 = pos_names{pos_index}; %Set initial position and ao functions to correspond to initial pattern.
+            if length(doc.Patterns.(pat1).pattern.Pats(1,1,:)) ~= ...
+                max(doc.Pos_funcs.(pos1).pfnparam.func)
             pos1 = '';
+            end
+        else
+            pos1 = '';
+            
         end
+        if num_ao ~= 0
+            ao1 = ao_names{ao_index};
+        else
+            ao1 = '';
+        end    
+        
+        
+        
         
 
         
@@ -1075,16 +1115,28 @@ classdef controller < handle %Made this handle class because was having trouble 
             for i = pat_index:num_pats
                 
                 pat = pat_names{pat_index};
-                if pos_index > num_pos %Make sure indices are in range 
-                    pos_index = 1;
+                if num_pos ~= 0
+                    if pos_index > num_pos %Make sure indices are in range 
+                        pos_index = 1;
+                    end
+                    pos = pos_names{pos_index};
+                else
+                    
+                    pos = '';
                 end
-                if ao_index > num_ao
-                    ao_index = 1;
-                end
-                pos = pos_names{pos_index};
-                ao = ao_names{ao_index};
                 
-                if length(doc.Patterns_.(pat).pattern.Pats(:,1,1))/16 ~= self.doc.num_rows
+                if num_ao ~= 0
+
+                    if ao_index > num_ao
+                        ao_index = 1;
+                    end
+                    ao = ao_names{ao_index};
+                else
+                    ao = '';
+                end
+                
+                
+                if length(doc.Patterns.(pat).pattern.Pats(:,1,1))/16 ~= self.doc.num_rows
                     pat_index = pat_index + 1;
                     pos_index = pos_index + 1;
                     ao_index = ao_index + 1;
@@ -1093,7 +1145,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                 end
                 
                 newrow = self.doc.block_trials(end, 1:end);
-                newrow{2} = cell2mat(pat_names(pat_index)); %Only executes if previous if statement did not. Sets new row's pattern
+                newrow{2} = pat_names{pat_index}; %Only executes if previous if statement did not. Sets new row's pattern
 
                 newrow{3} = pos; 
 
@@ -1104,14 +1156,16 @@ classdef controller < handle %Made this handle class because was having trouble 
                 pos_index = pos_index + 1;
                 ao_index = ao_index + 1;
                 
-                if length(doc.Patterns_.(newrow{2}).pattern.Pats(1,1,:)) ~= ...
-                        doc.Pos_funcs_.(newrow{3}).pfnparam.frames
-                    newrow{3} = '';
+                if ~strcmp(newrow{3},'')
+                    if length(doc.Patterns.(newrow{2}).pattern.Pats(1,1,:)) ~= ...
+                           max(doc.Pos_funcs.(newrow{3}).pfnparam.func)
+                        newrow{3} = '';
+                    end
                 end
 
                 self.doc.set_block_trial_property([j,1],newrow);
-                self.block_files.pattern(end + 1) = string(cell2mat(newrow(2)));
-                self.block_files.position(end + 1) = string(cell2mat(newrow(3)));
+                self.block_files.pattern(end + 1) = string(newrow{2});
+                self.block_files.position(end + 1) = string(newrow{3});
  
 
             end
@@ -1260,15 +1314,18 @@ classdef controller < handle %Made this handle class because was having trouble 
         else
         
 %             if isempty(fieldnames(self.doc.currentExp))
-                    self.doc.import_folder(top_folder_path);
-                    [exp_path, exp_name, ext] = fileparts(filepath);
+            self.doc.import_folder(top_folder_path);
+            [exp_path, exp_name, ext] = fileparts(filepath);
                    % [exp_path, exp_name] = fileparts(self.doc.top_folder_path_);
-                    self.doc.experiment_name = exp_name;
-                    self.set_exp_name();
+                    
                     %self.update_doc();
 %                     self.update_gui();
                     
 %              end
+            if isempty(fieldnames(self.doc.Patterns))
+                %no patterns were successfully imported, so don't autofill
+                return;
+            end
             
 
             data = self.doc.open(filepath);
@@ -1276,7 +1333,8 @@ classdef controller < handle %Made this handle class because was having trouble 
             d = data.exp_parameters;
             
             %Set parameters outside tables
-            
+            self.doc.experiment_name = exp_name;
+            self.set_exp_name();
             m.repetitions = d.repetitions;
             m.is_randomized = d.is_randomized;
             m.is_chan1 = d.is_chan1;
@@ -1504,17 +1562,19 @@ classdef controller < handle %Made this handle class because was having trouble 
 
         function preview_selection(self, src, event, positions)
             %disp(event.Indices);
+            delete(self.hAxes);
+            delete(self.second_axes);
             if isempty(event.Indices) == 0
                 
-                x = event.Indices(1);
-                y = event.Indices(2);
+                x_event_index = event.Indices(1);
+                y_event_index = event.Indices(2);
                 
                 self.model.current_selected_cell.index = event.Indices;
-                self.model.auto_preview_index = 1; %A new file has been selected so preview starts over at frame 1
+                 %A new file has been selected so preview starts over at frame 1
                 
-                if y > 1 && y< 8
+                if y_event_index > 1 && y_event_index< 8
 
-                    file = string(src.Data(x, y));
+                    file = string(src.Data(x_event_index, y_event_index));
                  
                 else
                     
@@ -1527,19 +1587,68 @@ classdef controller < handle %Made this handle class because was having trouble 
                  if src.Position == positions.pre
                     self.model.current_selected_cell.table = "pre";
                     mode = self.doc.pretrial{1};
+                    
+                    if ~isempty(src.Data(x_event_index,y_event_index)) && ~isempty(self.doc.pretrial{2})
+                        if mode == 2
+                            frame_rate = self.doc.pretrial{9};
+                        else
+                            pat = self.doc.pretrial{2};
+                            if self.doc.Patterns.(pat).pattern.gs_val == 1
+                                frame_rate = 1000;
+                            else 
+                                frame_rate = 500;
+                            end
+                        end
+                    end
                     dur = self.doc.pretrial{12}*1000;
                 elseif src.Position == positions.inter
+                    
                     self.model.current_selected_cell.table = "inter";
                     mode = self.doc.intertrial{1};
+                    if ~isempty(src.Data(x_event_index,y_event_index)) && ~isempty(self.doc.intertrial{2})
+                        if mode == 2
+                            frame_rate = self.doc.intertrial{9};
+                        else
+                            pat = self.doc.intertrial{2};
+                            if self.doc.Patterns.(pat).pattern.gs_val == 1
+                                frame_rate = 1000;
+                            else 
+                                frame_rate = 500;
+                            end
+                        end
+                    end
                     dur = self.doc.intertrial{12}*1000;
                 elseif src.Position == positions.block
                     self.model.current_selected_cell.table = "block";
-                    x = self.model.current_selected_cell.index(1);
-                    mode = self.doc.block_trials{x, 1};
-                    dur = self.doc.block_trials{x,12}*1000;
+                    mode = self.doc.block_trials{x_event_index, 1};
+                    if ~isempty(src.Data(x_event_index,y_event_index)) && ~isempty(self.doc.block_trials{x_event_index,2})
+                        if mode == 2
+                            frame_rate = self.doc.block_trials{x_event_index, 9};
+                        else
+                            pat = self.doc.block_trials{x_event_index, 2};
+                            if self.doc.Patterns.(pat).pattern.gs_val == 1
+                                frame_rate = 1000;
+                            else 
+                                frame_rate = 500;
+                            end
+                        end
+                    end
+                    dur = self.doc.block_trials{x_event_index,12}*1000;
                  elseif src.Position == positions.post
                     self.model.current_selected_cell.table = "post";
                     mode = self.doc.posttrial{1};
+                    if ~isempty(src.Data(x_event_index,y_event_index)) && ~isempty(self.doc.posttrial{2})
+                        if mode == 2
+                            frame_rate = self.doc.posttrial{9};
+                        else
+                            pat = self.doc.posttrial{2};
+                            if self.doc.Patterns.(pat).pattern.gs_val == 1
+                                frame_rate = 1000;
+                            else 
+                                frame_rate = 500;
+                            end
+                        end
+                    end
                     dur = self.doc.posttrial{12}*1000;
                 else
                     waitfor(errordlg("Something has gone wrong, table positions have been corrupted."));
@@ -1569,7 +1678,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                         if chose == 1
                             
                             chosen_pat = fields{index};
-                            if length(self.doc.Patterns_.(chosen_pat).pattern.Pats(:,1,1))/16 ~= self.doc.num_rows
+                            if length(self.doc.Patterns.(chosen_pat).pattern.Pats(:,1,1))/16 ~= self.doc.num_rows
                                 waitfor(errordlg("This pattern will not run on the currently selected screen size. Please try again."));
                                 return;
                             end
@@ -1652,7 +1761,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                         fields = fieldnames(ao);
                         [index, chose] = listdlg('ListString',fields,'SelectionMode','single');
                         if chose == 1
-                            file = cell2mat(fields(index));
+                            file = fields{index};
 
                             if strcmp(self.model.current_selected_cell.table, "pre") == 1
 
@@ -1694,26 +1803,47 @@ classdef controller < handle %Made this handle class because was having trouble 
 %                             waitfor(errordlg("You haven't imported anything yet"));
 %                         end
 
-                        self.model.current_preview_file = self.doc.Patterns_.(file).pattern.Pats;
+                        self.model.auto_preview_index = self.check_pattern_dimensions();
 
-                        x = [0 length(self.model.current_preview_file(1,:,1))];
-                        y = [0 length(self.model.current_preview_file(:,1,1))];
-                        adjusted_file = zeros(y(2),x(2),length(self.model.current_preview_file(1,1,:)));
-                        max_num = max(self.model.current_preview_file,[],[1 2]);
-                        for i = 1:length(self.model.current_preview_file(1,1,:))
+
+                        self.model.current_preview_file = self.doc.Patterns.(file).pattern.Pats;
+                        
+%                         if length(self.model.auto_preview_index) == 1
+
+                            x = [0 length(self.model.current_preview_file(1,:,1))];
+                            y = [0 length(self.model.current_preview_file(:,1,1))];
+                            adjusted_file = zeros(y(2),x(2),length(self.model.current_preview_file(1,1,:)));
+                            max_num = max(self.model.current_preview_file,[],[1 2]);
+                            for i = 1:length(self.model.current_preview_file(1,1,:))
+
+                                adjusted_matrix = self.model.current_preview_file(:,:,i) ./ max_num(i);
+                                adjusted_file(:,:,i) = adjusted_matrix(:,:,1);
+                            end
+
+                            self.hAxes = axes(self.f, 'units', 'pixels', 'OuterPosition', [245, 135, 1190 ,397], 'XTick', [], 'YTick', [] ,'XLim', x, 'YLim', y);
+                            im = imshow(adjusted_file(:,:,self.model.auto_preview_index), 'Colormap',gray);
+
+                            set(im, 'parent', self.hAxes);
                             
-                            adjusted_matrix = self.model.current_preview_file(:,:,i) ./ max_num(i);
-                            adjusted_file(:,:,i) = adjusted_matrix(:,:,1);
-                        end
+                            %BELOW ATTEMPT TO WORK WITH 4D PATTERNS - NOT
+                            %WORKING YET.
+%                         else
+%                             x = [0 length(self.model.current_preview_file(1,:,1,1))];
+%                             y = [0 length(self.model.current_preview_file(:,1,1,1))];
+%                             adjusted_file = zeros(y(2),x(2), length(self.model.current_preview_file(1,1,:,1)), length(self.model.current_preview_file(1,1,1,:)));
+%                             max_num = max(self.model.current_preview_file,[],[1 2 4]);
+%                             
+%                             for j = 1:length(self.model.current_preview_file(1,1,:,1))
+%                                 adjusted_matrix = self.model.current_preview_file(:,:,j,:) ./ max_num(j);
+%                                 adjusted_file(:,:,j,:) = adjusted_matrix(:,:,j,:);
+%                             end
+%                             data_to_plot = adjusted_file(:,:, self.model.auto_preview_index, 1)
+%                             
+%                             self.hAxes = axes(self.f, 'units', 'pixels', 'OuterPosition', [245, 135, 1190 ,397], 'XTick', [], 'YTick', [] ,'XLim', x, 'YLim', y);
+%                             im = imshow(data_to_plot(:,:), 'Colormap', gray);
+%                             set(im, 'parent', self.hAxes);
+%                         end
 
-
-
-                        %for i = 1:30
-                        im = imshow(adjusted_file(:,:,self.model.auto_preview_index), 'Colormap',gray);
-                        set(im, 'parent', self.hAxes)
-                        colormap( self.hAxes, gray )
-                        set(self.hAxes, 'XLim', x, 'YLim', y);
-                       % pause(1/fr_rate);
 
 
 
@@ -1724,13 +1854,31 @@ classdef controller < handle %Made this handle class because was having trouble 
                     elseif event.Indices(2) == 3
 
 
-                        self.model.current_preview_file = self.doc.Pos_funcs_.(file).pfnparam.func;
-
-                        xax = [0 length(self.model.current_preview_file(1,:))];
+                        self.model.current_preview_file = self.doc.Pos_funcs.(file).pfnparam.func;
+                        self.hAxes = axes(self.f,'units', 'pixels', 'OuterPosition', [245, 135, 1190 ,397]);
+                        self.second_axes = axes(self.f, 'units', 'pixels', 'OuterPosition', self.hAxes.OuterPosition, 'XAxisLocation', 'top', 'YAxisLocation', 'right');
+                        p = plot(self.model.current_preview_file, 'parent', self.hAxes);
+                        
+                        time_in_ms = length(self.model.current_preview_file(1,:));
+                        xax = [0 time_in_ms];
                         yax = [min(self.model.current_preview_file) max(self.model.current_preview_file)];
-                        set(self.hAxes, 'XLim', xax, 'YLim', yax);
-                        p = plot(self.model.current_preview_file);
-                        set(p, 'parent', self.hAxes);
+                        timeLabel = 'Time (ms)';
+                        patLabel = 'Pattern';
+                        frameLabel = 'Frame Number';
+                        set(self.hAxes, 'XLim', xax, 'YLim', yax, 'TickLength',[0,0]);
+                        self.hAxes.XLabel.String = timeLabel;
+                        self.hAxes.YLabel.String = patLabel;
+                        
+                        num_frames = frame_rate*(1/1000)*time_in_ms;
+                        xax2 = [0 num_frames];
+                        yax2 = yax;
+                        set(self.second_axes, 'Position', self.hAxes.Position, 'XLim', xax2, 'YLim', yax2, 'TickLength', [0,0], 'Color', 'none');
+                        self.second_axes.XLabel.String = frameLabel;
+                        
+%                         
+%                         
+                        
+                        %set(p, 'parent', self.hAxes);
                         if dur <= length(self.model.current_preview_file(1,:))
                             dur_line = line('XData', [dur, dur], 'YData', [yax(1), yax(2)], 'Color', [1 0 0], 'LineWidth', 2);
                         end
@@ -1738,12 +1886,27 @@ classdef controller < handle %Made this handle class because was having trouble 
                     elseif event.Indices(2) > 3 && event.Indices(2) < 7
 
                         self.model.current_preview_file = self.doc.Ao_funcs_.(file).afnparam.func;
+                        self.hAxes = axes(self.f,'units', 'pixels', 'OuterPosition', [245, 135, 1190 ,397]);
+                        self.second_axes = axes(self.f, 'units', 'pixels', 'OuterPosition', self.hAxes.OuterPosition, 'XAxisLocation', 'top', 'YAxisLocation', 'right');
+                        
+                        p = plot(self.model.current_preview_file, 'parent', self.hAxes);
+                        time_in_ms = length(self.model.current_preview_file(1,:));
 
                         xax = [0 length(self.model.current_preview_file(1,:))];
                         yax = [min(self.model.current_preview_file) max(self.model.current_preview_file)];
-                        set(self.hAxes, 'XLim', xax, 'YLim', yax);
-                        p = plot(self.model.current_preview_file);
-                        set(p, 'parent', self.hAxes);
+                        
+                        timeLabel = 'Time (ms)';
+                        patLabel = 'Pattern';
+                        frameLabel = 'Frame Number';
+                        set(self.hAxes, 'XLim', xax, 'YLim', yax, 'TickLength',[0,0]);
+                        self.hAxes.XLabel.String = timeLabel;
+                        self.hAxes.YLabel.String = patLabel;
+                        
+                        num_frames = frame_rate*(1/1000)*time_in_ms;
+                        xax2 = [0 num_frames];
+                        yax2 = yax;
+                        set(self.second_axes, 'Position', self.hAxes.Position, 'XLim', xax2, 'YLim', yax2, 'TickLength', [0,0], 'Color', 'none');
+                        self.second_axes.XLabel.String = frameLabel;
 
                     end
                 
@@ -1753,6 +1916,12 @@ classdef controller < handle %Made this handle class because was having trouble 
 
             end
 
+        end
+        
+        function page_up_4d(self, src, event)
+        end
+        
+        function page_down_4d(self, src, event)
         end
 
 
@@ -1773,6 +1942,7 @@ classdef controller < handle %Made this handle class because was having trouble 
 
             else
                 waitfor(errordlg("Please make sure you have selected a cell and try again"));
+                return;
             end
 
             if strcmp(filename,'') == 0
@@ -1796,7 +1966,7 @@ classdef controller < handle %Made this handle class because was having trouble 
 
                 %for i = 1:30
                 im = imshow(adjusted_matrix(:,:), 'Colormap', gray);
-                set(im, 'parent', self.hAxes)
+                set(im, 'parent', self.hAxes);
                 set(self.hAxes, 'XLim', xax, 'YLim', yax);
 
             end
@@ -1821,6 +1991,7 @@ classdef controller < handle %Made this handle class because was having trouble 
 
             else
                 waitfor(errordlg("Please make sure you have selected a cell and try again"));
+                return;
             end
 
             if strcmp(filename,'') == 0
@@ -1845,7 +2016,7 @@ classdef controller < handle %Made this handle class because was having trouble 
 
                 %for i = 1:30
                 im = imshow(adjusted_matrix(:,:), 'Colormap', gray);
-                set(im, 'parent', self.hAxes)
+                set(im, 'parent', self.hAxes);
                 set(self.hAxes, 'XLim', xax, 'YLim', yax);
             end
 
@@ -1899,6 +2070,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                 end
             else
                 waitfor(errordlg("Please make sure you have selected a cell and try again"));
+                return;
             end
 
             
@@ -1981,6 +2153,11 @@ classdef controller < handle %Made this handle class because was having trouble 
 %STOP THE CURRENTLY PLAYING IN SCREEN PREVIEW------------------------------
         
         function preview_stop(self,src,event)
+            
+            if strcmp(self.model.current_selected_cell.table, "")
+                waitfor(errordlg("Please make sure you've selected a cell."));
+                return;
+            end
 
             self.model.is_paused = true;
             self.model.auto_preview_index = 1;
@@ -1999,7 +2176,7 @@ classdef controller < handle %Made this handle class because was having trouble 
 
                 %for i = 1:30
             im = imshow(adjusted_matrix(:,:), 'Colormap', gray);
-            set(im, 'parent', self.hAxes)
+            set(im, 'parent', self.hAxes);
             set(self.hAxes, 'XLim', x, 'YLim', y);
                         
 
@@ -2064,7 +2241,15 @@ classdef controller < handle %Made this handle class because was having trouble 
             %block_trials = self.doc.block_trials();
             trial_mode = trial{1};
             trial_duration = trial{12};
-           
+            if isempty(trial{8})
+                trial_frame_index = 1;
+            elseif strcmp(trial{8},'r')
+                num_frames = length(self.doc.Patterns.(trial{2}).pattern.Pats(1,1,:));
+                trial_frame_index = randperm(num_frames,1);
+            else
+                trial_frame_index = str2num(trial{8});
+            end
+            
             trial_fr_rate = trial{9};
            
             
@@ -2118,10 +2303,8 @@ classdef controller < handle %Made this handle class because was having trouble 
                         Panel_com('set_frame_rate', trial_fr_rate);
                     end
 
-                    if trial_mode == 3
-                        Panel_com('set_position_x', trial{8});
-                       % Panel_com('set_position_y', trial{8});
-                    end
+                    Panel_com('set_position_x', trial_frame_index);
+
                     pause(0.01)
                     Panel_com('start_display', (trial_duration*10)); %duration expected in 100ms units
                     pause(trial_duration+0.1)
@@ -2250,6 +2433,9 @@ classdef controller < handle %Made this handle class because was having trouble 
 
 
             allow = 1;
+            if ~isnumeric(mode)
+                mode = str2num(mode);
+            end
 
             %check that the field is editable based on the mode
             if isempty(mode)
@@ -2258,7 +2444,7 @@ classdef controller < handle %Made this handle class because was having trouble 
 
                 allow = 0;
 
-            elseif mode == 2 && (y ==3 || y == 8 || ((y > 9) && (y < 12)))
+            elseif mode == 2 && (y ==3 || ((y > 9) && (y < 12)))
 
                 allow = 0;
 
@@ -2266,11 +2452,11 @@ classdef controller < handle %Made this handle class because was having trouble 
 
                 allow = 0;
 
-            elseif mode == 4 && (y == 3 || y == 8 || y == 9 )
+            elseif mode == 4 && (y == 3 || y == 9 )
 
                 allow = 0;
 
-            elseif (mode == 5 || mode == 6) && (y == 8 || y == 9)
+            elseif (mode == 5 || mode == 6) && (y == 9)
 
                 allow = 0;
 
@@ -2309,12 +2495,41 @@ function [within_bounds] = check_constraints(self, y, new)
     end
 end
 
+%CHECK PATTERN BEING PREVIEWED FOR THREE OR FOUR DIMENSIONS----------------
+
+function [start_index] = check_pattern_dimensions(self)
+
+   if strcmp(self.model.current_selected_cell.table, "pre")
+       pat = self.doc.pretrial{2};
+   elseif strcmp(self.model.current_selected_cell.table, "inter")
+       pat = self.doc.intertrial{2};
+   elseif strcmp(self.model.current_selected_cell.table, "post")
+       pat = self.doc.posttrial{2};
+   elseif strcmp(self.model.current_selected_cell.table, "block")
+       pat = self.doc.block_trials_{self.model.current_selected_cell.index(1),2};
+   else
+       pat = 0;
+   end
+   
+   num_dim = ndims(self.doc.Patterns.(pat).pattern.Pats);
+   if num_dim == 3
+       start_index = 1;
+   elseif num_dim == 4
+       start_index = [1,1];
+       set(self.pageUp_button, 'Enable', 'on');
+       set(self.pageDown_button, 'Enable', 'on');
+   else
+       start_index = 0;
+   end
+
+end
+
 %CLEAR APPROPRIATE FIELDS WHEN THE MODE IS CHANGED-------------------------
 
 function clear_fields(self, mode)
 
-    pos_fields = fieldnames(self.doc.Pos_funcs_);
-    pat_fields = fieldnames(self.doc.Patterns_);
+    pos_fields = fieldnames(self.doc.Pos_funcs);
+    pat_fields = fieldnames(self.doc.Patterns);
     pos = '';
     indx = [];
     rate = [];
@@ -2324,7 +2539,7 @@ function clear_fields(self, mode)
     if mode == 1
 
         index_of_pat = find(strcmp(pat_fields(:), [self.doc.block_trials{self.model.current_selected_cell.index(1), 2}]));
-        pos = cell2mat(pos_fields(index_of_pat));
+        pos = pos_fields{index_of_pat};
         self.set_mode_dep_props(pos, indx, rate, gain, offset);
         
     elseif mode == 2
@@ -2696,6 +2911,18 @@ end
          function set.doc(self, value)
             self.doc_ = value;
          end
+         
+         function set.second_axes(self, value)
+             self.second_axes_ = value;
+         end
+         
+         function set.pageUp_button(self, value)
+             self.pageUp_button_ = value;
+         end
+         
+         function set.pageDown_button(self, value)
+             self.pageDown_button_ = value;
+         end
 
 
 
@@ -2834,6 +3061,18 @@ end
          function output = get.doc(self)
             output = self.doc_;
          end
+         
+         function output = get.second_axes(self)
+             output = self.second_axes_;
+         end
+         
+         function output = get.pageUp_button(self)
+             output = self.pageUp_button_;
+         end
+         
+         function output = get.pageDown_button(self)
+             output = self.pageDown_button_;
+         end
 
          
 %SETTERS OF GUI OBJECT VALUES
@@ -2961,6 +3200,7 @@ end
          function set_exp_name(self)
              set(self.exp_name_box,'String', self.doc.experiment_name);
          end
+         
 
          
              
