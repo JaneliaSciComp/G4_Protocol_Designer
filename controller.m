@@ -313,7 +313,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             menu_import = uimenu(menu, 'Text', 'Import', 'Callback', @self.import);
             menu_open = uimenu(menu, 'Text', 'Open', 'Callback', @self.open_file);
             menu_saveas = uimenu(menu, 'Text', 'Save as', 'Callback', @self.saveas);
-            menu_save = uimenu(menu, 'Text', 'Save', 'Callback', @self.save);
+            %menu_save = uimenu(menu, 'Text', 'Save', 'Callback', @self.save);
             menu_copy = uimenu(menu, 'Text', 'Copy to...', 'Callback', @self.copy_to);
             menu_set = uimenu(menu, 'Text', 'Set Selected...', 'Callback', @self.set_selected);
 
@@ -333,11 +333,11 @@ classdef controller < handle %Made this handle class because was having trouble 
             self.repetitions_box = uicontrol(self.f, 'Style', 'edit', 'units', 'pixels', 'Position', ...
                 [90, positions.block(2) + positions.block(4) - 45, 40, 20], 'Callback', @self.update_repetitions);
 
-            repetitions_label_ = uicontrol(self.f, 'Style', 'text', 'String', 'Repetitions:', 'FontSize', font_size_, ...
+            repetitions_label = uicontrol(self.f, 'Style', 'text', 'String', 'Repetitions:', 'FontSize', font_size_, ...
                 'units', 'pixels', 'Position', [15, positions.block(2) + positions.block(4) - 45, 70, 20]);
 
        %Dry Run
-            dry_run_ = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Dry Run', 'FontSize', font_size_, 'units', 'pixels', 'Position', ...
+            dry_run = uicontrol(self.f, 'Style', 'pushbutton', 'String', 'Dry Run', 'FontSize', font_size_, 'units', 'pixels', 'Position', ...
                 [pos_panel_(1) + pos_panel_(3) + 2, pos_panel_(2) - 40, 75, 40],'Callback',@self.dry_run);
 
        %Actual run button
@@ -1277,6 +1277,7 @@ classdef controller < handle %Made this handle class because was having trouble 
         if ~isempty(self.run_con)
             self.run_con.update_run_gui();
         end
+        self.update_gui();
         
         
 
@@ -2288,15 +2289,16 @@ classdef controller < handle %Made this handle class because was having trouble 
                     func_index = self.doc.get_posfunc_index(trial{3});
                     
                     %ao_index = self.doc.get_ao_index(trial{4});
-
+                    
                     Panel_com('set_control_mode', trial_mode);
+
                     Panel_com('set_pattern_id', pattern_index); 
                    % Panel_com('set_gain_bias', [LmR_gain LmR_offset])
                    if func_index ~= 0
                         Panel_com('set_pattern_func_id', func_index);
                    end
                     %Panel_com('set_ao_function_id',[0, ao_index]);
-                    if ~strcmp(trial{10},'')
+                    if ~isempty(trial{10})
                         Panel_com('set_gain_bias',[LmR_gain LmR_offset]);
                     end
                     if trial_mode == 2
@@ -2304,9 +2306,12 @@ classdef controller < handle %Made this handle class because was having trouble 
                     end
 
                     Panel_com('set_position_x', trial_frame_index);
+                    
+
 
                     pause(0.01)
                     Panel_com('start_display', (trial_duration*10)); %duration expected in 100ms units
+                    
                     pause(trial_duration+0.1)
                     Panel_com('stop_display');
                     disconnectHost;
@@ -2539,6 +2544,11 @@ function clear_fields(self, mode)
     if mode == 1
 
         index_of_pat = find(strcmp(pat_fields(:), [self.doc.block_trials{self.model.current_selected_cell.index(1), 2}]));
+        %%%%%%DOESN'T WORK IF THERE ARE MORE PATTERNS IMPORTED THAN
+        %%%%%%POSITION FUNCTIONS
+        if index_of_pat > length(pos_fields)
+            index_of_pat = rem(length(pos_fields), index_of_pat);
+        end
         pos = pos_fields{index_of_pat};
         self.set_mode_dep_props(pos, indx, rate, gain, offset);
         

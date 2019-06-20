@@ -10,6 +10,7 @@ classdef run_model
         do_processing_;
         plotting_file_;
         processing_file_;
+        run_protocol_file_;
         
     end
     
@@ -23,6 +24,7 @@ classdef run_model
         do_processing;
         plotting_file;
         processing_file;
+        run_protocol_file;
         
     end
     
@@ -41,6 +43,7 @@ classdef run_model
             self.do_processing = 1;
             self.plotting_file = '';
             self.processing_file = '';
+            self.run_protocol_file = 'default run file path';
             
             
         end
@@ -81,6 +84,10 @@ classdef run_model
         function value = get.processing_file(self)
             value = self.processing_file_;
         end
+        
+        function value = get.run_protocol_file(self)
+            value = self.run_protocol_file_;
+        end
 
 
 %SETTERS------------------------------------------------------------------
@@ -115,6 +122,10 @@ classdef run_model
         
         function self = set.processing_file(self, value)
             self.processing_file_ = value;
+        end
+        
+        function self = set.run_protocol_file(self, value)
+            self.run_protocol_file_ = value;
         end
         
     end

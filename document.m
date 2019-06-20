@@ -437,7 +437,9 @@ classdef document < handle
             %Make sure frame rate is > 0
             
             if index == 9 && ~strcmp(num2str(new_value),'')
-               
+               if ~isnumeric(new_value)
+                   new_value = str2num(new_value);
+               end
                 if new_value <= 0 
                     waitfor(errordlg("Your frame rate must be above 0"));
                     return;
@@ -449,14 +451,16 @@ classdef document < handle
             if index == 10 || index == 11 && ~strcmp(num2str(new_value),'')
                
                 if ~isnumeric(new_value)
-                    waitfor(errordlg("Your gain and offset must be numeric."));
-                    return;
+                    new_value = str2num(new_value);
                 end
                 
             end
             
             if index == 12 && ~strcmp(num2str(new_value),'')
                
+                if ~isnumeric(new_value)
+                    new_value = str2num(new_value);
+                end
                 if new_value < 0
                     waitfor(errordlg("You duration must be zero or greater"));
                     return;
@@ -569,7 +573,9 @@ classdef document < handle
             %Make sure frame rate is > 0
             
             if index == 9 && ~strcmp(num2str(new_value),'')
-               
+                if ~isnumeric(new_value)
+                    new_value = str2num(new_value);
+                end
                 if new_value <= 0 
                     waitfor(errordlg("Your frame rate must be above 0"));
                     return;
@@ -581,14 +587,16 @@ classdef document < handle
             if index == 10 || index == 11 && ~strcmp(num2str(new_value),'')
                
                 if ~isnumeric(new_value)
-                    waitfor(errordlg("Your gain and offset must be numeric."));
-                    return;
+                    new_value = str2num(new_value);
+                    
                 end
                 
             end
             
             if index == 12 && ~strcmp(num2str(new_value),'')
-               
+               if ~isnumeric(new_value)
+                    new_value = str2num(new_value);
+                end
                 if new_value < 0
                     waitfor(errordlg("You duration must be zero or greater"));
                     return;
@@ -699,7 +707,9 @@ classdef document < handle
             %Make sure frame rate is > 0
             
             if index == 9 && ~strcmp(num2str(new_value),'')
-               
+               if ~isnumeric(new_value)
+                   new_value = str2num(new_value);
+               end
                 if new_value <= 0 
                     waitfor(errordlg("Your frame rate must be above 0"));
                     return;
@@ -711,14 +721,16 @@ classdef document < handle
             if index == 10 || index == 11 && ~strcmp(num2str(new_value),'')
                
                 if ~isnumeric(new_value)
-                    waitfor(errordlg("Your gain and offset must be numeric."));
-                    return;
+                    mew_value = str2num(new_value);
+                
                 end
                 
             end
             
             if index == 12 && ~strcmp(num2str(new_value),'')
-               
+               if ~isnumeric(new_value)
+                    new_value = str2num(new_value);
+                end
                 if new_value < 0
                     waitfor(errordlg("You duration must be zero or greater"));
                     return;
@@ -1686,16 +1698,16 @@ classdef document < handle
         
 %GET THE INDEX OF A GIVEN PATTERN, POS, OR AO NAME-------------------------
 
-  function [index] = get_pattern_index(self, pat_name)
+      function [index] = get_pattern_index(self, pat_name)
             if strcmp(pat_name,'') == 1
                 index = 0;
             else
                 fields = fieldnames(self.Patterns);
                 index = find(strcmp(fields, pat_name));
-                
+
             end    
         end
-        
+
         function [index] = get_posfunc_index(self, pos_name)
             if strcmp(pos_name,'') == 1
                 index = 0;

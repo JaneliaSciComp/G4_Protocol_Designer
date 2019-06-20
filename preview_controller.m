@@ -832,7 +832,12 @@ classdef preview_controller < handle
             elseif self.model.mode == 2
                 first_frame = 1;
             elseif self.model.mode == 3
-                first_frame = self.model.data{8};
+                if strcmp(self.model.data{8},'r')
+                    num_frames = length(self.model.pattern_data(1,1,:));
+                    first_frame = randperm(num_frames,1);
+                else
+                    first_frame = str2num(self.model.data{8});
+                end
             elseif self.model.mode == 4 || self.model.mode == 7
                 first_frame = 1;
             elseif self.model.mode == 5
@@ -850,6 +855,8 @@ classdef preview_controller < handle
             yax = [min(data) max(data)];
             if dur <= len
                  dur_line = line('XData', [dur, dur], 'YData', yax, 'Color', [1 0 0], 'LineWidth', 2);
+            else
+                dur_line = 0;
             end
 
         
