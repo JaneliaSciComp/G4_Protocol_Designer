@@ -97,7 +97,7 @@ classdef run_controller < handle
          %  menu_clear = uimenu(menu, 'Text', 'Clear', 'Callback', @self.clear_data);
            
             start_button = uicontrol(self.fig,'Style','pushbutton', 'String', 'Run', ...
-                'units', 'pixels', 'Position', [15, fig_size(4)- 305, 115, 85],'Callback', @self.separate_run_opt2);
+                'units', 'pixels', 'Position', [15, fig_size(4)- 305, 115, 85],'Callback', @self.separate_run_option1);
             settings_pan = uipanel(self.fig, 'Title', 'Settings', 'FontSize', 13, 'units', 'pixels', ...
                 'Position', [15, fig_size(4) - 215, 370, 200]);
             metadata_pan = uipanel(self.fig, 'Title', 'Metadata', 'units', 'pixels', ...
@@ -1219,6 +1219,7 @@ classdef run_controller < handle
             %Start experiment
             %Start host
             connectHost;
+            pause(10);
             Panel_com('change_root_directory',experiment_folder);
             
             %set acive ao channels
@@ -1282,13 +1283,17 @@ classdef run_controller < handle
                         pretrial_pat_id = self.doc.get_pattern_index(pretrial{2});
                         pretrial_pos_id = self.doc.get_posfunc_index(pretrial{2});
                         pre_run_command = run_name + "('pre', pretrial, num_pretrial_frames, active_ao_channels, pretrial_ao_indices, pretrial_pat_id, pretrial_pos_id)";
+ 
+
                         eval(pre_run_command);
+
+
 %                        run_on_screens_opt2('pre', pretrial, num_pretrial_frames, active_ao_channels, pretrial_ao_indices, pretrial_pat_id, pretrial_pos_id);
                     end
                     
                     %Get intertrial pattern and position indices before
                     %starting main loop
-                    
+
                     intertrial_pat_id = self.doc.get_pattern_index(intertrial{2});
                     intertrial_pos_id = self.doc.get_posfunc_index(intertrial{3});
                     
@@ -1326,6 +1331,7 @@ classdef run_controller < handle
                     Panel_com('stop_display');
                     pause(1);
                     Panel_com('stop_log');
+                    pause(3);
                     disconnectHost;
                     pause(1);
 

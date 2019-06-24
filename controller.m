@@ -2262,7 +2262,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                 LmR_gain = 0;
                 LmR_offset = 0;
             end
-            pre_start = 0;
+            %pre_start = 0;
             if strcmp(self.doc.top_folder_path,'') == 1
                 waitfor(errordlg("You must save the experiment before you can test it on the screens."));
                 return;
@@ -2291,25 +2291,30 @@ classdef controller < handle %Made this handle class because was having trouble 
                     %ao_index = self.doc.get_ao_index(trial{4});
                     
                     Panel_com('set_control_mode', trial_mode);
+                    pause(1);
 
                     Panel_com('set_pattern_id', pattern_index); 
+                    pause(1);
                    % Panel_com('set_gain_bias', [LmR_gain LmR_offset])
                    if func_index ~= 0
                         Panel_com('set_pattern_func_id', func_index);
+                        pause(1);
                    end
                     %Panel_com('set_ao_function_id',[0, ao_index]);
                     if ~isempty(trial{10})
                         Panel_com('set_gain_bias',[LmR_gain LmR_offset]);
+                        pause(1);
                     end
                     if trial_mode == 2
                         Panel_com('set_frame_rate', trial_fr_rate);
+                        pause(1);
                     end
 
                     Panel_com('set_position_x', trial_frame_index);
                     
 
 
-                    pause(0.01)
+                    pause(0.5)
                     Panel_com('start_display', (trial_duration*10)); %duration expected in 100ms units
                     
                     pause(trial_duration+0.1)
