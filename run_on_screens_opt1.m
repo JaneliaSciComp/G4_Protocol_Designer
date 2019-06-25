@@ -213,36 +213,36 @@ function run_on_screens_opt1(runcon, p)
                  drawnow;
 
                  Panel_com('set_control_mode',pre_mode);
-                 %pause(1);
+                 pause(1);
                  Panel_com('set_pattern_id', pre_pat);
-                 %pause(1);
+                 pause(1);
                  %randomize frame index if indicated
                  if pre_frame_ind == 0
                      pre_frame_ind = randperm(p.num_pretrial_frames, 1);
-                     %pause(1);
+                     pause(1);
                  end
                  Panel_com('set_position_x',pre_frame_ind);
-                 %pause(1);
+                 pause(1);
 
                  if pre_pos ~= 0
                      Panel_com('set_pattern_func_id', pre_pos);
-                     %pause(1);
+                     pause(1);
                  end
 
                  if ~isempty(pre_gain) %this assumes you'll never have gain without offset
                      Panel_com('set_gain_bias', [pre_gain, pre_offset]);
-                     %pause(1);
+                     pause(1);
                  end
 
                  if pre_mode == 2
                      Panel_com('set_frame_rate', pre_frame_rate);
-                     %pause(1);
+                     pause(1);
                  end
 
                  for i = 1:length(pre_ao_ind)
                      if pre_ao_ind(i) ~= 0 %if it is zero, there was no ao function for this channel
                          Panel_com('set_ao_function_id',[active_ao_channels(i), pre_ao_ind(i)]);%[channel number, index of ao func]
-                        %pause(1);
+                        pause(1);
                      end
                  end
 
