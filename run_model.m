@@ -41,8 +41,8 @@ classdef run_model
             self.experiment_type = 1;
             self.do_plotting = 1;
             self.do_processing = 1;
-            self.plotting_file = '';
-            self.processing_file = '';
+            self.plotting_file = 'default plotting path';
+            self.processing_file = 'default processing path';
             self.run_protocol_file = 'default run file path';
             
             

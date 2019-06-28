@@ -21,7 +21,24 @@ classdef run_controller < handle
         processing_checkbox_
         processing_textbox_
         run_textbox_
+        current_running_trial_
         %total_trials_;
+        
+        %These are pieces of text in the updates panel that are updated
+        %every trial
+        
+        current_mode_
+        current_pat_
+        current_pos_
+        current_ao1_
+        current_ao2_
+        current_ao3_
+        current_ao4_
+        current_frInd_
+        current_frRate_
+        current_gain_
+        current_offset_
+        current_duration_
 
         
     end
@@ -46,7 +63,24 @@ classdef run_controller < handle
         processing_checkbox
         processing_textbox
         run_textbox
+        current_running_trial
        % total_trials;
+       
+        %These are pieces of text in the updates panel that are updated
+        %every trial
+        
+        current_mode
+        current_pat
+        current_pos
+        current_ao1
+        current_ao2
+        current_ao3
+        current_ao4
+        current_frInd
+        current_frRate
+        current_gain
+        current_offset
+        current_duration
         
         
     end
@@ -97,13 +131,70 @@ classdef run_controller < handle
          %  menu_clear = uimenu(menu, 'Text', 'Clear', 'Callback', @self.clear_data);
            
             start_button = uicontrol(self.fig,'Style','pushbutton', 'String', 'Run', ...
-                'units', 'pixels', 'Position', [15, fig_size(4)- 305, 115, 85],'Callback', @self.separate_run_option1);
+                'units', 'pixels', 'Position', [15, fig_size(4)- 305, 115, 85],'Callback', @self.run);
             settings_pan = uipanel(self.fig, 'Title', 'Settings', 'FontSize', 13, 'units', 'pixels', ...
                 'Position', [15, fig_size(4) - 215, 370, 200]);
             metadata_pan = uipanel(self.fig, 'Title', 'Metadata', 'units', 'pixels', ...
                 'FontSize', 13, 'Position', [fig_size(3) - 300, fig_size(4) - 265, 275, 250]);
             status_pan = uipanel(self.fig, 'Title', 'Status', 'FontSize', 13, 'units', 'pixels', ...
                 'Position', [15, 15, fig_size(3) - 30, fig_size(4)*.2]); 
+            
+            %Labels for status update showing current trial parameters
+            current_trial = uicontrol(status_pan, 'Style', 'text', 'String', 'Current Trial:', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [10, 35, 100, 15]);
+            mode_label = uicontrol(status_pan, 'Style', 'text', 'String', 'Mode', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [115, 60, 55, 15]);
+            pat_label = uicontrol(status_pan, 'Style', 'text', 'String', 'Pattern', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [180, 60, 55, 15]);
+            pos_label = uicontrol(status_pan, 'Style', 'text', 'String', 'Position', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [245, 60, 60, 15]);
+            ao1_label = uicontrol(status_pan, 'Style', 'text', 'String', 'AO1', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [320, 60, 55, 15]);
+            ao2_label = uicontrol(status_pan, 'Style', 'text', 'String', 'AO2', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [385, 60, 55, 15]);
+            ao3_label = uicontrol(status_pan, 'Style', 'text', 'String', 'AO3', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [450, 60, 55, 15]);
+            ao4_label = uicontrol(status_pan, 'Style', 'text', 'String', 'AO4', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [515, 60, 55, 15]);
+            frameInd_label = uicontrol(status_pan, 'Style', 'text', 'String', 'Fr. Index', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [580, 60, 60, 15]);
+            frRate_label = uicontrol(status_pan, 'Style', 'text', 'String', 'Fr. Rate', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [655, 60, 55, 15]);
+            gain_label = uicontrol(status_pan, 'Style', 'text', 'String', 'Gain', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [720, 60, 55, 15]);
+            off_label = uicontrol(status_pan, 'Style', 'text', 'String', 'Offset', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [785, 60, 55, 15]);
+            dur_label = uicontrol(status_pan, 'Style', 'text', 'String', 'Duration', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [850, 60, 60, 15]);
+            
+            %Parameter values in status panel which change with every trial
+            
+            self.current_mode =  uicontrol(status_pan, 'Style', 'text', 'String', '', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [115, 35, 55, 15]);
+            self.current_pat = uicontrol(status_pan, 'Style', 'text', 'String', '', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [180, 35, 55, 15]);
+            self.current_pos = uicontrol(status_pan, 'Style', 'text', 'String', '', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [245, 35, 60, 15]);
+            self.current_ao1 = uicontrol(status_pan, 'Style', 'text', 'String', '', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [320, 35, 55, 15]);
+            self.current_ao2 = uicontrol(status_pan, 'Style', 'text', 'String', '', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [385, 35, 55, 15]);
+            self.current_ao3 = uicontrol(status_pan, 'Style', 'text', 'String', '', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [450, 35, 55, 15]);
+            self.current_ao4 = uicontrol(status_pan, 'Style', 'text', 'String', '', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [515, 35, 55, 15]);
+             self.current_frInd = uicontrol(status_pan, 'Style', 'text', 'String', '', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [580, 35, 60, 15]);
+            self.current_frRate = uicontrol(status_pan, 'Style', 'text', 'String', '', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [655, 35, 55, 15]);
+            self.current_gain = uicontrol(status_pan, 'Style', 'text', 'String', '', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [720, 35, 55, 15]);
+            self.current_offset = uicontrol(status_pan, 'Style', 'text', 'String', '', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [785, 35, 55, 15]);
+            self.current_duration = uicontrol(status_pan, 'Style', 'text', 'String', '', 'FontSize', 10.5, ...
+                'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [850, 35, 60, 15]);
+            
+            
             self.progress_axes = axes(self.fig, 'units','pixels', 'Position', [15, fig_size(4)*.2+30, fig_size(3) - 15 ,50]);
             self.axes_label = uicontrol(self.fig, 'Style', 'text', 'String', 'Progress:', 'FontSize', 13, ...
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [15, fig_size(4)*.2 + 85, 100, 20]);
@@ -162,21 +253,27 @@ classdef run_controller < handle
             test_button = uicontrol(settings_pan, 'Style', 'pushbutton', 'String', 'Run Test Protocol', ...
                 'units', 'pixels', 'Position', [210, 120, 150, 20], 'Callback', @self.run_test);
             plotting_checkbox_label = uicontrol(settings_pan, 'Style', 'text', 'String', 'Plotting?', ...
-                'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 95, 65, 15]);
+                'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 120, 45, 15]);
             self.plotting_checkbox = uicontrol(settings_pan, 'Style', 'checkbox', 'Value', self.model.do_plotting, ...
-                'units', 'pixels', 'Position', [80, 95, 15, 15], 'Callback', @self.update_do_plotting);
+                'units', 'pixels', 'Position', [60, 120, 15, 15], 'Callback', @self.update_do_plotting);
             plotting_filename_label = uicontrol(settings_pan, 'Style', 'text', 'String', 'Plotting Protocol:', ...
-                'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [100, 95, 105, 15]);
+                'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 95, 105, 15]);
             self.plotting_textbox = uicontrol(settings_pan, 'Style', 'edit', 'units', 'pixels', ...
-                'String', self.model.plotting_file, 'Position', [210, 95, 150, 18], 'Callback', @self.update_plotting_file);
+                'String', self.model.plotting_file, 'Position', [120, 95, 160, 18], 'Callback', @self.update_plotting_file);
+            browse_button1 = uicontrol(settings_pan, 'Style', 'pushbutton', 'units', 'pixels', ...
+                'String', 'Browse', 'Position', [285, 95, 65, 18], 'Callback', @self.browse_plot_protocol);
+            
             processing_checkbox_label = uicontrol(settings_pan, 'Style', 'text', 'String', 'Processing?', ...
-                'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 70, 65, 15]);
+                'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [90, 120, 65, 15]);
             self.processing_checkbox = uicontrol(settings_pan, 'Style', 'checkbox', 'Value', self.model.do_processing, ...
-                'units', 'pixels', 'Position', [80, 70, 15, 15], 'Callback', @self.update_do_processing);
+                'units', 'pixels', 'Position', [160, 120, 15, 15], 'Callback', @self.update_do_processing);
             processing_filename_label = uicontrol(settings_pan, 'Style', 'text', 'String', 'Processing Protocol:', ...
-                'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [100, 70, 105, 15]);
+                'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 70, 105, 15]);
             self.processing_textbox = uicontrol(settings_pan, 'Style', 'edit', 'units', 'pixels', ...
-                'String', self.model.processing_file, 'Position', [210, 70, 150, 18], 'Callback', @self.update_processing_file);
+                'String', self.model.processing_file, 'Position', [120, 70, 160, 18], 'Callback', @self.update_processing_file);
+            browse_button2 = uicontrol(settings_pan, 'Style', 'pushbutton', 'units', 'pixels', ...
+                'String', 'Browse', 'Position', [285, 70, 65, 18], 'Callback', @self.browse_process_protocol);
+            
             run_filename_label = uicontrol(settings_pan, 'Style', 'text', 'String', 'Run Protocol:', ...
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 45, 105, 15]);
             self.run_textbox = uicontrol(settings_pan, 'Style', 'edit', 'units', 'pixels', ...
@@ -346,450 +443,8 @@ classdef run_controller < handle
 
             
         end
-        
+
         function run(self, src, event)
-            %Get necessary data
-            
-            experiment_name = self.doc.experiment_name;
-            
-            
-            trial_duration = self.doc.block_trials{1,12};
-            intertrial_duration = self.doc.intertrial{12};
-            pretrial_duration = pretrial{12};
-            num_reps = self.doc.repetitions;
-            randomize = self.doc.is_randomized;
-            
-            pretrial = self.doc.pretrial;
-            block_trials = self.doc.block_trials;
-            intertrial = self.doc.intertrial;
-            posttrial = self.doc.posttrial;
-            posttrial_duration = posttrial{12};
-            
-            %Set initial index values to send to panel - NOT ALL OF THESE
-            %WILL BE USED. IF THERE IS NO PRE/POST/INTER TRIAL THEN THE
-            %VALUES WILL NEVER GET SENT BUT IT'S EASIER TO DEFINE THEM ALL
-            %AT ONCE.
-            %pretrial
-            pretrial_mode = pretrial{1};
-            pretrial_pat_id = self.doc.get_pattern_index(pretrial{2});
-            pretrial_posfunc_id = self.doc.get_posfunc_index(pretrial{3});
-            
-            if ~isempty(pretrial{10})
-                pretrial_gain = pretrial{10};
-                pretrial_offset = pretrial{11};
-
-                
-            else
-                pretrial_gain = 0;
-                pretrial_offset = 0;
-
-                
-            end
-            
-
-            
-            %first run of block_trials
-%             trial_mode = block_trials{1,1};
-%             pat_index = self.doc.get_pattern_index(block_trials{1,2});
-%             posfunc_index = self.doc.get_posfunc_index(block_trials{1,3});
-            if ~isempty(block_trials{1,10})
-                LmR_gain = block_trials{1,10};
-                LmR_offset = block_trials{1,11};
-                
-            else
-                LmR_gain = 0;
-                LmR_offset = 0;
-                
-            end
-            
-
-            %intertrial values
-            intertrial_mode = intertrial{1};
-            intertrial_pat_id = self.doc.get_pattern_index(intertrial{2});
-            intertrial_posfunc_id = self.doc.get_posfunc_index(intertrial{3});
-            if ~isempty(intertrial{10})
-                intertrial_gain = intertrial{10};
-                intertrial_offset = intertrial{11};
-            else
-                intertrial_gain = 0;
-                intertrial_offset = 0;
-                
-            end
-            
-           
-            %posttrial values
-            posttrial_mode = posttrial{1};
-            posttrial_pat_id = self.doc.get_pattern_index(posttrial{2});
-            posttrial_posfunc_id = self.doc.get_posfunc_index(posttrial{3});
-            if ~isempty(posttrial{10})
-                posttrial_gain = posttrial{10};
-                posttrial_offset = posttrial{11};
-                
-            else
-                posttrial_gain = 0;
-                posttrial_offset = 0;
-                
-            end
-
-            
-            %Checking to see if the intertrial has a pattern or not, bc a
-            %pattern is needed for all modes. 
-            
-            %%%%%%%%%CONSIDER PUTTING IN A CHECKBOX WHICH ALLOWS THEM TO
-            %%%%%%%%%DISABLE THE PRE, INTER, AND POST TRIALS so they don't
-            %%%%%%%%%have to erase everything autofilled. 
-            if isempty(intertrial{2})
-                inter_type = 0;
-            else
-                inter_type = 1;
-            end
- 
-            
-            %pre_start indicates whether there is a pretrial or not
-            
-            if isempty(pretrial{2})
-                pre_start = 0;
-            else
-                pre_start = 1; 
-            end
-            
-            %post_type indicates if there is a posttrial or not
-            
-            if isempty(posttrial{2})
-                post_type = 0;
-            else
-                post_type = 1;
-            end
-            %%Get active channels from the model, create array of their
-            %%numeric representations, ie if channels 1 and 3 are active,
-            %%active_ao_channels will be [0,2]; 
-            
-            %THIS METHOD will create an array like [0, 2, 3] if ao channels
-            %1,3, and 4 are active. Is this correct??????????????
-            ao1_funcs = {};
-            ao1_funcs{1} = pretrial{4};
-            for c = 1:length(block_trials(:,1))
-                ao1_funcs{c+1} = block_trials{c,4};
-            end
-            ao1_funcs{end + 1} =  intertrial{4};
-            ao1_funcs{end + 1} = posttrial{4};
-            
-            ao2_funcs = {};
-            ao2_funcs{1} = pretrial{5};
-            for c = 1:length(block_trials(:,1))
-                ao2_funcs{c+1} = block_trials{c,5};
-            end
-            ao2_funcs{end + 1} =  intertrial{5};
-            ao2_funcs{end + 1} = posttrial{5};
-            
-            ao3_funcs = {};
-            ao3_funcs{1} = pretrial{6};
-            for c = 1:length(block_trials(:,1))
-                ao3_funcs{c+1} = block_trials{c,6};
-            end
-            ao3_funcs{end + 1} =  intertrial{6};
-            ao3_funcs{end + 1} = posttrial{6};
-            
-            
-            ao4_funcs = {};
-            ao4_funcs{1} = pretrial{7};
-            for c = 1:length(block_trials(:,1))
-                ao4_funcs{c+1} = block_trials{c,7};
-            end
-            ao4_funcs{end + 1} =  intertrial{7};
-            ao4_funcs{end + 1} = posttrial{7};
-            
-            ao1_active = 0;
-            for i = 1:length(ao1_funcs)
-                if ~strcmp(ao1_funcs{i},'')
-                    ao1_active = 1;
-                end
-            end
-            
-            ao2_active = 0;
-            for i = 1:length(ao2_funcs)
-                if ~strcmp(ao2_funcs{i},'')
-                    ao2_active = 1;
-                end
-            end
-            
-            ao3_active = 0;
-            for i = 1:length(ao3_funcs)
-                if ~strcmp(ao3_funcs{i},'')
-                    ao3_active = 1;
-                end
-            end
-            
-            ao4_active = 0;
-            for i = 1:length(ao4_funcs)
-                if ~strcmp(ao4_funcs{i},'')
-                    ao4_active = 1;
-                end
-            end
-            channels = [ao1_active, ao2_active, ao3_active, ao4_active];
-            channel_nums = [0,1,2,3];
-            
-            j = 1;
-            active_ao_channels = [];
-            for channel = 1:4
-                if channels(channel) == 1
-                    active_ao_channels(j) = channel_nums(channel);
-                    j = j + 1;
-                end
-                
-                
-            end
-            pretrial_ao_funcs = [];
-            ao_funcs = []; %first trial of block trials
-            intertrial_ao_funcs = [];
-            posttrial_ao_funcs = [];
-            for i = 1:length(active_ao_channels)
-                channel_num = active_ao_channels(i);
-                pretrial_ao_indices(i) = self.doc.get_ao_index(pretrial{channel_num + 4});
-                ao_indices(i) = self.doc.get_ao_index(block_trials{1,channel_num + 4});
-                intertrial_ao_indices(i) = self.doc.get_ao_index(intertrial{channel_num + 4});
-                posttrial_ao_indices(i) = self.doc.get_ao_index(posttrial{channel_num + 4});
-            end
-         
-            
-            
-            %% PREPARE EXPERIMENT COFIGURATION
-            if strcmp(self.doc.save_filename_,'') == 1
-                waitfor(errordlg("You didn't save this experiment. Please go back and save then run the experiment again."));
-                return;
-            end
-            [experiment_path, g4p_filename, ext] = fileparts(self.doc.save_filename_);
-            experiment_folder = experiment_path;
-
-            num_conditions = length(self.doc.block_trials(:,1));
-            if ~exist(fullfile(experiment_folder,'Log Files'),'dir')
-                mkdir(experiment_folder,'Log Files');
-            end
-            
-            %check if log files already present
-            
-            if length(dir([experiment_folder '\Log Files\']))>2
-                waitfor(errordlg('unsorted files present in "Log Files" folder, remove before restarting experiment\n'));
-                return
-            end
-            if exist([experiment_folder '\Results\' self.model.fly_name],'dir')
-                waitfor(errordlg('Results folder already exists with that fly name\n'));
-                return
-            end
-            
-            %Start host
-            connectHost;
-            Panel_com('change_root_directory',experiment_folder);
-            
-            %set acive ao channels
-            if exist('active_ao_channels','var') && ~isempty(active_ao_channels) &&sum(active_ao_channels)>0
-                aobits = 0;
-                for bit = active_ao_channels
-                    aobits = bitset(aobits,bit+1); %plus 1 bc aochans are 0-3
-                end
-                Panel_com('set_active_ao_channels', dec2bin(aobits,4));
-            end
-            start = questdlg('Start Experiment?','Confirm Start','Start','Cancel','Start');
-            Panel_com('start_log');
-            pause(1);
-            if pre_start==1 %start with 10 seconds of closed loop stripe fixation
-                Panel_com('set_control_mode',pretrial_mode);
-                if pretrial_posfunc_id ~= 0
-                    Panel_com('set_pattern_func_id',pretrial_posfunc_id);
-                end
-                if ~isempty(pretrial_gain)
-                    Panel_com('set_gain_bias', [pretrial_gain, pretrial_offset]);
-                end
-                Panel_com('set_pattern_id', pretrial_pat_id);
-               
-                for i = 1:length(pretrial_ao_funcs)
-                    Panel_com('set_ao_function_id',[active_ao_channels(i), pretrial_ao_indices(i)]);%[channel number, index of ao func]
-                end
-                
-                if pretrial_mode == 2
-                    Panel_com('set_frame_rate', pretrial{9});
-                end
-                
-                
-                 if pretrial_mode == 3
-                    Panel_com('set_position_x', pretrial{8});
-                 end
-        
-                
-                pause(0.01)
-                %%%%%%%%%%%%%%%%%THIS IS UNTESTED
-%                 if pretrial_duration == 0
-%                     Panel_com('start_display');
-%                     w = waitforbuttonpress;
-%                 else
-                Panel_com('start_display', (pretrial_duration*10))
-%                 end
-                pause(pretrial_duration);
-            end
-            
-           
-            switch start
-                case 'Cancel'
-                    Panel_com('stop_display')
-                    disconnectHost;
-                    return;
-                case 'Start'
-                %% run experiment
-                exp_seconds = num_reps*num_conditions*(trial_duration + intertrial_duration);
-                fprintf(['Estimated experiment duration: ' num2str(exp_seconds/60) ' minutes\n']);
-
-
-                %%create .mat file of experiment order
-                if randomize == 1
-                    exp_order = NaN(num_reps, num_conditions);
-                    for rep_ind = 1:num_reps
-                        exp_order(rep_ind,:) = randperm(num_conditions);
-                    end
-                else
-                    exp_order = repmat(1:num_conditions,num_reps,1);
-                    
-                end
-
-                save([experiment_folder '\Log Files\exp_order.mat'],'exp_order')
-
-                %start experiment log and trial loop
-                Panel_com('stop_display');
-                
-                for r = 1:num_reps
-                    for c = 1:num_conditions
-                        
-                        cond = exp_order(r,c); % + exclude_stripe
-                        self.update_progress(r, c, cond);
-                        
-                        pat_id = self.doc.get_pattern_index(block_trials{cond,2});
-                        pos_func_id = self.doc.get_posfunc_index(block_trials{cond,3});
-                        trial_mode = block_trials{cond,1};
-                        for i = 1:length(active_ao_channels)
-                            ao_func_indices(i) = self.doc.get_ao_index(block_trials{cond, active_ao_channels(i)+ 4});
-                        end
-
-                        
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%DOES THERE NEED TO BE A TYPE 2???why does type 2
-                        %%%%%%%set an ao function id but not type 1? 
-                        
-                         %trial portion
-                        %Panel_com('stop_display')
-                        Panel_com('set_control_mode', trial_mode);
-                        Panel_com('set_pattern_id', pat_id);
-                        if ~isempty(block_trials{cond,10})
-                            LmR_gain = block_trials{cond,10};
-                            LmR_offset = block_trials{cond,11};
-                            Panel_com('set_gain_bias', [LmR_gain, LmR_offset]);
-                        end
-                        if pos_func_id ~= 0
-
-                            Panel_com('set_pattern_func_id', pos_func_id);
-                        end
-                        if trial_mode == 2
-                            Panel_com('set_frame_rate',block_trials{cond,9});
-                        end
-
-                        if trial_mode == 3
-
-                            Panel_com('set_position_x', block_trials{cond,8});
-                        end
-                        
-    %                     counter = "Rep " + num2str(r) + " of " + num2str(num_reps) + ", cond " + num2str(c) + " of " + num2str(num_conditions) +": " + strjoin(self.doc.currentExp_.currentExp.pattern.pattNames(pat_id));
-    %                     disp(counter);
-
-                        %%%%%%How does this work? what does the zero represent?
-                        %%%%%%What if there are more than one ao_functions?
-
-
-                        for i = 1:length(active_ao_channels)
-                            Panel_com('set_ao_function_id',[active_ao_channels(i), ao_func_indices(i)]);
-                        end
-                        pause(0.01)
-                        Panel_com('start_display', (trial_duration*10)); %duration expected in 100ms units
-                        pause(trial_duration)
-                        %end of trial portion
-                        Panel_com('stop_display');
-                        
-                        if r == num_reps && c == num_conditions
-   
-                            continue
-                        end
-                        
-                        %intertrial portion
-                        if inter_type == 1
- 
-                            Panel_com('set_control_mode', intertrial_mode);
-                            Panel_com('set_pattern_id', intertrial_pat_id );
-                            if intertrial_posfunc_id ~= 0
-                                Panel_com('set_pattern_func_id',intertrial_posfunc_id);
-                            end
-                            
-                            Panel_com('set_position_x',intertrial_frame_index);
-                            
-
-                            for i = 1:length(intertrial_ao_funcs)
-                                Panel_com('set_ao_function_id',[active_ao_channels(i), intertrial_ao_indices(i)]);
-                            end
-                            if intertrial_mode == 2
-                                Panel_com('set_frame_rate', intertrial{9});
-                            end
-                            Panel_com('start_display', (intertrial_duration*10));
-                            pause(intertrial_duration);
-                        elseif inter_type == 2
-                            Panel_com('set_control_mode', 4);
-                            Panel_com('set_gain_bias', [LmR_gain, LmR_offset]);
-                            Panel_com('set_pattern_id', 1);
-                            for i = 1:length(intertrial_ao_funcs)
-                                Panel_com('set_ao_function_id',[active_ao_channels(i), intertrial_ao_indices(i)]);
-                            end
-                            pause(0.01)
-                            Panel_com('start_display', (intertrial_duration*10));
-                            pause(intertrial_duration+0.1);
-                            Panel_com('stop_display');
-                        end
-                        %end of intertrial portion
-
-                        
-
-                    end
-                end
-                
-                if post_type == 1
-
-                     Panel_com('set_control_mode', posttrial_mode);
-                     Panel_com('set_pattern_id', posttrial_pat_id);
-                     if ~isempty(posttrial{10})
-                         Panel_com('set_gain_bias', [posttrial_gain, posttrial_offset]);
-                     end
-                     if pos_func_id ~= 0
-                         Panel_com('set_pattern_func_id', posttrial_posfunc_id);
-                     end
-                     if posttrial_mode == 2
-                         Panel_com('set_frame_rate', posttrial{9});
-                     end
-                     
-                     Panel_com('set_position_x',posttrial_frame_index);
-                     
-                     Panel_com('start_display',posttrial_duration*10);
-                     pause(posttrial_duration);
-                end
-                %rename/move results folder
-                Panel_com('stop_display');
-                pause(1);
-                Panel_com('stop_log');
-                disconnectHost;
-                pause(1);
-                movefile([experiment_folder '\Log Files\*'],fullfile(experiment_folder,'Results',self.model.fly_name));
-                %save([experiment_folder '\Log Files\exp_order.mat'],'exp_order')
-                self.progress_axes.Title.String = "Experiment Completed.";
-                drawnow;
-
-            
-            end
-        end
-        
-        function separate_run_option1(self, src, event)
             
             %Before creating the data and sending you to the run script,
             %check to make sure there are no issues that will disrupt the
@@ -1012,335 +667,86 @@ classdef run_controller < handle
             parameters.exp_order = exp_order;
             parameters.experiment_folder = experiment_folder;
             
-            %Send parameters to run script
-            run_on_screens_opt1(self, parameters);
-            
-             movefile([experiment_folder '\Log Files\*'],fullfile(experiment_folder,'Results',self.model.fly_name));
-            %save([experiment_folder '\Log Files\exp_order.mat'],'exp_order')
-            self.progress_axes.Title.String = "Experiment Completed.";
-            drawnow;
-            
-            
-            
-        
-        
-        end
-        
-        function separate_run_opt2(self, src, event)
-            
-            %Set parameters
-            
-            pretrial = self.doc.pretrial;
-            block_trials = self.doc.block_trials;
-            intertrial = self.doc.intertrial;
-            posttrial = self.doc.posttrial;
-            
-            num_reps = self.doc.repetitions;
-            num_conditions = length(self.doc.block_trials(:,1));
-            randomize = self.doc.is_randomized;
-            
-            pre_duration = pretrial{12};
-            inter_duration = intertrial{12};
-            post_duration = posttrial{12};
-            if ~isempty(pretrial{1})
-                pre_start = 1;
-            else
-                pre_start = 0;
-            end
-            
-            if ~isempty(intertrial{1})
-                inter_type = 1;
-            else
-                inter_type = 0;
-            end
-            
-            if ~isempty(posttrial{1})
-                post_type = 1;
-            else
-                post_type = 0;
-            end
-            
-            %check to make sure there are no issues that will disrupt the
-            %run:--------------------------------------------------------
-            
-            %returns if you forgot to save the experiment.
-            if strcmp(self.doc.save_filename,'') == 1
-                waitfor(errordlg("You didn't save this experiment. Please go back and save then run the experiment again."));
-                return
-            end
-            
-            %gets path to experiment folder
-            [experiment_path, g4p_filename, ext] = fileparts(self.doc.save_filename);
-            experiment_folder = experiment_path;
-            
-            %creates Log Files folder if it doesn't exist
-            if ~exist(fullfile(experiment_folder,'Log Files'),'dir')
-                mkdir(experiment_folder,'Log Files');
-            end
-            
-            %check if log files already present or if a fly by that name
-            %already has results in this experiment folder.
-            
-            if length(dir([experiment_folder '\Log Files\']))>2
-                waitfor(errordlg('unsorted files present in "Log Files" folder, remove before restarting experiment\n'));
+            %Make sure the run file entered exists
+            if ~isfile(self.model.run_protocol_file)
+                waitfor(errordlg("Please make sure you've entered a valid .m file to run the experiment."));
                 return;
             end
-            if exist([experiment_folder '\Results\' self.model.fly_name],'dir')
-                waitfor(errordlg('Results folder already exists with that fly name\n'));
-                return;
-            end
-            %-------------------------------------------------------------
             
+            %Get function name of the script which will run the experiment
+            [run_path, run_name, ext] = fileparts(self.model.run_protocol_file);
             
-                        %The following block of code will create an array called
-            %active_ao_channels with the numbers of the active ao channels
-            %(ie [0 2 3] means ao channels 1, 3, and 4 are active. It will also create
-            %four arrays for the pre/inter/post/block trials of the indices of
-            %the ao functions for that trial. 
-            %-------------------------------------------------------------
+            %Create the full command
+            run_command = run_name + "(self, parameters)";
             
-                %make cell arrays for each ao channel listing all the
-                %functions called for that channel across all trials.
-            ao1_funcs = {};
-                ao1_funcs{1} = pretrial{4};
+            %run script
+            eval(run_command);
 
-                for c = 1:length(block_trials(:,1))
-                    ao1_funcs{c+1} = block_trials{c,4};
-                end
-                ao1_funcs{end + 1} =  intertrial{4};
-                ao1_funcs{end + 1} = posttrial{4};
-            
-            ao2_funcs = {};
-                ao2_funcs{1} = pretrial{5};
-                for c = 1:length(block_trials(:,1))
-                    ao2_funcs{c+1} = block_trials{c,5};
-                end
-                ao2_funcs{end + 1} =  intertrial{5};
-                ao2_funcs{end + 1} = posttrial{5};
-            
-            ao3_funcs = {};
-                ao3_funcs{1} = pretrial{6};
-                for c = 1:length(block_trials(:,1))
-                    ao3_funcs{c+1} = block_trials{c,6};
-                end
-                ao3_funcs{end + 1} =  intertrial{6};
-                ao3_funcs{end + 1} = posttrial{6};
-            
-            
-            ao4_funcs = {};
-                ao4_funcs{1} = pretrial{7};
-                for c = 1:length(block_trials(:,1))
-                    ao4_funcs{c+1} = block_trials{c,7};
-                end
-                ao4_funcs{end + 1} =  intertrial{7};
-                ao4_funcs{end + 1} = posttrial{7};
-            
-                %Determine which channels should be active by going through
-                %the arrays we just created and checking if they are empty
-                %or not
-            ao1_active = 0;
-            for i = 1:length(ao1_funcs)
-                if ~strcmp(ao1_funcs{i},'')
-                    ao1_active = 1;
-                end
-            end
-            
-            ao2_active = 0;
-            for i = 1:length(ao2_funcs)
-                if ~strcmp(ao2_funcs{i},'')
-                    ao2_active = 1;
-                end
-            end
-            
-            ao3_active = 0;
-            for i = 1:length(ao3_funcs)
-                if ~strcmp(ao3_funcs{i},'')
-                    ao3_active = 1;
-                end
-            end
-            
-            ao4_active = 0;
-            for i = 1:length(ao4_funcs)
-                if ~strcmp(ao4_funcs{i},'')
-                    ao4_active = 1;
-                end
-            end
-            
-            %channels is now an array of zeros and 1's, a 1 indicating that
-            %channel is active, a 0 indicating it is not. 
-            channels = [ao1_active, ao2_active, ao3_active, ao4_active];
-            channel_nums = [0,1,2,3];
-            
-            %create an array of active ao channels which is formatted
-            %correctly to be passed to the panel_com function.
-            j = 1;
-            active_ao_channels = [];
-            for channel = 1:4
-                if channels(channel) == 1
-                    active_ao_channels(j) = channel_nums(channel);
-                    j = j + 1;
-                end
-            end
-            %now have active_ao_channels which is an array of 0 - 4
-            %elements indicating which ao channels are active, ie [2 3]
-            %indicates channels 3 and 4 are active.
-            
-            %Create an array for each section with the indices of their
-            %aofunctions (no ao function returns an index of 0)
-            pretrial_ao_indices = [];
-            intertrial_ao_indices = [];
-            ao_indices = [];
-            posttrial_ao_indices = [];
-            
-            for i = 1:length(active_ao_channels)
-                channel_num = active_ao_channels(i);
-                pretrial_ao_indices(i) = self.doc.get_ao_index(pretrial{channel_num + 4});
-                intertrial_ao_indices(i) = self.doc.get_ao_index(intertrial{channel_num + 4});
-                posttrial_ao_indices(i) = self.doc.get_ao_index(posttrial{channel_num + 4});
-            end
-            
-            
-            for m = 1:length(active_ao_channels)
-                channel_num = active_ao_channels(m);
-                for k = 1:length(block_trials(:,1))
-                    ao_indices(k,m) = self.doc.get_ao_index(block_trials{k, channel_num + 4});
-                end
-            end
-            %-------------------------------------------------------------
-            
-            
-            
-            %Need to know how many frames each pattern in each trial has
-            %in case the frame index on any of them needs to be randomized.
-            num_pretrial_frames = length(self.doc.Patterns.(pretrial{2}).pattern.Pats(1,1,:));
-            num_intertrial_frames = length(self.doc.Patterns.(intertrial{2}).pattern.Pats(1,1,:));
-            num_posttrial_frames = length(self.doc.Patterns.(posttrial{2}).pattern.Pats(1,1,:));
-            
-            %Start experiment
-            %Start host
-            connectHost;
-            pause(10);
-            Panel_com('change_root_directory',experiment_folder);
-            
-            %set acive ao channels
-            if exist('active_ao_channels','var') && ~isempty(active_ao_channels) && sum(active_ao_channels)>= 0
-                aobits = 0;
-                for bit = active_ao_channels
-                    aobits = bitset(aobits,bit+1); %plus 1 bc aochans are 0-3
-                end
-                Panel_com('set_active_ao_channels', dec2bin(aobits,4));
-            end
-            start = questdlg('Start Experiment?','Confirm Start','Start','Cancel','Start');
-            Panel_com('start_log');
+            Panel_com('stop_display');
+            pause(1);
+            Panel_com('stop_log');
+            pause(1);
+            disconnectHost;
             pause(1);
             
-             switch start
-                case 'Cancel'
-                    Panel_com('stop_display')
-                    disconnectHost;
-                    return;
-                case 'Start'
-                %% run experiment
+
+            
+            movefile([experiment_folder '\Log Files\*'],fullfile(experiment_folder,'Results',self.model.fly_name));
+            %save([experiment_folder '\Log Files\exp_order.mat'],'exp_order')
+            self.progress_axes.Title.String = "Experiment Completed. Running post-processing.";
+            drawnow;
+            %Set up trial options matrix
+            
+            if ~isempty(pretrial{1})
+                is_pretrial = 1;
+            else
+                is_pretrial = 0;
+            end
+            if ~isempty(intertrial{1})
+                is_intertrial = 1;
+            else
+                is_intertrial = 0;
+            end
+            if ~isempty(posttrial{1})
+                is_posttrial = 1;
+            else
+                is_posttrial = 0;
+            end
+            trial_options = [is_pretrial, is_intertrial, is_posttrial];
+            
+            %Run required post processing script that converts the TDMS
+            %files into mat files.
+            fly_results_folder = fullfile(experiment_folder,'Results',self.model.fly_name);
+%             files = dir(fly_results_folder);
+%             files = files(~ismember({files.name},{'.','..'}));
+%             dirFlags = [files.isdir];
+%             tdms_folder = files(dirFlags);
+%             folder = fullfile(tdms_folder.folder,tdms_folder.name);
+            
+            G4_TDMS_folder2struct(fly_results_folder);
+            
+            %Run post processing and plotting scripts if selected
+            if self.model.do_processing == 1 && (strcmp(self.model.processing_file,'') || ~isfile(self.model.processing_file))
+                waitfor(errordlg("Processing script was not run because the processing file could not be found. Please run manually."));
+     
+            elseif self.model.do_processing == 1 && isfile(self.model.processing_file)
                 
-                %Determine how long the experiment will take
-                    block_time = 0;
-                    for i = 1:length(block_trials(:,1))
-                        block_time = block_time + block_trials{i,12};
-                    end
-                    if inter_type == 1
-                        inter_time = inter_duration * length(block_trials(:,1)) * num_reps - inter_duration;
-                    else
-                        inter_time = 0;
-                    end
-                    total_time = block_time*num_reps + inter_time;
-                    if pre_start == 1
-                        total_time = total_time + pre_duration;
-                    end
-                    if post_type == 1
-                        total_time = total_time + post_duration;
-                    end
+                
+                processing_command = self.model.processing_file + "(fly_results_folder, trial_options)";
+                eval(processing_command);
+            
+            end
+            
+            if self.model.do_plotting == 1 && (strcmp(self.model.plotting_file,'') || ~isfile(self.model.plotting_file))
+                waitfor(errordlg("Plotting script was not run because the plotting file could not be found. Please run manually."));
+            elseif self.model.do_plotting == 1 && isfile(self.model.plotting)
+                plotting_command = self.model.plotting_file + "(fly_results_folder, trial_options)";
+                eval(plotting_command);
+            end
 
-                    
-                    fprintf(['Estimated experiment duration: ' num2str(total_time/60) ' minutes\n']);
-
-
-                    %%create .mat file of experiment order
-                    if randomize == 1
-                        exp_order = NaN(num_reps, num_conditions);
-                        for rep_ind = 1:num_reps
-                            exp_order(rep_ind,:) = randperm(num_conditions);
-                        end
-                    else
-                        exp_order = repmat(1:num_conditions,num_reps,1);
-
-                    end
-
-                    save([experiment_folder '\Log Files\exp_order.mat'],'exp_order')
-                    [run_path, run_name, ext] = fileparts(self.model.run_protocol_file);
-                    
-                    
-                    if pre_start == 1
-                        pretrial_pat_id = self.doc.get_pattern_index(pretrial{2});
-                        pretrial_pos_id = self.doc.get_posfunc_index(pretrial{2});
-                        pre_run_command = run_name + "('pre', pretrial, num_pretrial_frames, active_ao_channels, pretrial_ao_indices, pretrial_pat_id, pretrial_pos_id)";
- 
-
-                        eval(pre_run_command);
-
-
-%                        run_on_screens_opt2('pre', pretrial, num_pretrial_frames, active_ao_channels, pretrial_ao_indices, pretrial_pat_id, pretrial_pos_id);
-                    end
-                    
-                    %Get intertrial pattern and position indices before
-                    %starting main loop
-
-                    intertrial_pat_id = self.doc.get_pattern_index(intertrial{2});
-                    intertrial_pos_id = self.doc.get_posfunc_index(intertrial{3});
-                    
-                    for r = 1:num_reps
-                        for c = 1:num_conditions
-                            
-                            cond = exp_order(r,c); % + exclude_stripe
-                            self.update_progress(r, c, cond);
-                            num_frames = self.doc.Patterns.(block_trials{cond,2}).pattern.Pats(1,1,:);
-                            pat_id = self.doc.get_pattern_index(block_trials{cond,2});
-                            pos_id = self.doc.get_posfunc_index(block_trials{cond,3});
-                            block_run_command = run_name + "('block', block_trials(cond,:), num_frames, active_ao_channels, ao_indices(cond,:),pat_id, pos_id)";
-                            eval(block_run_command);
-                            
- %                           run_on_screens_opt2('block', block_trials(cond,:), num_frames, active_ao_channels, ao_indices(cond,:),pat_id, pos_id);
-                            
-                            if inter_type == 1
-                                
-                                inter_run_command = run_name + "('inter', intertrial, num_intertrial_frames, active_ao_channels, intertrial_ao_indices, intertrial_pat_id, intertrial_pos_id)";
-                                eval(inter_run_command);
-     %                           run_on_screens_opt2('inter', intertrial, num_intertrial_frames, active_ao_channels, intertrial_ao_indices, intertrial_pat_id, intertrial_pos_id);
-                            
-                            end
-                            
-                        end
-                    end
-                    
-                    if post_type == 1
-                        posttrial_pat_id = self.doc.get_pattern_index(posttrial{2});
-                        posttrial_pos_id = self.doc.get_posfunc_index(posttrial{3});
-                        post_run_command = run_name + "('post', posttrial, num_posttrial_frames, active_ao_channels, posttrial_ao_indices, posttrial_pat_id, posttrial_pos_id)";
-                        eval(post_run_command);
-%                        run_on_screens_opt2('post', posttrial, num_posttrial_frames, active_ao_channels, posttrial_ao_indices, posttrial_pat_id, posttrial_pos_id);
-                    end
-                    Panel_com('stop_display');
-                    pause(1);
-                    Panel_com('stop_log');
-                    pause(3);
-                    disconnectHost;
-                    pause(1);
-
-                    movefile(experiment_folder + "\Log Files\*",fullfile(experiment_folder,'Results',self.model.fly_name));
-                    %save([experiment_folder '\Log Files\exp_order.mat'],'exp_order')
-                    
-             end
-      
         end
+        
+       
         
         
         function run_test(self, src, event)
@@ -1360,6 +766,20 @@ classdef run_controller < handle
             self.model.run_protocol_file = fullfile(path,file);
             self.update_run_gui();
         
+        end
+        
+        function browse_plot_protocol(self, src, event)
+            
+            [file, path] = uigetfile('*.m');
+            self.model.plotting_file = fullfile(path,file);
+            self.update_run_gui();
+        end
+        
+        function browse_process_protocol(self, src, event)
+            
+            [file,path] = uigetfile('*.m');
+            self.model.processing_file = fullfile(path,file);
+            self.update_run_gui();
         end
         
         
@@ -1441,6 +861,58 @@ classdef run_controller < handle
             self.run_textbox_ = value;
         end
         
+        function set.current_running_trial(self, value)
+            self.current_running_trial_ = value;
+        end
+        
+        function set.current_mode(self, value)
+            self.current_mode_ = value;
+        end
+        
+        function set.current_pat(self, value)
+            self.current_pat_ = value;
+        end
+        
+        function set.current_pos(self, value)
+            self.current_pos_ = value;
+        end
+        
+        function set.current_ao1(self, value)
+            self.current_ao1_ = value;
+        end
+        
+        function set.current_ao2(self, value)
+            self.current_ao2_ = value;
+        end
+        
+        function set.current_ao3(self, value)
+            self.current_ao3_ = value;
+        end
+        
+        function set.current_ao4(self, value)
+            self.current_ao4_ = value;
+        end
+        
+        function set.current_frInd(self, value)
+            self.current_frInd_ = value;
+        end
+        
+        function set.current_frRate(self, value)
+            self.current_frRate_ = value;
+        end
+        
+        function set.current_gain(self, value)
+            self.current_gain_ = value;
+        end
+        
+        function set.current_offset(self, value)
+            self.current_offset_ = value;
+        end
+        
+        function set.current_duration(self, value)
+            self.current_duration_ = value;
+        end
+        
 
 
 
@@ -1517,6 +989,59 @@ classdef run_controller < handle
         function value = get.run_textbox(self)
             value = self.run_textbox_;
         end
+        
+        function value = get.current_running_trial(self)
+            value = self.current_running_trial_;
+        end
+        
+        function value = get.current_mode(self)
+            value = self.current_mode_;
+        end
+        
+        function value = get.current_pat(self)
+            value = self.current_pat_;
+        end
+        
+        function value = get.current_pos(self)
+            value = self.current_pos_;
+        end
+        
+        function value = get.current_ao1(self)
+            value = self.current_ao1_;
+        end
+        
+        function value = get.current_ao2(self)
+            value = self.current_ao2_;
+        end
+        
+        function value = get.current_ao3(self)
+            value = self.current_ao3_;
+        end
+        
+        function value = get.current_ao4(self)
+            value = self.current_ao4_;
+        end
+        
+        function value = get.current_frInd(self)
+            value = self.current_frInd_;
+        end
+        
+        function value = get.current_frRate(self)
+            value = self.current_frRate_;
+        end
+        
+        function value = get.current_gain(self)
+            value = self.current_gain_;
+        end
+        
+        function value = get.current_offset(self)
+            value = self.current_offset_;
+        end
+        
+        function value = get.current_duration(self)
+            value = self.current_duration_;
+        end
+   
         
 %         function [output] = get_fly_name(self)
 %             output = self.model.fly_name_;
