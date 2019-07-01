@@ -438,16 +438,13 @@ function run_on_screens(runcon, p)
                  runcon.current_duration.String = num2str(post_dur);
 
                  Panel_com('start_display',post_dur*10);
-                 pause(post_dur + .01);
+                 pause(post_dur + .1);
+                 
+                 
             end
             
             
-
-
-
-         
+     
      end
-
-
 
 end

@@ -681,20 +681,32 @@ classdef run_controller < handle
             
             %run script
             eval(run_command);
-
+            disp("stopping display!");
+            pause(3);
+            
+            
+            %For some reason, if I gave the stop display and log commands
+            %in the run_on_screens script, they were not received. But if I
+            %place them here instead, they work. Something to look into in
+            %the future.
             Panel_com('stop_display');
             pause(1);
+            disp("Stopping log!")
+            pause(1);
             Panel_com('stop_log');
+            pause(3);
+            disp("Disconnecting!")
             pause(1);
             disconnectHost;
-            pause(1);
+            pause(3);
             
 
-            
+            %Move the log files to the results file under the fly name
             movefile([experiment_folder '\Log Files\*'],fullfile(experiment_folder,'Results',self.model.fly_name));
-            %save([experiment_folder '\Log Files\exp_order.mat'],'exp_order')
+
             self.progress_axes.Title.String = "Experiment Completed. Running post-processing.";
             drawnow;
+            
             %Set up trial options matrix
             
             if ~isempty(pretrial{1})
@@ -717,12 +729,8 @@ classdef run_controller < handle
             %Run required post processing script that converts the TDMS
             %files into mat files.
             fly_results_folder = fullfile(experiment_folder,'Results',self.model.fly_name);
-%             files = dir(fly_results_folder);
-%             files = files(~ismember({files.name},{'.','..'}));
-%             dirFlags = [files.isdir];
-%             tdms_folder = files(dirFlags);
-%             folder = fullfile(tdms_folder.folder,tdms_folder.name);
-            
+
+            %Always run this script
             G4_TDMS_folder2struct(fly_results_folder);
             
             %Run post processing and plotting scripts if selected
@@ -730,18 +738,72 @@ classdef run_controller < handle
                 waitfor(errordlg("Processing script was not run because the processing file could not be found. Please run manually."));
      
             elseif self.model.do_processing == 1 && isfile(self.model.processing_file)
-                
-                
-                processing_command = self.model.processing_file + "(fly_results_folder, trial_options)";
+                [proc_path, proc_name, proc_ext] = fileparts(self.model.processing_file);
+                processing_command = proc_name + "(fly_results_folder, trial_options)";
+
                 eval(processing_command);
             
             end
             
             if self.model.do_plotting == 1 && (strcmp(self.model.plotting_file,'') || ~isfile(self.model.plotting_file))
                 waitfor(errordlg("Plotting script was not run because the plotting file could not be found. Please run manually."));
-            elseif self.model.do_plotting == 1 && isfile(self.model.plotting)
-                plotting_command = self.model.plotting_file + "(fly_results_folder, trial_options)";
-                eval(plotting_command);
+            elseif self.model.do_plotting == 1 && isfile(self.model.plotting_file)
+                [plot_path, plot_name, plot_ext] = fileparts(self.model.plotting_file);
+                plotting_command = plot_name + "(metadata.fly_results_folder, metadata.trial_options)";
+                plot_file = strcat(plot_name, plot_ext);
+                %Put all metadata in a struct to be passed to the
+                %function which creates the pdf.
+                
+                metadata = struct;
+                metadata.experimenter = self.model.experimenter;
+                metadata.experiment_name = self.doc.experiment_name;
+                metadata.experiment_protocol = self.model.run_protocol_file;
+                
+                %Turn experiment type (1,2, or 3) to matching word
+                %("Flight", etc)
+                if self.model.experiment_type == 1
+                    metadata.experiment_type = "Flight";
+                elseif self.model.experiment_type == 2
+                    metadata.experiment_type = "Camera Walk";
+                elseif self.model.experiment_type == 3
+                    metadata.experiment_type = "Chip Walk";
+                end
+                metadata.fly_name = self.model.fly_name;
+                metadata.genotype = self.model.fly_genotype;
+                metadata.timestamp = self.date_and_time_box.String;
+                metadata.plotting_protocol = self.model.plotting_file;
+                metadata.processing_protocol = self.model.processing_file;
+                if self.model.do_plotting == 1
+                    metadata.do_plotting = "Yes";
+                elseif self.model.do_plotting == 0
+                    metadata.do_plotting = "No";
+                end
+                if self.model.do_processing == 1
+                    metadata.do_processing = "Yes";
+                elseif self.model.do_processing == 0
+                    metadata.do_processing = "No";
+                end
+
+                metadata.plotting_command = plotting_command;
+                metadata.fly_results_folder = fly_results_folder;
+                metadata.trial_options = trial_options;
+                
+                
+                
+                %assigns the metadata struct to metadata in the base
+                %workspace so publish can use it.
+                assignin('base','metadata',metadata);
+                assignin('base','fly_results_folder',fly_results_folder);
+                assignin('base','trial_options',trial_options);
+
+
+                %publishes the output (but not code) "create_pdf_script" to
+                %a pdf file.
+                options.codeToEvaluate = sprintf('%s(%s,%s,%s)',plot_name,'fly_results_folder','trial_options','metadata');
+                options.format = 'pdf';
+                options.outputDir = sprintf('%s',fly_results_folder);
+                options.showCode = false;
+                publish(plot_file,options);
             end
 
         end
