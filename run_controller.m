@@ -195,7 +195,7 @@ classdef run_controller < handle
                 'HorizontalAlignment', 'center', 'units', 'pixels', 'Position', [850, 35, 60, 15]);
             
             
-            self.progress_axes = axes(self.fig, 'units','pixels', 'Position', [15, fig_size(4)*.2+30, fig_size(3) - 15 ,50]);
+            self.progress_axes = axes(self.fig, 'units','pixels', 'Position', [15, fig_size(4)*.2+30, fig_size(3) - 30 ,50]);
             self.axes_label = uicontrol(self.fig, 'Style', 'text', 'String', 'Progress:', 'FontSize', 13, ...
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [15, fig_size(4)*.2 + 85, 100, 20]);
             self.progress_bar = barh(0, 'Parent', self.progress_axes,'BaseValue', 0);
@@ -209,7 +209,7 @@ classdef run_controller < handle
            reps = self.doc.repetitions;
            total_steps = self.doc.repetitions * length(self.doc.block_trials(:,1));
            if ~isempty(self.doc.intertrial{1})
-               total_steps = total_steps + (length(self.doc.block_trials(:,1)) - 1);
+               total_steps = total_steps + ((length(self.doc.block_trials(:,1)) - 1)*reps);
            end
            
            if ~isempty(self.doc.pretrial{1})
