@@ -1074,7 +1074,7 @@ classdef controller < handle %Made this handle class because was having trouble 
         
         if num_pos ~= 0
             pos1 = pos_names{pos_index}; %Set initial position and ao functions to correspond to initial pattern.
-            if length(doc.Patterns.(pat1).pattern.Pats(1,1,:)) ~= ...
+            if length(doc.Patterns.(pat1).pattern.Pats(1,1,:)) < ...
                 max(doc.Pos_funcs.(pos1).pfnparam.func)
             pos1 = '';
             end
@@ -1163,7 +1163,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                 ao_index = ao_index + 1;
                 
                 if ~strcmp(newrow{3},'')
-                    if length(doc.Patterns.(newrow{2}).pattern.Pats(1,1,:)) ~= ...
+                    if length(doc.Patterns.(newrow{2}).pattern.Pats(1,1,:)) < ...
                            max(doc.Pos_funcs.(newrow{3}).pfnparam.func)
                         newrow{3} = '';
                     end

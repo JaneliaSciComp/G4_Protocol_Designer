@@ -1,51 +1,61 @@
-%Input is a struct p with fields containing all the necessary data for
- %running an experiment. The structure is:
- 
+%% Default protocol by which to run a flight experiment. 
+
+%The first input is the currently open instance (called runcon) of the run_gui's class.
+%This allows this script to access the figure, progress bar, etc.
+
+%The second input is a struct p which contains all the parameters needed to
+%run the experiment on the screens. The structure is as follows: 
+
+%PARAMETERS BELONGING TO EACH TRIAL
  %p.pretrial - cell array with all table values
- %p.intertrial - "
- %p.posttrial - "
- %p.block_trials - "
+ %p.pretrial_pat_index - index of the pattern in the pretrial
+ %p.pretrial_pos_index = index of the position function in the pretrial
+ %p.pretrial_ao_indices = indices of ao functions in the pretrial
  
- %The filenames in the table have to be converted to indices that can be
- %passed to panel_com. This has already been done and are saved as:
+ %p.intertrial - same as above, replacing "pretrial" with "intertrial"
+ %p.posttrial - same as above, replacing "pretrial" with "posttrial"
+ %p.block_trials - naming is slightly different. p.block_pat_indices,
+ %p.block_pos_indices, etc. 
+
+ %p.num_pretrial_frames gives the number of frames in the pretrial pattern
+ %in case it needs to be randomized. 
  
- %p.pretrial_pat_index
- %p.pretrial_pos_index - will be zero if no position function.
- %p.pretrial_ao_indices - if there are no active ao channels, this will be
-            %empty. If there are, but the pretrial has no ao funcs, it will be zeros.
+ %p.num_intertrial_frames - same as above
+ %p.num_posttrial_frames - same as above
  
- %p.intertrial_pat_index
- %p.intertrial_pos_index
- %p.intertrial_ao_indices...etc the others follow the same naming
- %convention
+ %p.num_block_frames - m x 1 matrix, m being the number of conditions,
+ %where each element is the number of frames in that trial's pattern
+ %library.
  
- %note that p.block_pat/pos/ao indices arrays are m x n where m is number
- %of conditions and n is 1 in the case of pat/pos, or the number of active
- %channels in the case of ao.
+ %PARAMETERS NOT SPECIFIC TO A TRIAL
+  
+ %p.active_ao_channels - [0 1 2 3]
+ %p.repetitions
+ %p.is_randomized
+ %p.fly_name
+ %p.save_filename - name under which experiment is saved
+ %p.exp_order - vector with the order conditions are run in
+ %p.experiment_folder - path to experiment folder
+ 
+ %NOTES
+  %The arrays of block indices are m x n where m is number of conditions and
+ %n is 1 in the case of pat/pos, or the number of active
+ %channels in the case of ao. In any position where there was no pos/ao
+ %function, the value is a 0.
  
  %p.active_ao_channels lists the channels that are active - [0 2 3] for
  %example means channels 1, 3, and 4 are active.
- 
- %p.num_pretrial_frames gives the number of frames in the pretrial pattern
- %in case it needs to be randomized. p.num_block_frames is an array of
- %numbers, one per trial. Also p.num_intertrial_frames and
- %p.num_posttrial_frames.
- 
- %other parameters include p.repetitions, p.is_randomized, and
- %p.save_filename
 
 function run_on_screens(runcon, p)
 
-%Get access to the figure and progress bar in the run gui.
+%% Get access to the figure and progress bar in the run gui.
 
     fig = runcon.fig;
     progress_bar = runcon.progress_bar;
     progress_axes = runcon.progress_axes;
     axes_label = runcon.axes_label;
 
- %Set up parameters
- 
-    active_ao_channels = p.active_ao_channels;
+ %% Set up parameters 
  %pretrial params-----------------------------------------------------
      if isempty(p.pretrial{1}) %no need to set up pretrial params
          pre_start = 0;
@@ -122,26 +132,27 @@ function run_on_screens(runcon, p)
  %define static block trial params (will define the ones that change every
  %loop later)--------------------------------------------------------------
      block_trials = p.block_trials; 
-     ao_indices = p.ao_indices;
+     block_ao_indices = p.block_ao_indices;
      reps = p.repetitions;
      num_cond = length(block_trials(:,1)); %number of conditions
      
  
- %Start host and switch to correct directory
+ %% Start host and switch to correct directory
  
      connectHost;
      pause(10);
      Panel_com('change_root_directory', p.experiment_folder);
  
- %set active ao channels
-     if ~isempty(active_ao_channels)
+ %% set active ao channels
+     if ~isempty(p.active_ao_channels)
          aobits = 0;
-        for bit = active_ao_channels
+        for bit = p.active_ao_channels
             aobits = bitset(aobits,bit+1); %plus 1 bc aochans are 0-3
         end
         Panel_com('set_active_ao_channels', dec2bin(aobits,4));
      end
-%confirm start experiment
+     
+%% confirm start experiment
      start = questdlg('Start Experiment?','Confirm Start','Start','Cancel','Start');
  
      switch start
@@ -149,28 +160,28 @@ function run_on_screens(runcon, p)
          case 'Cancel'
              disconnectHost;
              return;
-         case 'Start' %rest of the code goes under this case
+         case 'Start' 
+%The rest of the code to run the experiment goes under this case
          
-%Determine the total number of trials in order to define in what increments 
+%% Determine the total number of trials in order to define in what increments 
 %the progress bar will progress.-------------------------------------------
             total_num_steps = 0; 
             if pre_start == 1
                 total_num_steps = total_num_steps + 1;
             end
             if inter_type == 1
-                
-
-                total_num_steps = total_num_steps + reps*(2*num_cond) - 1;
-                %2 times length of block_trials = num of block and inter trials in one repetition. 
-                %Multiplied by repetitions = total num trials in block section. Minus 1 at 
-                %end bc no intertrial after last block trial..
+                total_num_steps = total_num_steps + (reps*num_cond) - 1;
+                %Minus 1 because there is no intertrial before the first
+                %block trial OR after the last block trial.
 
             end
             if post_type == 1
                 total_num_steps = total_num_steps + 1;
             end
+            total_num_steps = total_num_steps + (reps*num_cond);
+            %adds total number of block trials (not including intertrials)
 
-%Determine how long the experiment will take and update the title of the 
+%% Determine how long the experiment will take and update the title of the 
 %progress bar to reflect it------------------------------------------------
             total_time = 0; 
             if inter_type == 1
@@ -178,7 +189,7 @@ function run_on_screens(runcon, p)
                     total_time = total_time + p.block_trials{i,12} + inter_dur;
                 end
                 total_time = (total_time * reps) - inter_dur; %bc no intertrial before first rep OR after last rep of the block.
-            else
+            else %meaning no intertrial
                 for i = 1:num_cond
                     total_time = total_time + p.block_trials{i,12};
                 end
@@ -191,19 +202,21 @@ function run_on_screens(runcon, p)
             if post_type == 1
                 total_time = total_time + post_dur;
             end
-
+            
+            %Update the progress bar's label to reflect the expected
+            %duration.
             axes_label.String = "Estimated experiment duration: " + num2str(total_time/60) + " minutes.";
             
-%Will increment this every time a trial is completed to track how far along 
-%in the experiment we are-------------------------------------------------
+            %Will increment this every time a trial is completed to track how far along 
+            %in the experiment we are
             num_trial_of_total = 0;
 
-%Start log---------------------------------------------------------
+%% Start log---------------------------------------------------------
 
              Panel_com('start_log');
              pause(1);
 
-%run pretrial if it exists----------------------------------------
+%% run pretrial if it exists----------------------------------------
 
              if pre_start == 1
                  %First update the progress bar to show pretrial is running----
@@ -212,46 +225,40 @@ function run_on_screens(runcon, p)
                  progress_bar.YData = num_trial_of_total/total_num_steps;
                  drawnow;
                  
-                 %Then update the parameters showing in the Status panel to
-                 %reflect the pretrial
                  
-                 
-                 
-
+                %Set the panel values appropriately----------------
                  Panel_com('set_control_mode',pre_mode);
                  pause(1);
                  Panel_com('set_pattern_id', pre_pat);
                  pause(1);
+                 
                  %randomize frame index if indicated
                  if pre_frame_ind == 0
                      pre_frame_ind = randperm(p.num_pretrial_frames, 1);
                      pause(1);
                  end
-                 Panel_com('set_position_x',pre_frame_ind);
                  
+                 Panel_com('set_position_x',pre_frame_ind);
                  pause(1);
 
                  if pre_pos ~= 0
-                     Panel_com('set_pattern_func_id', pre_pos);
-                     
+                     Panel_com('set_pattern_func_id', pre_pos);   
                      pause(1);
                  end
 
                  if ~isempty(pre_gain) %this assumes you'll never have gain without offset
                      Panel_com('set_gain_bias', [pre_gain, pre_offset]);
-                     
                      pause(1);
                  end
 
                  if pre_mode == 2
                      Panel_com('set_frame_rate', pre_frame_rate);
-                     
                      pause(1);
                  end
 
                  for i = 1:length(pre_ao_ind)
                      if pre_ao_ind(i) ~= 0 %if it is zero, there was no ao function for this channel
-                         Panel_com('set_ao_function_id',[active_ao_channels(i), pre_ao_ind(i)]);%[channel number, index of ao func]
+                         Panel_com('set_ao_function_id',[p.active_ao_channels(i), pre_ao_ind(i)]);%[channel number, index of ao func]
                         pause(1);
                      end
                  end
@@ -260,6 +267,17 @@ function run_on_screens(runcon, p)
                  runcon.current_mode.String = num2str(pre_mode);
                  runcon.current_pat.String = num2str(pre_pat);
                  runcon.current_pos.String = num2str(pre_pos);
+                 for i = 1:length(p.active_ao_channels) %This figures out which ao channel to put the ao function index under.
+                    if p.active_ao_channels(i) == 0
+                        runcon.current_ao1.String = num2str(pre_ao_ind(i));
+                    elseif p.active_ao_channels(i) == 1
+                        runcon.current_ao2.String = num2str(pre_ao_ind(i));
+                    elseif p.active_ao_channels(i) == 2
+                        runcon.current_ao3.String = num2str(pre_ao_ind(i));
+                    else
+                        runcon.current_ao4.String = num2str(pre_ao_ind(i));
+                    end
+                 end
                  runcon.current_frInd.String = num2str(pre_frame_ind);
                  runcon.current_frRate.String = num2str(pre_frame_rate);
                  runcon.current_gain.String = num2str(pre_gain);
@@ -267,34 +285,38 @@ function run_on_screens(runcon, p)
                  runcon.current_duration.String = num2str(pre_dur);
 
                  pause(0.01);
+                 
+                 %Run pretrial on screen
                  Panel_com('start_display', (pre_dur*10));
+                 
+                 pause(pre_dur + .01);
                  if pre_dur == 0
-                     w = waitforbuttonpress;
+                     w = waitforbuttonpress; %If pretrial duration is set to zero, this
+                     %causes it to loop until you press a button.
                  end
-                 pause(pre_dur);
              end
 
-%Now set up for block/inter loop --------------------------------------
-             %Panel_com('stop_display');
-             
+%% Loop to run the block/inter trials --------------------------------------
+
              for r = 1:reps
                  for c = 1:num_cond
-                     %define which condition we're using
+                    %define which condition we're using
                     cond = p.exp_order(r,c);
                     
-                     %Update the progress bar----------------
+                    %Update the progress bar--------------------------
                     num_trial_of_total = num_trial_of_total + 1;
                     progress_axes.Title.String = "Rep " + r + " of " + reps +...
                         ", Trial " + c + " of " + num_cond + ". Condition number: " + cond;
                     progress_bar.YData = num_trial_of_total/total_num_steps;
                     drawnow;
                     
-                    %define parameters for this trial---------
+                    %define parameters for this trial----------------
                     trial_mode = block_trials{cond,1};
                     pat_id = p.block_pat_indices(cond);
                     pos_id = p.block_pos_indices(cond);
-                    trial_ao_indices = ao_indices(cond,:);
+                    trial_ao_indices = block_ao_indices(cond,:);
                     
+                    %Set frame index
                     if isempty(block_trials{cond,8})
                         frame_ind = 1;
                     elseif strcmp(block_trials{cond,8},'r')
@@ -308,9 +330,11 @@ function run_on_screens(runcon, p)
                     offset = block_trials{cond, 11};
                     dur = block_trials{cond, 12};
                      
-                    %Update panel_com-------------------
+                    %Update panel_com-----------------------------
                     Panel_com('set_control_mode', trial_mode);
+                    pause(.5);
                     Panel_com('set_pattern_id', pat_id);
+                    pause(.5);
                     if ~isempty(block_trials{cond,10})
                         Panel_com('set_gain_bias', [gain, offset]);
                     end
@@ -322,14 +346,26 @@ function run_on_screens(runcon, p)
                     end
 
                     Panel_com('set_position_x', frame_ind);
-                    for i = 1:length(active_ao_channels)
-                        Panel_com('set_ao_function_id',[active_ao_channels(i), trial_ao_indices(i)]);
+                    pause(.5);
+                    for i = 1:length(p.active_ao_channels)
+                        Panel_com('set_ao_function_id',[p.active_ao_channels(i), trial_ao_indices(i)]);
                     end
                     
                     %Update status panel to show current parameters
                      runcon.current_mode.String = num2str(trial_mode);
                      runcon.current_pat.String = num2str(pat_id);
                      runcon.current_pos.String = num2str(pos_id);
+                     for i = 1:length(p.active_ao_channels) %This figures out which ao channel to put the ao function index under.
+                        if p.active_ao_channels(i) == 0
+                            runcon.current_ao1.String = num2str(trial_ao_indices(i));
+                        elseif p.active_ao_channels(i) == 1
+                            runcon.current_ao2.String = num2str(trial_ao_indices(i));
+                        elseif p.active_ao_channels(i) == 2
+                            runcon.current_ao3.String = num2str(trial_ao_indices(i));
+                        else
+                            runcon.current_ao4.String = num2str(trial_ao_indices(i));
+                        end
+                    end
                      runcon.current_frInd.String = num2str(frame_ind);
                      runcon.current_frRate.String = num2str(frame_rate);
                      runcon.current_gain.String = num2str(gain);
@@ -337,36 +373,37 @@ function run_on_screens(runcon, p)
                      runcon.current_duration.String = num2str(dur);
                     pause(0.01)
                     
-                    %Run block trial----------------------
+                    %Run block trial--------------------------------------
                     Panel_com('start_display', (dur*10)); %duration expected in 100ms units
-                    pause(dur)
-                    %Panel_com('stop_display');
-                    
+                    pause(dur + .01)
+
                     %Tells loop to skip the intertrial if this is the last iteration of the last rep
                     if r == reps && c == num_cond
    
                         continue 
                     end
                     
-        %Run inter-trial assuming there is one--------------------
+        %Run inter-trial assuming there is one-------------------------
                     if inter_type == 1
                     
                         %Update progress bar to indicate start of inter-trial
                         num_trial_of_total = num_trial_of_total + 1;
                         progress_axes.Title.String = "Rep " + r + " of " + reps +...
-                            ", Trial " + c + " of " + num_cond + "Inter-trial running...";
+                            ", Trial " + c + " of " + num_cond + ". Inter-trial running...";
                         progress_bar.YData = num_trial_of_total/total_num_steps;
                         drawnow;
 
                         %Run intertrial-------------------------
                         Panel_com('set_control_mode',inter_mode);
+                        pause(.1);
                         Panel_com('set_pattern_id', inter_pat);
-                        
+                        pause(.1);
                         %randomize frame index if indicated
                         if inter_frame_ind == 0
                             inter_frame_ind = randperm(p.num_intertrial_frames, 1);
                         end
                         Panel_com('set_position_x',inter_frame_ind);
+                        pause(.1);
 
                         if inter_pos ~= 0
                             Panel_com('set_pattern_func_id', inter_pos);
@@ -382,7 +419,7 @@ function run_on_screens(runcon, p)
 
                          for i = 1:length(inter_ao_ind)
                              if inter_ao_ind(i) ~= 0 %if it is zero, there was no ao function for this channel
-                                 Panel_com('set_ao_function_id',[active_ao_channels(i), inter_ao_ind(i)]);%[channel number, index of ao func]
+                                 Panel_com('set_ao_function_id',[p.active_ao_channels(i), inter_ao_ind(i)]);%[channel number, index of ao func]
                              end
                          end
                          
@@ -390,6 +427,18 @@ function run_on_screens(runcon, p)
                          runcon.current_mode.String = num2str(inter_mode);
                          runcon.current_pat.String = num2str(inter_pat);
                          runcon.current_pos.String = num2str(inter_pos);
+                         
+                         for i = 1:length(p.active_ao_channels) %This figures out which ao channel to put the ao function index under.
+                            if p.active_ao_channels(i) == 0
+                                runcon.current_ao1.String = num2str(inter_ao_ind(i));
+                            elseif p.active_ao_channels(i) == 1
+                                runcon.current_ao2.String = num2str(inter_ao_ind(i));
+                            elseif p.active_ao_channels(i) == 2
+                                runcon.current_ao3.String = num2str(inter_ao_ind(i));
+                            else
+                                runcon.current_ao4.String = num2str(inter_ao_ind(i));
+                            end
+                        end
                          runcon.current_frInd.String = num2str(inter_frame_ind);
                          runcon.current_frRate.String = num2str(inter_frame_rate);
                          runcon.current_gain.String = num2str(inter_gain);
@@ -398,19 +447,21 @@ function run_on_screens(runcon, p)
 
                          pause(0.01);
                          Panel_com('start_display', (inter_dur*10));
-                         pause(inter_dur);
+                         pause(inter_dur + .01);
                     end 
                  end
              end
              
-%Run post-trial if there is one--------------------------------------------
+%% Run post-trial if there is one--------------------------------------------
 
             if post_type == 1
                 
-                %Update progress bar------------
+                %Update progress bar--------------------------
 
                  Panel_com('set_control_mode', post_mode);
+                 pause(.1);
                  Panel_com('set_pattern_id', post_pat);
+                 pause(.1);
                  if ~isempty(post_gain)
                      Panel_com('set_gain_bias', [post_gain, post_offset]);
                  end
@@ -421,9 +472,10 @@ function run_on_screens(runcon, p)
                      Panel_com('set_frame_rate', post_frame_rate);
                  end
                  Panel_com('set_position_x',post_frame_ind);
+                 pause(.1);
                  for i = 1:length(post_ao_ind)
                      if post_ao_ind(i) ~= 0 %if it is zero, there was no ao function for this channel
-                         Panel_com('set_ao_function_id',[active_ao_channels(i), post_ao_ind(i)]);%[channel number, index of ao func]
+                         Panel_com('set_ao_function_id',[p.active_ao_channels(i), post_ao_ind(i)]);%[channel number, index of ao func]
                      end
                  end
                  
@@ -431,6 +483,17 @@ function run_on_screens(runcon, p)
                  runcon.current_mode.String = num2str(post_mode);
                  runcon.current_pat.String = num2str(post_pat);
                  runcon.current_pos.String = num2str(post_pos);
+                 for i = 1:length(p.active_ao_channels) %This figures out which ao channel to put the ao function index under.
+                    if p.active_ao_channels(i) == 0
+                        runcon.current_ao1.String = num2str(post_ao_ind(i));
+                    elseif p.active_ao_channels(i) == 1
+                        runcon.current_ao2.String = num2str(post_ao_ind(i));
+                    elseif p.active_ao_channels(i) == 2
+                        runcon.current_ao3.String = num2str(post_ao_ind(i));
+                    else
+                        runcon.current_ao4.String = num2str(post_ao_ind(i));
+                    end
+                end
                  runcon.current_frInd.String = num2str(post_frame_ind);
                  runcon.current_frRate.String = num2str(post_frame_rate);
                  runcon.current_gain.String = num2str(post_gain);
@@ -442,9 +505,7 @@ function run_on_screens(runcon, p)
                  
                  
             end
-            
-            
-     
+
      end
 
 end

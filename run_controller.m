@@ -22,6 +22,9 @@ classdef run_controller < handle
         processing_textbox_
         run_textbox_
         current_running_trial_
+        browse_button_plotting_
+        browse_button_processing_
+        browse_button_run_
         %total_trials_;
         
         %These are pieces of text in the updates panel that are updated
@@ -64,6 +67,9 @@ classdef run_controller < handle
         processing_textbox
         run_textbox
         current_running_trial
+        browse_button_plotting
+        browse_button_processing
+        browse_button_run
        % total_trials;
        
         %These are pieces of text in the updates panel that are updated
@@ -219,7 +225,7 @@ classdef run_controller < handle
                total_steps = total_steps + 1;
            end
            for i = 1:reps
-               x = (1/reps)*i + 1/total_steps;
+               x = (i/reps);% + 1/total_steps;
                line('XData', [x, x], 'YDATA', [0,2]);
            end
 
@@ -260,7 +266,7 @@ classdef run_controller < handle
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 95, 105, 15]);
             self.plotting_textbox = uicontrol(settings_pan, 'Style', 'edit', 'units', 'pixels', ...
                 'String', self.model.plotting_file, 'Position', [120, 95, 160, 18], 'Callback', @self.update_plotting_file);
-            browse_button1 = uicontrol(settings_pan, 'Style', 'pushbutton', 'units', 'pixels', ...
+            self.browse_button_plotting = uicontrol(settings_pan, 'Style', 'pushbutton', 'units', 'pixels', ...
                 'String', 'Browse', 'Position', [285, 95, 65, 18], 'Callback', @self.browse_plot_protocol);
             
             processing_checkbox_label = uicontrol(settings_pan, 'Style', 'text', 'String', 'Processing?', ...
@@ -271,14 +277,14 @@ classdef run_controller < handle
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 70, 105, 15]);
             self.processing_textbox = uicontrol(settings_pan, 'Style', 'edit', 'units', 'pixels', ...
                 'String', self.model.processing_file, 'Position', [120, 70, 160, 18], 'Callback', @self.update_processing_file);
-            browse_button2 = uicontrol(settings_pan, 'Style', 'pushbutton', 'units', 'pixels', ...
+            self.browse_button_processing = uicontrol(settings_pan, 'Style', 'pushbutton', 'units', 'pixels', ...
                 'String', 'Browse', 'Position', [285, 70, 65, 18], 'Callback', @self.browse_process_protocol);
             
             run_filename_label = uicontrol(settings_pan, 'Style', 'text', 'String', 'Run Protocol:', ...
                 'HorizontalAlignment', 'left', 'units', 'pixels', 'Position', [10, 45, 105, 15]);
             self.run_textbox = uicontrol(settings_pan, 'Style', 'edit', 'units', 'pixels', ...
                 'String', self.model.run_protocol_file, 'Position', [80, 45, 200, 18]);
-            browse_button = uicontrol(settings_pan, 'Style', 'pushbutton', 'units', 'pixels', ...
+            self.browse_button_run = uicontrol(settings_pan, 'Style', 'pushbutton', 'units', 'pixels', ...
                 'String', 'Browse', 'Position', [285, 45, 65, 18], 'Callback', @self.browse_run_protocol);
             
             
@@ -303,12 +309,14 @@ classdef run_controller < handle
         function update_fly_name(self, src, event)
             
             self.model.fly_name = src.String;
+            self.update_run_gui();
             
         end
         
         function update_experimenter(self, src, event)
             
             self.model.experimenter = src.String;
+            self.update_run_gui();
             
         end
         
@@ -319,30 +327,53 @@ classdef run_controller < handle
                 + "and save it under the new name in the designer view.";
             waitfor(errordlg(errormsg));
             self.exp_name_box.String = self.doc.experiment_name;
+            self.update_run_gui();
         end
         
         function update_genotype(self, src, event)
             self.model.fly_genotype = src.String;
+            self.update_run_gui();
         end
         
         function update_do_plotting(self, src, event)
             self.model.do_plotting = src.Value;
+            if self.model.do_plotting == 1
+                set(self.plotting_textbox, 'enable', 'on');
+                set(self.browse_button_plotting, 'enable','on');
+            elseif self.model.do_plotting == 0
+                set(self.plotting_textbox, 'enable', 'off');
+                set(self.browse_button_plotting, 'enable','off');
+                self.model.plotting_file = '';
+            end
+            self.update_run_gui();
         end
         
         function update_do_processing(self, src, event)
             self.model.do_processing = src.Value;
+            if self.model.do_processing == 1
+                set(self.processing_textbox,'enable', 'on');
+                set(self.browse_button_processing, 'enable','on');
+            elseif self.model.do_processing == 0
+                set(self.processing_textbox, 'enable', 'off');
+                set(self.browse_button_processing, 'enable', 'off');
+                self.model.processing_file = '';
+            end
+            self.update_run_gui();
         end
         
         function update_plotting_file(self, src, event)
             self.model.plotting_file = src.String;
+            self.update_run_gui();
         end
         
         function update_processing_file(self, src, event)
             self.model.processing_file = src.String;
+            self.update_run_gui();
         end
         
         function update_experiment_type(self, src, event)
             self.model.experiment_type = src.Value;
+            self.update_run_gui();
         end
         
         function update_progress(self, rep, trial, cond)
@@ -637,7 +668,7 @@ classdef run_controller < handle
             parameters.pretrial_ao_indices = pretrial_ao_indices;
             parameters.intertrial_ao_indices = intertrial_ao_indices;
             parameters.posttrial_ao_indices = posttrial_ao_indices;
-            parameters.ao_indices = ao_indices;
+            parameters.block_ao_indices = ao_indices;
             parameters.active_ao_channels = active_ao_channels;
             
             %Need to know how many frames each pattern in each trial has
@@ -681,7 +712,6 @@ classdef run_controller < handle
             
             %run script
             eval(run_command);
-            disp("stopping display!");
             pause(3);
             
             
@@ -690,13 +720,11 @@ classdef run_controller < handle
             %place them here instead, they work. Something to look into in
             %the future.
             Panel_com('stop_display');
-            pause(1);
-            disp("Stopping log!")
-            pause(1);
+            pause(2);
+
             Panel_com('stop_log');
             pause(3);
-            disp("Disconnecting!")
-            pause(1);
+
             disconnectHost;
             pause(3);
             
@@ -704,8 +732,22 @@ classdef run_controller < handle
             %Move the log files to the results file under the fly name
             movefile([experiment_folder '\Log Files\*'],fullfile(experiment_folder,'Results',self.model.fly_name));
 
-            self.progress_axes.Title.String = "Experiment Completed. Running post-processing.";
-            drawnow;
+                        
+            if self.model.do_processing == 1 || self.model.do_plotting == 1
+                self.progress_axes.Title.String = "Experiment Completed. Running post-processing.";
+                drawnow;
+            else
+                self.progress_axes.Title.String = "Skipping post-processing.";
+                drawnow;
+            end
+            
+            %Run required post processing script that converts the TDMS
+            %files into mat files.
+            fly_results_folder = fullfile(experiment_folder,'Results',self.model.fly_name);
+
+            %Always run this script
+            G4_TDMS_folder2struct(fly_results_folder);
+
             
             %Set up trial options matrix
             
@@ -726,12 +768,7 @@ classdef run_controller < handle
             end
             trial_options = [is_pretrial, is_intertrial, is_posttrial];
             
-            %Run required post processing script that converts the TDMS
-            %files into mat files.
-            fly_results_folder = fullfile(experiment_folder,'Results',self.model.fly_name);
-
-            %Always run this script
-            G4_TDMS_folder2struct(fly_results_folder);
+            
             
             %Run post processing and plotting scripts if selected
             if self.model.do_processing == 1 && (strcmp(self.model.processing_file,'') || ~isfile(self.model.processing_file))
@@ -804,6 +841,14 @@ classdef run_controller < handle
                 options.outputDir = sprintf('%s',fly_results_folder);
                 options.showCode = false;
                 publish(plot_file,options);
+                
+                pdf_path = fullfile(fly_results_folder,plot_name,'pdf');
+                new_pdf_path = fullfile(fly_results_folder,self.model.fly_name,'pdf');
+                movefile(pdf_path, new_pdf_path);
+                
+                self.progress_axes.Title.String = "Finished.";
+                drawnow;
+                
             end
 
         end
@@ -975,6 +1020,18 @@ classdef run_controller < handle
             self.current_duration_ = value;
         end
         
+        function set.browse_button_plotting(self, value)
+            self.browse_button_plotting_ = value;
+        end
+        
+        function set.browse_button_processing(self, value)
+            self.browse_button_processing_ = value;
+        end
+        
+        function set.browse_button_run(self, value)
+            self.browse_button_run_ = value;
+        end
+        
 
 
 
@@ -1103,6 +1160,20 @@ classdef run_controller < handle
         function value = get.current_duration(self)
             value = self.current_duration_;
         end
+        
+        function value = get.browse_button_plotting(self)
+            value = self.browse_button_plotting_;
+        end
+        
+        function value = get.browse_button_processing(self)
+            value = self.browse_button_processing_;
+        end
+        
+        function value = get.browse_button_run(self)
+            value = self.browse_button_run;
+        end
+            
+
    
         
 %         function [output] = get_fly_name(self)

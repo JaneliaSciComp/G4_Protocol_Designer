@@ -327,7 +327,7 @@ classdef document < handle
             if patRows ~= numrows
                 waitfor(errordlg("Watch out! This pattern will not run on the size screen you have selected."));
             end
-            if patDim ~= funcDim
+            if patDim < funcDim
                  waitfor(errordlg("Please make sure the dimension of your pattern and position functions match"));
             else
 
@@ -471,7 +471,7 @@ classdef document < handle
                 waitfor(errordlg("Watch out! This pattern will not run on the size screen you have selected."));
             end
 
-            if patDim ~= funcDim
+            if patDim < funcDim
                  waitfor(errordlg("Please make sure the dimension of your pattern and position functions match"));
             else
 
@@ -607,7 +607,7 @@ classdef document < handle
                 waitfor(errordlg("Watch out! This pattern will not run on the size screen you have selected."));
             end
 
-            if patDim ~= funcDim
+            if patDim < funcDim
                  waitfor(errordlg("Please make sure the dimension of your pattern and position functions match"));
             else
             self.intertrial{index} =  new_value ;
@@ -741,7 +741,7 @@ classdef document < handle
                 waitfor(errordlg("Watch out! This pattern will not run on the size screen you have selected."));
             end
 
-            if patDim ~= funcDim
+            if patDim < funcDim
                  waitfor(errordlg("Please make sure the dimension of your pattern and position functions match"));
             else
             self.posttrial{index} =  new_value ;
