@@ -842,8 +842,10 @@ classdef run_controller < handle
                 options.showCode = false;
                 publish(plot_file,options);
                 
-                pdf_path = fullfile(fly_results_folder,plot_name,'pdf');
-                new_pdf_path = fullfile(fly_results_folder,self.model.fly_name,'pdf');
+                plot_filename = strcat(plot_name,'.pdf');
+                new_plot_filename = strcat(self.model.fly_name,'.pdf');
+                pdf_path = fullfile(fly_results_folder,plot_filename);
+                new_pdf_path = fullfile(fly_results_folder,new_plot_filename);
                 movefile(pdf_path, new_pdf_path);
                 
                 self.progress_axes.Title.String = "Finished.";

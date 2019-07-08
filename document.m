@@ -345,8 +345,7 @@ classdef document < handle
         function set_pretrial_property(self, index, new_value)
             %If the user edited the pattern or position function, make sure
             %the file dimensions match
-            
-            if index == 1 && ~strcmp(num2str(new_value),'')
+            if index == 1 && ~isempty(new_value)
                 if ~isnumeric(new_value)
                     new_value = str2num(new_value);
                 end
@@ -485,7 +484,7 @@ classdef document < handle
 %             %If the user edited the pattern or position function, make sure
             %the file dimensions match
             
-            if index == 1 && ~strcmp(num2str(new_value),'')
+            if index == 1 && ~isempty(new_value)
                 if ~isnumeric(new_value)
                     new_value = str2num(new_value);
                 end
@@ -618,7 +617,7 @@ classdef document < handle
         
         function set_posttrial_property(self, index, new_value)
             
-            if index == 1 && ~strcmp(num2str(new_value),'')
+            if index == 1 && ~isempty(new_value)
                 if ~isnumeric(new_value)
                     new_value = str2num(new_value);
                 end
