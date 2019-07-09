@@ -142,6 +142,7 @@ function run_on_screens(runcon, p)
      connectHost;
      pause(10);
      Panel_com('change_root_directory', p.experiment_folder);
+     %pause(.1);
  
  %% set active ao channels
      if ~isempty(p.active_ao_channels)
@@ -150,6 +151,7 @@ function run_on_screens(runcon, p)
             aobits = bitset(aobits,bit+1); %plus 1 bc aochans are 0-3
         end
         Panel_com('set_active_ao_channels', dec2bin(aobits,4));
+        %pause(.1);
      end
      
 %% confirm start experiment
@@ -228,38 +230,38 @@ function run_on_screens(runcon, p)
                  
                 %Set the panel values appropriately----------------
                  Panel_com('set_control_mode',pre_mode);
-                 pause(1);
+                 pause(.1);
                  Panel_com('set_pattern_id', pre_pat);
-                 pause(1);
+                 pause(.1);
                  
                  %randomize frame index if indicated
                  if pre_frame_ind == 0
                      pre_frame_ind = randperm(p.num_pretrial_frames, 1);
-                     pause(1);
+                     pause(.1);
                  end
                  
                  Panel_com('set_position_x',pre_frame_ind);
-                 pause(1);
+                 pause(.1);
 
                  if pre_pos ~= 0
                      Panel_com('set_pattern_func_id', pre_pos);   
-                     pause(1);
+                     pause(.1);
                  end
 
                  if ~isempty(pre_gain) %this assumes you'll never have gain without offset
                      Panel_com('set_gain_bias', [pre_gain, pre_offset]);
-                     pause(1);
+                     pause(.1);
                  end
 
                  if pre_mode == 2
                      Panel_com('set_frame_rate', pre_frame_rate);
-                     pause(1);
+                     pause(.1);
                  end
 
                  for i = 1:length(pre_ao_ind)
                      if pre_ao_ind(i) ~= 0 %if it is zero, there was no ao function for this channel
                          Panel_com('set_ao_function_id',[p.active_ao_channels(i), pre_ao_ind(i)]);%[channel number, index of ao func]
-                        pause(1);
+                        pause(.1);
                      end
                  end
                  
@@ -331,24 +333,27 @@ function run_on_screens(runcon, p)
                     dur = block_trials{cond, 12};
                      
                     %Update panel_com-----------------------------
-                    Panel_com('set_control_mode', trial_mode);
-                    pause(.5);
-                    Panel_com('set_pattern_id', pat_id);
-                    pause(.5);
+                    Panel_com('set_control_mode', trial_mode)
+                    pause(.1);
+                    Panel_com('set_pattern_id', pat_id)
+                    pause(.1);
                     if ~isempty(block_trials{cond,10})
                         Panel_com('set_gain_bias', [gain, offset]);
                     end
                     if pos_id ~= 0
-                        Panel_com('set_pattern_func_id', pos_id);
+
+                        Panel_com('set_pattern_func_id', pos_id)
+                        pause(.1);
                     end
                     if trial_mode == 2
                         Panel_com('set_frame_rate',frame_rate);
                     end
 
                     Panel_com('set_position_x', frame_ind);
-                    pause(.5);
+                    pause(.1);
                     for i = 1:length(p.active_ao_channels)
                         Panel_com('set_ao_function_id',[p.active_ao_channels(i), trial_ao_indices(i)]);
+                        pause(.1);
                     end
                     
                     %Update status panel to show current parameters
@@ -375,7 +380,7 @@ function run_on_screens(runcon, p)
                     
                     %Run block trial--------------------------------------
                     Panel_com('start_display', (dur*10)); %duration expected in 100ms units
-                    pause(dur + .01)
+                    pause(dur + .1)
 
                     %Tells loop to skip the intertrial if this is the last iteration of the last rep
                     if r == reps && c == num_cond
@@ -407,6 +412,7 @@ function run_on_screens(runcon, p)
 
                         if inter_pos ~= 0
                             Panel_com('set_pattern_func_id', inter_pos);
+                            pause(.1);
                         end
 
                          if ~isempty(inter_gain) %this assumes you'll never have gain without offset
@@ -420,6 +426,7 @@ function run_on_screens(runcon, p)
                          for i = 1:length(inter_ao_ind)
                              if inter_ao_ind(i) ~= 0 %if it is zero, there was no ao function for this channel
                                  Panel_com('set_ao_function_id',[p.active_ao_channels(i), inter_ao_ind(i)]);%[channel number, index of ao func]
+                                 pause(.1);
                              end
                          end
                          
@@ -447,7 +454,7 @@ function run_on_screens(runcon, p)
 
                          pause(0.01);
                          Panel_com('start_display', (inter_dur*10));
-                         pause(inter_dur + .01);
+                         pause(inter_dur + .1);
                     end 
                  end
              end
@@ -457,6 +464,10 @@ function run_on_screens(runcon, p)
             if post_type == 1
                 
                 %Update progress bar--------------------------
+                num_trial_of_total = num_trial_of_total + 1;
+                progress_axes.Title.String = "Post-trial running...";
+                progress_bar.YData = num_trial_of_total/total_num_steps;
+                drawnow;
 
                  Panel_com('set_control_mode', post_mode);
                  pause(.1);
@@ -467,6 +478,7 @@ function run_on_screens(runcon, p)
                  end
                  if post_pos ~= 0
                      Panel_com('set_pattern_func_id', post_pos);
+                     pause(.1)
                  end
                  if post_mode == 2
                      Panel_com('set_frame_rate', post_frame_rate);
@@ -476,6 +488,7 @@ function run_on_screens(runcon, p)
                  for i = 1:length(post_ao_ind)
                      if post_ao_ind(i) ~= 0 %if it is zero, there was no ao function for this channel
                          Panel_com('set_ao_function_id',[p.active_ao_channels(i), post_ao_ind(i)]);%[channel number, index of ao func]
+                         pause(.1)
                      end
                  end
                  
@@ -501,10 +514,24 @@ function run_on_screens(runcon, p)
                  runcon.current_duration.String = num2str(post_dur);
 
                  Panel_com('start_display',post_dur*10);
-                 pause(post_dur + .1);
+
+                 pause(post_dur + 1);
                  
                  
             end
+
+            Panel_com('stop_display');
+            
+            pause(1);
+
+            Panel_com('stop_log');
+            
+            pause(2);
+            
+            disp("Disconnecting!");
+            disconnectHost;
+            
+            pause(1);
 
      end
 

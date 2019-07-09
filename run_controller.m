@@ -567,6 +567,7 @@ classdef run_controller < handle
                 end
                 ao1_funcs{end + 1} =  intertrial{4};
                 ao1_funcs{end + 1} = posttrial{4};
+                ao1_isnt_empty = ~cellfun('isempty',ao1_funcs);
             
             ao2_funcs = {};
                 ao2_funcs{1} = pretrial{5};
@@ -575,6 +576,7 @@ classdef run_controller < handle
                 end
                 ao2_funcs{end + 1} =  intertrial{5};
                 ao2_funcs{end + 1} = posttrial{5};
+                ao2_isnt_empty = ~cellfun('isempty',ao2_funcs);
             
             ao3_funcs = {};
                 ao3_funcs{1} = pretrial{6};
@@ -583,6 +585,7 @@ classdef run_controller < handle
                 end
                 ao3_funcs{end + 1} =  intertrial{6};
                 ao3_funcs{end + 1} = posttrial{6};
+                ao3_isnt_empty = ~cellfun('isempty',ao3_funcs);
             
             
             ao4_funcs = {};
@@ -592,42 +595,47 @@ classdef run_controller < handle
                 end
                 ao4_funcs{end + 1} =  intertrial{7};
                 ao4_funcs{end + 1} = posttrial{7};
+                ao4_isnt_empty = ~cellfun('isempty',ao4_funcs);
+                
+
+           
             
                 %Determine which channels should be active by going through
                 %the arrays we just created and checking if they are empty
                 %or not
             ao1_active = 0;
-            for i = 1:length(ao1_funcs)
-                if ~strcmp(ao1_funcs{i},'')
+     
+                if sum(ao1_isnt_empty) > 0
                     ao1_active = 1;
                 end
-            end
+           
             
             ao2_active = 0;
-            for i = 1:length(ao2_funcs)
-                if ~strcmp(ao2_funcs{i},'')
+
+                if sum(ao2_isnt_empty) > 0
                     ao2_active = 1;
                 end
-            end
+            
             
             ao3_active = 0;
-            for i = 1:length(ao3_funcs)
-                if ~strcmp(ao3_funcs{i},'')
+   
+                if sum(ao3_isnt_empty) > 0
                     ao3_active = 1;
                 end
-            end
+          
             
             ao4_active = 0;
-            for i = 1:length(ao4_funcs)
-                if ~strcmp(ao4_funcs{i},'')
+ 
+                if sum(ao4_isnt_empty) > 0
                     ao4_active = 1;
                 end
-            end
-            
+
             %channels is now an array of zeros and 1's, a 1 indicating that
             %channel is active, a 0 indicating it is not. 
             channels = [ao1_active, ao2_active, ao3_active, ao4_active];
             channel_nums = [0,1,2,3];
+            
+            
             
             %create an array of active ao channels which is formatted
             %correctly to be passed to the panel_com function.
@@ -639,6 +647,7 @@ classdef run_controller < handle
                     j = j + 1;
                 end
             end
+            
             %now have active_ao_channels which is an array of 0 - 4
             %elements indicating which ao channels are active, ie [2 3]
             %indicates channels 3 and 4 are active.
@@ -664,6 +673,9 @@ classdef run_controller < handle
                     ao_indices(k,m) = self.doc.get_ao_index(block_trials{k, channel_num + 4});
                 end
             end
+            
+
+         
             %-------------------------------------------------------------
             parameters.pretrial_ao_indices = pretrial_ao_indices;
             parameters.intertrial_ao_indices = intertrial_ao_indices;
@@ -719,14 +731,14 @@ classdef run_controller < handle
             %in the run_on_screens script, they were not received. But if I
             %place them here instead, they work. Something to look into in
             %the future.
-            Panel_com('stop_display');
-            pause(2);
-
-            Panel_com('stop_log');
-            pause(3);
-
-            disconnectHost;
-            pause(3);
+%             Panel_com('stop_display');
+%             pause(10);
+% 
+%             Panel_com('stop_log');
+%             pause(10);
+% 
+%             disconnectHost;
+%             pause(10);
             
 
             %Move the log files to the results file under the fly name

@@ -1701,7 +1701,10 @@ classdef document < handle
             if strcmp(pat_name,'') == 1
                 index = 0;
             else
-                fields = fieldnames(self.Patterns);
+                pat_name = strcat(pat_name,'.mat');
+                currentExp_file = fullfile(self.top_export_path, 'currentExp.mat');
+                saved_currentExp = load(currentExp_file);
+                fields = saved_currentExp.currentExp.pattern.pattNames;
                 index = find(strcmp(fields, pat_name));
 
             end    
@@ -1711,7 +1714,10 @@ classdef document < handle
             if strcmp(pos_name,'') == 1
                 index = 0;
             else
-                fields = fieldnames(self.Pos_funcs);
+                pos_name = strcat(pos_name,'.mat');
+                currentExp_file = fullfile(self.top_export_path, 'currentExp.mat');
+                saved_currentExp = load(currentExp_file);
+                fields = saved_currentExp.currentExp.function.functionName;
                 index = find(strcmp(fields, pos_name));
             end
         end
@@ -1720,7 +1726,10 @@ classdef document < handle
             if strcmp(ao_name,'') == 1
                 index = 0;
             else
-                fields = fieldnames(self.Ao_funcs);
+                ao_name = strcat(ao_name, '.mat');
+                currentExp_file = fullfile(self.top_export_path, 'currentExp.mat');
+                saved_currentExp = load(currentExp_file);
+                fields = saved_currentExp.currentExp.aoFunction.aoFunctionName;
                 index = find(strcmp(fields, ao_name));
             end
         end
