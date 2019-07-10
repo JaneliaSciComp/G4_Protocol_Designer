@@ -64,6 +64,8 @@ load(fullfile(exp_folder,Data_name));
 
 %create default matrices for plotting all conditions
 if nargin<5 
+    %Added (1,:) to the finds below so it only looks at the conditions for
+    %one rep - LT 7/10
     CL_conds = find(Data.conditionModes(1,:)==4); %all closed-loop modes
     OL_conds = find(Data.conditionModes(1,:)~=4); %all open-loop modes
     TC_conds = []; %by default, don't plot any tuning curves

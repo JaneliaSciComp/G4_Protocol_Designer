@@ -2516,11 +2516,11 @@ classdef controller < handle %Made this handle class because was having trouble 
                 LmR_offset = 0;
             end
             %pre_start = 0;
-            if strcmp(self.doc.top_folder_path,'') == 1
+            if strcmp(self.doc.top_export_path,'') == 1
                 waitfor(errordlg("You must save the experiment before you can test it on the screens."));
                 return;
             end
-            experiment_folder = self.doc.top_folder_path;
+            experiment_folder = self.doc.top_export_path;
             answer = questdlg("If you have imported from multiple locations, you must save your experiment" + ...
                 " before you can test it on the screens.", 'Confirm Save', 'Continue', 'Go back', 'Continue');
             

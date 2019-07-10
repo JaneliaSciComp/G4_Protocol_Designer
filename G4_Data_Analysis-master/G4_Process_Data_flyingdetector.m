@@ -210,7 +210,12 @@ p = permute(1:max_pos,[1 3 4 2]); %create array of all possible pattern position
 %get histogram of pattern position
 tmpdata = squeeze(da_data(Frame_ind,:,:,:));
 p_idx = tmpdata==p;
-hist_data(1,:,:,:) = squeeze(nansum(p_idx,3)); 
+if num_reps == 1 %Added this because when there is only 1 repetition,the p_idx has dims of 3x700x1x33 
+    index_to_sum_over = 2; %And when there is more than 1 repetition, the p_idx has dims of 3x1x700x33
+elseif num_reps > 1
+    index_to_sum_over = 3;
+end
+hist_data(1,:,:,:) = nansum(p_idx, index_to_sum_over); %removed squeeze around nansum 
 
 %get mean turning, forward, and sideslip for each pattern position
 tmpdata = repmat(da_data([LmR_ind, LpR_ind],:,:,:),[1 1 1 1 max_pos]);
