@@ -527,12 +527,16 @@ classdef run_controller < handle
             %string name of a pattern or function and returns its index
             %number. If the string is empty (ie, there is no position
             %function) it returns 0 as the index.
+
             parameters.pretrial_pat_index = self.doc.get_pattern_index(pretrial{2});
             parameters.pretrial_pos_index = self.doc.get_posfunc_index(pretrial{3});
+
             
             parameters.intertrial = intertrial;
+
             parameters.intertrial_pat_index = self.doc.get_pattern_index(intertrial{2});
             parameters.intertrial_pos_index = self.doc.get_posfunc_index(intertrial{3});
+
             
             parameters.block_trials = block_trials;
             for i = 1:length(self.doc.block_trials(:,1))
@@ -541,8 +545,10 @@ classdef run_controller < handle
             end
             
             parameters.posttrial = posttrial;
+
             parameters.posttrial_pat_index = self.doc.get_pattern_index(posttrial{2});
             parameters.posttrial_pos_index = self.doc.get_posfunc_index(posttrial{3});
+
             
             parameters.repetitions = self.doc.repetitions;
             parameters.is_randomized = self.doc.is_randomized;
@@ -634,7 +640,7 @@ classdef run_controller < handle
             %channel is active, a 0 indicating it is not. 
             channels = [ao1_active, ao2_active, ao3_active, ao4_active];
             channel_nums = [0,1,2,3];
-            
+
             
             
             %create an array of active ao channels which is formatted
@@ -647,6 +653,7 @@ classdef run_controller < handle
                     j = j + 1;
                 end
             end
+
             
             %now have active_ao_channels which is an array of 0 - 4
             %elements indicating which ao channels are active, ie [2 3]
@@ -685,9 +692,15 @@ classdef run_controller < handle
             
             %Need to know how many frames each pattern in each trial has
             %in case the frame index on any of them needs to be randomized.
-            parameters.num_pretrial_frames = length(self.doc.Patterns.(pretrial{2}).pattern.Pats(1,1,:));
-            parameters.num_intertrial_frames = length(self.doc.Patterns.(intertrial{2}).pattern.Pats(1,1,:));
-            parameters.num_posttrial_frames = length(self.doc.Patterns.(posttrial{2}).pattern.Pats(1,1,:));
+            if ~isempty(pretrial{1})
+                parameters.num_pretrial_frames = length(self.doc.Patterns.(pretrial{2}).pattern.Pats(1,1,:));
+            end
+            if ~isempty(intertrial{1})
+                parameters.num_intertrial_frames = length(self.doc.Patterns.(intertrial{2}).pattern.Pats(1,1,:));
+            end
+            if ~isempty(posttrial{1})
+                parameters.num_posttrial_frames = length(self.doc.Patterns.(posttrial{2}).pattern.Pats(1,1,:));
+            end
             for i = 1:length(block_trials(:,1))
                 parameters.num_block_frames(i) = length(self.doc.Patterns.(block_trials{i,2}).pattern.Pats(1,1,:));
             end
@@ -860,10 +873,12 @@ classdef run_controller < handle
                 new_pdf_path = fullfile(fly_results_folder,new_plot_filename);
                 movefile(pdf_path, new_pdf_path);
                 
-                self.progress_axes.Title.String = "Finished.";
-                drawnow;
+                
                 
             end
+            
+            self.progress_axes.Title.String = "Finished.";
+            drawnow;
 
         end
         

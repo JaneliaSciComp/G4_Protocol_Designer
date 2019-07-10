@@ -316,8 +316,9 @@ function run_on_screens(runcon, p)
                     trial_mode = block_trials{cond,1};
                     pat_id = p.block_pat_indices(cond);
                     pos_id = p.block_pos_indices(cond);
-                    trial_ao_indices = block_ao_indices(cond,:);
-                    
+                    if length(block_ao_indices) >= cond
+                        trial_ao_indices = block_ao_indices(cond,:);
+                    end
                     %Set frame index
                     if isempty(block_trials{cond,8})
                         frame_ind = 1;

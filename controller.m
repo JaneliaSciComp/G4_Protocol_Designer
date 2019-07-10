@@ -1321,6 +1321,7 @@ classdef controller < handle %Made this handle class because was having trouble 
         else
         
 %             if isempty(fieldnames(self.doc.currentExp))
+            self.doc.top_export_path = top_folder_path;
             self.doc.import_folder(top_folder_path);
             [exp_path, exp_name, ext] = fileparts(filepath);
                    % [exp_path, exp_name] = fileparts(self.doc.top_folder_path_);
