@@ -1,9 +1,6 @@
 %%%%I have changed the format of the commenting in this file so that only
-%%%%appropriate text shows up in the .pdf file being published from this. I
-%%%%have also added another input variable, a struct containing all the
-%%%%metadata so it can be published at the top of the pdf report. 
+%%%%appropriate text shows up in the .pdf file being published from this. -
 %%%%Lisa, 7/10/19
-
 
 function G4_Plot_Data_walkingsensor(exp_folder, trial_options, metadata_for_publishing, CL_conds, OL_conds, TC_conds)
 %FUNCTION G4_Plot_Data_walkingsensor(exp_folder, trial_options, CL_conds, OL_conds, TC_conds)
@@ -22,7 +19,7 @@ function G4_Plot_Data_walkingsensor(exp_folder, trial_options, metadata_for_publ
 % .pdf must also be part of this function. The disp commands below will
 % list the metadata in the .pdf before the graphs.
 
-    disp("Timestamp:   " + metadata_for_publishing.timestamp + newline);
+     disp("Timestamp:   " + metadata_for_publishing.timestamp + newline);
     disp("Experimenter:   " + metadata_for_publishing.experimenter + newline);
     disp("Experiment Name:   " + metadata_for_publishing.experiment_name + newline);
     disp("Experiment Type:   " + metadata_for_publishing.experiment_type + newline);
@@ -34,7 +31,7 @@ function G4_Plot_Data_walkingsensor(exp_folder, trial_options, metadata_for_publ
     disp("Processing Protocol Used:   " + metadata_for_publishing.processing_protocol + newline);
     disp("Plotting Protocol Used:   " + metadata_for_publishing.plotting_protocol + newline);
 
-%%%% user-defined parameters-----------------------
+%%%% user-defined parameters
 %datatype options: 'Vx0_chan', 'Vx1_chan', 'Vy0_chan', 'Vy1_chan', 'Frame Position', 'Turnin', 'Forward', 'Sideslip'
 CL_datatypes = {'Frame Position','Turning','Forward'}; %datatypes to plot as histograms
 OL_datatypes = {'Turning','Forward'}; %datatypes to plot as timeseries
@@ -48,7 +45,7 @@ mean_LineWidth = 1;
 subtitle_FontSize = 8;
 ylimits = [1 4; 1 4; 1 4; 1 4; 1 192; -0.3 0.3; -0.1 0.3; -0.1 0.3]; %[min max] y limits for each datatype
 
-%%%% load data and prepare for plotting------------
+%%%% load data and prepare for plotting
 %load G4_Processed_Data
 if nargin==0
     exp_folder = uigetdir('C:/','Select a folder containing a G4_Processed_Data file');
@@ -62,18 +59,16 @@ catch
 end
 load(fullfile(exp_folder,Data_name));
 
-%create default matrices for plotting all conditions-----------------
+%create default matrices for plotting all conditions
 if nargin<5 
-    %Added (1,:) to the finds below so it only looks at the conditions for
-    %one rep - LT 7/10
-    CL_conds = find(Data.conditionModes(1,:)==4); %all closed-loop modes
-    OL_conds = find(Data.conditionModes(1,:)~=4); %all open-loop modes
+    CL_conds = find(Data.conditionModes(:,1)==4); %all closed-loop modes
+    OL_conds = find(Data.conditionModes(:,1)~=4); %all open-loop modes
     TC_conds = []; %by default, don't plot any tuning curves
     CL_conds = reshape(CL_conds,[round(sqrt(numel(CL_conds))) ceil(sqrt(numel(CL_conds)))])';
     OL_conds = reshape(OL_conds,[round(sqrt(numel(OL_conds))) ceil(sqrt(numel(OL_conds)))])';
 end
 
-%get datatype indices----------------
+%get datatype indices
 num_OL_datatypes = length(OL_datatypes);
 OL_inds = nan(1,num_OL_datatypes);
 for d = 1:num_OL_datatypes
@@ -110,7 +105,8 @@ for d = 1:num_TC_datatypes
     xl = xlim;
     plot(xl,[avg avg],'--','Color',rep_Color','LineWidth',mean_LineWidth)
     title([datastr ' Histogram'],'FontSize',subtitle_FontSize);
-    snapnow; %added by Lisa 7/10
+    
+    snapnow; %%%LT 7/10
 end
 if trial_options(2)==1
     subplot(2,num_TC_datatypes,num_TC_datatypes)
@@ -118,10 +114,11 @@ if trial_options(2)==1
     hold on
     plot(nanmean(Data.interhistogram),'Color',mean_Color,'LineWidth',mean_LineWidth)
     title('Intertrial Pattern Frame Histogram','FontSize',subtitle_FontSize)
-    snapnow; %added by Lisa 7/10
+    
+    snapnow; %%%LT 7/10
 end
 
-%% Histograms for closed-loop trials
+%% plot histograms for closed-loop trials
 if ~isempty(CL_conds)
     num_figs = size(CL_conds,3);
     for d = CL_inds
@@ -144,7 +141,7 @@ if ~isempty(CL_conds)
                         ylim(ylimits(d,:));
                         title(['Condition #' num2str(cond)],'FontSize',subtitle_FontSize)
                         
-                        snapnow; %LT 7/10
+                        snapnow; %%%LT 7/10
                     end
                 end
             end
@@ -152,7 +149,7 @@ if ~isempty(CL_conds)
     end
 end
 
-%% timeseries data for open-loop trials
+%% plot timeseries data for open-loop trials
 if ~isempty(OL_conds)
     num_figs = size(OL_conds,3);
     num_reps = size(Data.timeseries,3);
@@ -175,7 +172,7 @@ if ~isempty(OL_conds)
                         xlim([min(Data.timestamps) max(Data.timestamps)])
                         title(['Condition #' num2str(cond)],'FontSize',subtitle_FontSize)
                         
-                        snapnow; %LT 7/10
+                        snapnow; %%%LT 7/10
                     end
                 end
             end
@@ -183,7 +180,7 @@ if ~isempty(OL_conds)
     end
 end
 
-%% tuning-curves for specified open-loop trials
+%% plot tuning-curves for specified open-loop trials
 if ~isempty(TC_conds)
     num_figs = size(TC_conds,3);
     %loop for different data types
@@ -201,7 +198,7 @@ if ~isempty(TC_conds)
                 ylim(ylimits(d,:));
                 title(['Condition #' num2str(cond)],'FontSize',subtitle_FontSize)
                 
-                snapnow; %LT 7/10
+                snapnow; %%%LT 7/10
             end
         end
     end

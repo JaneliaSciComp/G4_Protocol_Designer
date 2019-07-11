@@ -12,6 +12,7 @@ function G4_Plot_Data_flyingdetector(exp_folder, trial_options, metadata_for_pub
 % OL_conds: matrix of open-loop (OL) conditions to plot as timeseries
 % TC_conds: matrix of open-loop conditions to plot as tuning curves (TC)
 
+
 %% Metadata
 %%%%%SECTION ADDED BY LISA TAYLOR 7/10/19
 % This function must be published using the publish command in order for
@@ -19,10 +20,7 @@ function G4_Plot_Data_flyingdetector(exp_folder, trial_options, metadata_for_pub
 % .pdf must also be part of this function. The disp commands below will
 % list the metadata in the .pdf before the graphs.
 
-
-
-
-    disp("Timestamp:   " + metadata_for_publishing.timestamp + newline);
+     disp("Timestamp:   " + metadata_for_publishing.timestamp + newline);
     disp("Experimenter:   " + metadata_for_publishing.experimenter + newline);
     disp("Experiment Name:   " + metadata_for_publishing.experiment_name + newline);
     disp("Experiment Type:   " + metadata_for_publishing.experiment_type + newline);
@@ -33,7 +31,7 @@ function G4_Plot_Data_flyingdetector(exp_folder, trial_options, metadata_for_pub
     disp("Plotting performed?   " + metadata_for_publishing.do_plotting + newline);
     disp("Processing Protocol Used:   " + metadata_for_publishing.processing_protocol + newline);
     disp("Plotting Protocol Used:   " + metadata_for_publishing.plotting_protocol + newline);
-    
+
 %%%% user-defined parameters
 %datatype options: 'LmR_chan', 'L_chan', 'R_chan', 'F_chan', 'Frame Position', 'LmR', 'LpR'
 CL_datatypes = {'Frame Position','LmR','LpR'}; %datatypes to plot as histograms
@@ -64,10 +62,8 @@ load(fullfile(exp_folder,Data_name));
 
 %create default matrices for plotting all conditions
 if nargin<5 
-    %Added (1,:) to the finds below so it only looks at the conditions for
-    %one rep - LT 7/10
-    CL_conds = find(Data.conditionModes(1,:)==4); %all closed-loop modes
-    OL_conds = find(Data.conditionModes(1,:)~=4); %all open-loop modes
+    CL_conds = find(Data.conditionModes(:,1)==4); %all closed-loop modes
+    OL_conds = find(Data.conditionModes(:,1)~=4); %all open-loop modes
     TC_conds = []; %by default, don't plot any tuning curves
     CL_conds = reshape(CL_conds,[round(sqrt(numel(CL_conds))) ceil(sqrt(numel(CL_conds)))])';
     OL_conds = reshape(OL_conds,[round(sqrt(numel(OL_conds))) ceil(sqrt(numel(OL_conds)))])';
@@ -112,7 +108,7 @@ for d = 1:num_TC_datatypes
     plot(xl,[avg avg],'--','Color',rep_Color','LineWidth',mean_LineWidth)
     title([datastr ' Histogram'],'FontSize',subtitle_FontSize);
     
-    snapnow; %%%%%%%%%%%%%%%%%%LINE ADDED BY LISA
+    snapnow; %%%LT 7/10
 end
 if trial_options(2)==1
     subplot(2,num_TC_datatypes,num_TC_datatypes)
@@ -121,11 +117,10 @@ if trial_options(2)==1
     plot(nanmean(Data.interhistogram),'Color',mean_Color,'LineWidth',mean_LineWidth)
     title('Intertrial Pattern Frame Histogram','FontSize',subtitle_FontSize)
     
-    snapnow; %%%%%%%%%LINE ADDED BY LISA
+    snapnow; %%%LT 7/10
 end
 
-%plot histograms for closed-loop trials
-%% Closed-loop trial histograms
+%% plot histograms for closed-loop trials
 if ~isempty(CL_conds)
     num_figs = size(CL_conds,3);
     for d = CL_inds
@@ -148,7 +143,7 @@ if ~isempty(CL_conds)
                         ylim(ylimits(d,:));
                         title(['Condition #' num2str(cond)],'FontSize',subtitle_FontSize)
                         
-                        snapnow; %%%%%%%%%LINE ADDED BY LISA
+                        snapnow;  %%%LT 7/10
                     end
                 end
             end
@@ -156,25 +151,20 @@ if ~isempty(CL_conds)
     end
 end
 
-%plot timeseries data for open-loop trials
-%% Timeseries data for open-loop trials
+%% plot timeseries data for open-loop trials
 if ~isempty(OL_conds)
     num_figs = size(OL_conds,3);
     num_reps = size(Data.timeseries,3);
     %loop for different data types
     for d = 1:OL_inds
-
         for fig = 1:num_figs
             num_plot_rows = max(nansum(OL_conds(:,:,fig)>0));
             num_plot_cols = max(nansum(OL_conds(:,:,fig)>0,2));
             figure()
             for row = 1:num_plot_rows
-               
                 for col = 1:num_plot_cols
-                    
                     cond = OL_conds(row,col,fig);
                     if ~isnan(cond)
-                        
                         subplot(num_plot_rows, num_plot_cols, col+num_plot_cols*(row-1))
                         subplot(num_plot_rows, num_plot_cols, col+num_plot_cols*(row-1))
                         plot(repmat(Data.timestamps',[1 num_reps]),squeeze(Data.timeseries(d,cond,:,:))','Color',rep_Color,'LineWidth',rep_LineWidth);
@@ -183,7 +173,7 @@ if ~isempty(OL_conds)
                         ylim(ylimits(d,:));
                         title(['Condition #' num2str(cond)],'FontSize',subtitle_FontSize)
                         
-                        snapnow; %%%%%LINE ADDED BY LISA
+                        snapnow; %%%LT 7/10
                     end
                 end
             end
@@ -191,8 +181,7 @@ if ~isempty(OL_conds)
     end
 end
 
-%plot tuning-curves for specified open-loop trials
-%% Tuning-curves for specified open-loop trials
+%% plot tuning-curves for specified open-loop trials
 if ~isempty(TC_conds)
     num_figs = size(TC_conds,3);
     %loop for different data types
@@ -209,8 +198,8 @@ if ~isempty(TC_conds)
                 plot(nanmean(Data.summaries(d,conds,:),3),'Color',mean_Color,'LineWidth',mean_LineWidth);
                 ylim(ylimits(d,:));
                 title(['Condition #' num2str(cond)],'FontSize',subtitle_FontSize)
-
-                snapnow; %%%%LINE ADDED BY LISA
+                
+                snapnow; %%%LT 7/10
             end
         end
     end

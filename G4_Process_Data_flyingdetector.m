@@ -190,8 +190,8 @@ if trial_options(2)==1
     inter_ts_data = nan([num_intertrials length(inter_ts_time)]);
     for i = 1:num_intertrials
         %get frame position data, upsampled to match ADC timestamps
-        start_ind = find(Log.Frames.Time(1,:)>=intertrial_start_times(trial),1);
-        stop_ind = find(Log.Frames.Time(1,:)>intertrial_stop_times(trial),1)-1;
+        start_ind = find(Log.Frames.Time(1,:)>=intertrial_start_times(i),1);
+        stop_ind = find(Log.Frames.Time(1,:)>intertrial_stop_times(i),1)-1;
         if isempty(stop_ind)
             stop_ind = length(Log.Frames.Time(1,:));
         end
