@@ -720,7 +720,7 @@ classdef document < handle
             if index == 10 || index == 11 && ~strcmp(num2str(new_value),'')
                
                 if ~isnumeric(new_value)
-                    mew_value = str2num(new_value);
+                    new_value = str2num(new_value);
                 
                 end
                 
