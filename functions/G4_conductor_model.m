@@ -1,4 +1,4 @@
-classdef run_model 
+classdef G4_conductor_model 
     
     properties
         
@@ -33,7 +33,7 @@ classdef run_model
         
 %CONSTRUCTOR--------------------------------------------------------------
 
-        function self = run_model()
+        function self = G4_conductor_model()
             
             self.fly_name = '';
             self.fly_genotype = '';

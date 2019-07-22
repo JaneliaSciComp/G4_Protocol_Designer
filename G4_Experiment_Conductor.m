@@ -1,1 +1,1 @@
-run_con = run_controller();
+run_con = G4_conductor_controller();

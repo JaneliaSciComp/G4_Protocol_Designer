@@ -1,2 +1,2 @@
 
-con = controller();
+con = G4_designer_controller();

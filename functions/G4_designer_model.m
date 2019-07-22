@@ -1,4 +1,4 @@
-classdef model_class
+classdef G4_designer_model
     %MAIN MODEL with trial data (in the form of cell arrays) and other
     %parameters for submitting a run. 
 
@@ -48,7 +48,7 @@ classdef model_class
     
     methods
 %CONSTRUCTOR (Set defaults here except trial defaults - set those in model_trial)
-        function self = model_class()
+        function self = G4_designer_model()
             
             self.isSelect_all = false;
             self.is_paused = false;

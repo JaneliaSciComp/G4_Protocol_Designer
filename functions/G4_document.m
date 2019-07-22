@@ -1,4 +1,4 @@
-classdef document < handle
+classdef G4_document < handle
     %UNTITLED Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -71,7 +71,7 @@ classdef document < handle
     methods
 
 %CONSTRUCTOR--------------------------------------------------------------        
-        function self = document()
+        function self = G4_document()
 
 %Set these properties to empty values until they are needed
             
@@ -86,7 +86,7 @@ classdef document < handle
             self.save_filename = '';
             self.currentExp = struct;
             self.experiment_name = '';
-            self.trial_data = model_trial();
+            self.trial_data = G4_trial_model();
             
 %Make table parameters into a cell array so they work with the tables more easily
 

@@ -1,4 +1,4 @@
-classdef model_trial
+classdef G4_trial_model
     
  %end
 
@@ -44,7 +44,7 @@ classdef model_trial
 
     methods
         
-        function self = model_trial()
+        function self = G4_trial_model()
         
             self.trial_mode = 1 ;
             self.pattern_name= '' ;

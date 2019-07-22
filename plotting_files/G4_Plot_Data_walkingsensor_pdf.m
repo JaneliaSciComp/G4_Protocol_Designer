@@ -2,7 +2,7 @@
 %%%%appropriate text shows up in the .pdf file being published from this. -
 %%%%Lisa, 7/10/19
 
-function G4_Plot_Data_walkingsensor(exp_folder, trial_options, metadata_for_publishing, CL_conds, OL_conds, TC_conds)
+function G4_Plot_Data_walkingsensor_pdf(exp_folder, trial_options, metadata_for_publishing, CL_conds, OL_conds, TC_conds)
 %FUNCTION G4_Plot_Data_walkingsensor(exp_folder, trial_options, CL_conds, OL_conds, TC_conds)
 % 
 % Inputs:
@@ -64,8 +64,14 @@ if nargin<5
     CL_conds = find(Data.conditionModes(:,1)==4); %all closed-loop modes
     OL_conds = find(Data.conditionModes(:,1)~=4); %all open-loop modes
     TC_conds = []; %by default, don't plot any tuning curves
-    CL_conds = reshape(CL_conds,[round(sqrt(numel(CL_conds))) ceil(sqrt(numel(CL_conds)))])';
-    OL_conds = reshape(OL_conds,[round(sqrt(numel(OL_conds))) ceil(sqrt(numel(OL_conds)))])';
+    CL_tmp = nan([round(sqrt(numel(CL_conds))) ceil(sqrt(numel(CL_conds)))]);
+    CL_tmp(1:length(CL_conds)) = CL_conds;
+    CL_conds = CL_tmp';
+    %CL_conds = reshape(CL_conds,[round(sqrt(numel(CL_conds))) ceil(sqrt(numel(CL_conds)))])';
+    OL_tmp = nan([round(sqrt(numel(OL_conds))) ceil(sqrt(numel(OL_conds)))]);
+    OL_tmp(1:length(OL_conds)) = OL_conds;
+    OL_conds = OL_tmp';
+    %OL_conds = reshape(OL_conds,[round(sqrt(numel(OL_conds))) ceil(sqrt(numel(OL_conds)))])';
 end
 
 %get datatype indices

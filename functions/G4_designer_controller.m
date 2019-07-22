@@ -1,4 +1,4 @@
-classdef controller < handle %Made this handle class because was having trouble getting setters to work, especially with struct properties. 
+classdef G4_designer_controller < handle %Made this handle class because was having trouble getting setters to work, especially with struct properties. 
 
     properties
         model_ %contains all data that does not persist with saving
@@ -118,10 +118,10 @@ classdef controller < handle %Made this handle class because was having trouble 
         
 %CONSTRUCTOR---------------------------------------------------------------
 
-        function self = controller()
+        function self = G4_designer_controller()
            
-            self.model = model_class();
-            self.doc = document();
+            self.model = G4_designer_model();
+            self.doc = G4_document();
             
             screensize = get(0, 'screensize');
 
@@ -842,7 +842,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                      %keep instances of each class but clear all data
                     clear self.model;
                     delete(self.doc);
-                    self.doc = document();
+                    self.doc = G4_document();
                     self.doc.experiment_name
                     
 
@@ -2448,7 +2448,7 @@ classdef controller < handle %Made this handle class because was having trouble 
                %do nothing
            else
                
-               minicon = preview_controller(data, self.doc);
+               minicon = G4_preview_controller(data, self.doc);
                self.update_preview_con(minicon);
                
                %For all cells that have a file, set the object in question
@@ -2530,6 +2530,7 @@ classdef controller < handle %Made this handle class because was having trouble 
             
             connectHost;
             Panel_com('change_root_directory', experiment_folder)
+            pause(.5);
             start = questdlg('Start Dry Run?','Confirm Start','Start','Cancel','Start');
             switch start
                 case 'Cancel'
@@ -2544,33 +2545,41 @@ classdef controller < handle %Made this handle class because was having trouble 
                     %ao_index = self.doc.get_ao_index(trial{4});
                     
                     Panel_com('set_control_mode', trial_mode);
-                    pause(1);
+                    
 
                     Panel_com('set_pattern_id', pattern_index); 
-                    pause(1);
+                    
                    % Panel_com('set_gain_bias', [LmR_gain LmR_offset])
                    if func_index ~= 0
                         Panel_com('set_pattern_func_id', func_index);
-                        pause(1);
+                       
                    end
                     %Panel_com('set_ao_function_id',[0, ao_index]);
                     if ~isempty(trial{10})
                         Panel_com('set_gain_bias',[LmR_gain LmR_offset]);
-                        pause(1);
+                       
                     end
                     if trial_mode == 2
                         Panel_com('set_frame_rate', trial_fr_rate);
-                        pause(1);
+                        
                     end
 
                     Panel_com('set_position_x', trial_frame_index);
                     
-
-
-                    pause(0.5)
-                    Panel_com('start_display', (trial_duration*10)); %duration expected in 100ms units
+                    if trial_duration ~= 0
+  
+                        Panel_com('start_display', (trial_duration*10)); %duration expected in 100ms units
                     
-                    pause(trial_duration+0.1)
+                        pause(trial_duration + 0.01)
+                        
+                    else
+                        
+                        Panel_com('start_display', 20);
+                        w = waitforbuttonpress; %If pretrial duration is set to zero, this
+                        %causes it to loop until a button is press or
+                        %mouse clicked
+
+                    end
                     Panel_com('stop_display');
                     disconnectHost;
                     %Panel_com('reset_display');
@@ -2674,7 +2683,7 @@ classdef controller < handle %Made this handle class because was having trouble 
         
         function open_run_gui(self, src, event)
             
-            self.run_con = run_controller(self.doc);
+            self.run_con = G4_conductor_controller(self.doc);
             
         end
 

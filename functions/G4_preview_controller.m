@@ -1,4 +1,4 @@
-classdef preview_controller < handle
+classdef G4_preview_controller < handle
 
     properties
          model_;
@@ -34,8 +34,8 @@ classdef preview_controller < handle
     
     methods
  %CONSTRUCTOR
-        function self = preview_controller(data, doc)
-            self.model = preview_model(data, doc);
+        function self = G4_preview_controller(data, doc)
+            self.model = G4_preview_model(data, doc);
             
             self.fig = figure( 'Name', 'Trial Preview', 'NumberTitle', 'off','units', 'pixels'); 
 

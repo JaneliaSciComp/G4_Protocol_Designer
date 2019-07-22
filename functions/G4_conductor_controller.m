@@ -1,4 +1,4 @@
-classdef run_controller < handle
+classdef G4_conductor_controller < handle
    
     properties
         model_;
@@ -96,11 +96,11 @@ classdef run_controller < handle
     methods
         
         %contstructor
-        function self = run_controller(varargin)
+        function self = G4_conductor_controller(varargin)
             self.fig = figure('Name', 'Fly Experiment Conductor', 'NumberTitle', 'off', 'units','pixels','MenuBar', 'none', ...
                 'ToolBar', 'none', 'Resize', 'off');
-            self.model = run_model();
-            self.doc = document();
+            self.model = G4_conductor_model();
+            self.doc = G4_document();
             
             
             if ~isempty(varargin)
@@ -741,7 +741,7 @@ classdef run_controller < handle
             
             
             %For some reason, if I gave the stop display and log commands
-            %in the run_on_screens script, they were not received. But if I
+            %in the G4_default_run_protocol script, they were not received. But if I
             %place them here instead, they work. Something to look into in
             %the future.
 %             Panel_com('stop_display');

@@ -1,4 +1,4 @@
-classdef preview_model
+classdef G4_preview_model
     
     properties
         doc_
@@ -45,7 +45,7 @@ classdef preview_model
     methods
 %CONSTRUCTOR
         
-        function self = preview_model(data, doc)
+        function self = G4_preview_model(data, doc)
             
             self.doc = doc;
             self.data = data;

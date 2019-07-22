@@ -46,7 +46,7 @@
  %p.active_ao_channels lists the channels that are active - [0 2 3] for
  %example means channels 1, 3, and 4 are active.
 
-function run_on_screens(runcon, p)
+function G4_default_run_protocol(runcon, p)
 
 %% Get access to the figure and progress bar in the run gui.
 
@@ -289,10 +289,11 @@ function run_on_screens(runcon, p)
                  pause(0.01);
                  
                  %Run pretrial on screen
-                 Panel_com('start_display', (pre_dur*10));
-                 
-                 pause(pre_dur + .01);
-                 if pre_dur == 0
+                 if pre_dur ~= 0
+                    Panel_com('start_display', (pre_dur*10));
+                    pause(pre_dur + .01);
+                 else
+                     Panel_com('start_display', 20);
                      w = waitforbuttonpress; %If pretrial duration is set to zero, this
                      %causes it to loop until you press a button.
                  end
