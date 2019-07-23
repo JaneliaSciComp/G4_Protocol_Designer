@@ -183,6 +183,8 @@ if ~isempty(OL_conds)
                     end
                 end
             end
+            
+            %put snapnow here instead? 
         end
     end
 end

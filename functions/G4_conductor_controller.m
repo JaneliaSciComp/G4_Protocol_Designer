@@ -419,6 +419,7 @@ classdef G4_conductor_controller < handle
               % [exp_path, exp_name] = fileparts(self.doc.top_folder_path_);
                 self.doc.experiment_name = exp_name;
                 self.doc.save_filename = top_folder_path;
+                self.doc.top_export_path = top_folder_path;
                 
                 data = self.doc.open(filepath);
                 p = data.exp_parameters;
@@ -539,6 +540,7 @@ classdef G4_conductor_controller < handle
 
             
             parameters.block_trials = block_trials;
+
             for i = 1:length(self.doc.block_trials(:,1))
                 parameters.block_pat_indices(i) = self.doc.get_pattern_index(block_trials{i,2}); 
                 parameters.block_pos_indices(i) = self.doc.get_posfunc_index(block_trials{i,3});
