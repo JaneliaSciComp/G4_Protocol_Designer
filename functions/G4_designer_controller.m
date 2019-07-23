@@ -1821,7 +1821,7 @@ classdef G4_designer_controller < handle %Made this handle class because was hav
                             x = [0 length(self.model.current_preview_file(1,:,1))];
                             y = [0 length(self.model.current_preview_file(:,1,1))];
                             adjusted_file = zeros(y(2),x(2),length(self.model.current_preview_file(1,1,:)));
-                            max_num = max(self.model.current_preview_file,[],[1 2]);
+                            max_num = max(max(self.model.current_preview_file,[],2));
                             for i = 1:length(self.model.current_preview_file(1,1,:))
 
                                 adjusted_matrix = self.model.current_preview_file(:,:,i) ./ max_num(i);

@@ -108,7 +108,7 @@ classdef G4_preview_model
             y = length(original_data(:,1,1));
             z = length(original_data(1,1,:));
             adjusted_data = zeros(y,x,z);
-            max_num = max(original_data,[],[1 2]);
+            max_num = max(max(original_data,[],2));
             for i = 1:z
                 
                 adjusted_matrix(:,:,1) = original_data(:,:,i) ./ max_num(i);
